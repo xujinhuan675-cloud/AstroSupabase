@@ -1,17 +1,13 @@
 ---
-import type { GetStaticPaths } from "astro";
-import { getArticleById, getArticles } from '../../lib/articles';
+import { getArticleById } from '../../lib/articles';
 import Layout from '../../layout/Layout.astro';
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  const articles = await getArticles();
-  return articles.map(article => ({
-    params: { id: article.id.toString() },
-    props: { article },
-  }));
-};
-
 const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/404');
+}
+
 const articleId = parseInt(id);
 
 if (isNaN(articleId)) {
