@@ -43,15 +43,15 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
 
       Swal.fire({
         icon: 'success',
-        title: '儲存成功',
-        text: '文章已成功儲存',
+        title: '保存成功',
+        text: '文章已成功保存',
       });
     } catch (err) {
       console.error('Error saving article:', err);
       Swal.fire({
         icon: 'error',
-        title: '儲存文章時發生錯誤',
-        text: err instanceof Error ? err.message : '儲存文章時發生錯誤',
+        title: '保存文章时发生错误',
+        text: err instanceof Error ? err.message : '保存文章时发生错误',
       });
     } finally {
       setIsSaving(false);
@@ -90,7 +90,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
         <div className="space-y-6">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              標題 *
+              标题 *
             </label>
             <input
               type="text"
@@ -104,7 +104,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
 
           <div>
             <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
-              URL 代稱 *
+              URL 代称 *
             </label>
             <input
               type="text"
@@ -131,7 +131,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
 
           <div>
             <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-              內容 *
+              内容 *
             </label>
             <textarea
               id="content"
@@ -145,7 +145,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
 
           <div>
             <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700">
-              精選圖片 URL
+              精选图片 URL
             </label>
             <input
               type="url"
@@ -158,7 +158,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
 
           <div>
             <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-              狀態
+              状态
             </label>
             <select
               id="status"

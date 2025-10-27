@@ -73,7 +73,7 @@ export default function ArticleList({ articles, onEdit, onDelete }: ArticleListP
                   onClick={() => onDelete(article.id)}
                   className="text-red-600 hover:text-red-900"
                 >
-                  刪除
+                  删除
                 </button>
               </td>
             </tr>
