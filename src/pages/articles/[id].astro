@@ -20,7 +20,7 @@ if (!article) {
   return Astro.redirect('/404');
 }
 
-const formattedDate = new Date(article.createdAt).toLocaleDateString('zh-TW', {
+const formattedDate = new Date(article.createdAt).toLocaleDateString('zh-CN', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',

@@ -25,9 +25,9 @@ export default function ArticleList({ articles, onEdit, onDelete }: ArticleListP
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">標題</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">發佈日期</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">标题</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发布日期</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
           </tr>
         </thead>
@@ -43,7 +43,7 @@ export default function ArticleList({ articles, onEdit, onDelete }: ArticleListP
                   {article.title}
                 </a>
                 <div className="text-xs text-gray-500">
-                  ID: {article.id} • {new Date(article.createdAt).toLocaleDateString('zh-TW')}
+                  ID: {article.id} • {new Date(article.createdAt).toLocaleDateString('zh-CN')}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -53,21 +53,21 @@ export default function ArticleList({ articles, onEdit, onDelete }: ArticleListP
                   {article.status === 'draft'
                     ? '草稿'
                     : article.status === 'published'
-                    ? '已發佈'
+                    ? '已发布'
                     : article.status === 'archived'
-                    ? '封存'
+                    ? '已归档'
                     : article.status}
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {article.publishedAt ? new Date(article.publishedAt).toLocaleString('zh-TW') : '未發佈'}
+                {article.publishedAt ? new Date(article.publishedAt).toLocaleString('zh-CN') : '未发布'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                 <a
                   href={`/dashboard/article/${article.id}`}
                   className="text-indigo-600 hover:text-indigo-900 mr-4"
                 >
-                  編輯
+                  编辑
                 </a>
                 <button
                   onClick={() => onDelete(article.id)}
