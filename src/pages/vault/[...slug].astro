@@ -1,0 +1,82 @@
+---
+import { getCollection } from 'astro:content';
+import { getEntry } from 'astro:content';
+import Layout from '@/layout/Layout.astro';
+import ThemeToggle from '@/components/ThemeToggle.astro';
+import '@/styles/global.css';
+
+export async function getStaticPaths() {
+  const notes = await getCollection('documents');
+  
+  return notes.map((note: any) => ({
+    params: { slug: note.id },
+    props: { note },
+  }));
+}
+
+const { note } = Astro.props;
+const { Content } = await note.render();
+---
+
+<Layout title={note.data.title || note.id}>
+  <ThemeToggle />
+  
+  <article class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+      <a href="/vault" class="text-blue-600 dark:text-blue-400 hover:underline">
+        ← Back to Vault
+      </a>
+    </nav>
+
+    <!-- Article Header -->
+    <header class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        {note.data.title || note.id}
+      </h1>
+      
+      {note.data.description && (
+        <p class="text-xl text-gray-600 dark:text-gray-400 mb-4">
+          {note.data.description}
+        </p>
+      )}
+      
+      {note.data.tags && note.data.tags.length > 0 && (
+        <div class="flex flex-wrap gap-2">
+          {note.data.tags.map((tag: string) => (
+            <a 
+              href={`/tags/${tag}`}
+              class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm hover:bg-blue-200 dark:hover:bg-blue-800 transition"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <!-- Article Content -->
+    <div class="prose prose-lg dark:prose-invert max-w-none vault-content">
+      <Content />
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <a 
+          href="/vault" 
+          class="text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          ← All Notes
+        </a>
+        
+        {note.data.tags && note.data.tags.length > 0 && (
+          <div class="text-sm text-gray-500 dark:text-gray-400">
+            Tagged with: {note.data.tags.join(', ')}
+          </div>
+        )}
+      </div>
+    </footer>
+  </article>
+</Layout>
+

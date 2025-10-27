@@ -1,0 +1,59 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '@/layout/Layout.astro';
+
+const allNotes = await getCollection('documents', ({ data }: any) => {
+  return data.publish !== false;
+});
+
+const sortedNotes = allNotes.sort((a: any, b: any) => {
+  const dateA = a.data.date ? new Date(a.data.date) : new Date(0);
+  const dateB = b.data.date ? new Date(b.data.date) : new Date(0);
+  return dateB.getTime() - dateA.getTime();
+});
+---
+
+<Layout title="Vault - All Notes">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold mb-8">📚 Knowledge Vault</h1>
+    
+    <p class="text-gray-600 dark:text-gray-400 mb-8">
+      Browse all notes from the Obsidian vault. These are static notes managed through markdown files.
+    </p>
+
+    <div class="space-y-6">
+      {sortedNotes.map((note: any) => (
+        <article class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <a href={`/vault/${note.id}`} class="block">
+            <h2 class="text-2xl font-semibold mb-2 text-blue-600 dark:text-blue-400 hover:underline">
+              {note.data.title || note.id}
+            </h2>
+            {note.data.description && (
+              <p class="text-gray-600 dark:text-gray-400 mb-3">
+                {note.data.description}
+              </p>
+            )}
+            {note.data.tags && note.data.tags.length > 0 && (
+              <div class="flex flex-wrap gap-2">
+                {note.data.tags.map((tag: string) => (
+                  <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </a>
+        </article>
+      ))}
+    </div>
+
+    {sortedNotes.length === 0 && (
+      <div class="text-center py-12">
+        <p class="text-gray-500 dark:text-gray-400 text-lg">
+          No notes found. Add markdown files to <code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">src/content/vault/</code>
+        </p>
+      </div>
+    )}
+  </div>
+</Layout>
+

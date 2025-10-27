@@ -1,0 +1,78 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '@/layout/Layout.astro';
+
+export async function getStaticPaths() {
+  const allNotes = await getCollection('documents');
+  
+  // Collect all unique tags
+  const allTags = new Set<string>();
+  allNotes.forEach((note: any) => {
+    if (note.data.tags && Array.isArray(note.data.tags)) {
+      note.data.tags.forEach((tag: string) => allTags.add(tag));
+    }
+  });
+
+  // Generate paths for each tag
+  return Array.from(allTags).map(tag => ({
+    params: { tag },
+    props: {
+      notes: allNotes.filter((note: any) => 
+        note.data.tags?.includes(tag) && note.data.publish !== false
+      ),
+      tag
+    }
+  }));
+}
+
+const { notes, tag } = Astro.props;
+---
+
+<Layout title={`Tag: ${tag}`}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <a href="/vault" class="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
+        ← Back to all notes
+      </a>
+      <h1 class="text-4xl font-bold mb-2">
+        🏷️ Tag: <span class="text-blue-600 dark:text-blue-400">#{tag}</span>
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        {notes.length} note{notes.length !== 1 ? 's' : ''} with this tag
+      </p>
+    </div>
+
+    <div class="space-y-6">
+      {notes.map((note: any) => (
+        <article class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-lg transition-shadow">
+          <a href={`/vault/${note.id}`} class="block">
+            <h2 class="text-2xl font-semibold mb-2 text-blue-600 dark:text-blue-400 hover:underline">
+              {note.data.title || note.id}
+            </h2>
+            {note.data.description && (
+              <p class="text-gray-600 dark:text-gray-400 mb-3">
+                {note.data.description}
+              </p>
+            )}
+            {note.data.tags && note.data.tags.length > 0 && (
+              <div class="flex flex-wrap gap-2">
+                {note.data.tags.map((t: string) => (
+                  <span 
+                    class={`px-3 py-1 rounded-full text-sm ${
+                      t === tag 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                    }`}
+                  >
+                    #{t}
+                  </span>
+                ))}
+              </div>
+            )}
+          </a>
+        </article>
+      ))}
+    </div>
+  </div>
+</Layout>
+

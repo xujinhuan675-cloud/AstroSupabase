@@ -1,0 +1,40 @@
+{
+  "name": "astro-supabase-blog-starter",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "@astrojs/react": "^4.2.7",
+    "@supabase/supabase-js": "^2.49.5",
+    "@tailwindcss/typography": "^0.5.15",
+    "@tailwindcss/vite": "^4.1.7",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
+    "alpinejs": "^3.15.0",
+    "astro": "^5.7.13",
+    "astro-loader-obsidian": "^0.9.1",
+    "astro-spaceship": "^0.9.8",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.43.1",
+    "postgres": "^3.4.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sharp": "^0.32.5",
+    "spaceship-monolith": "^0.9.8",
+    "sweetalert2": "^11.21.2",
+    "tailwindcss": "^4.1.7",
+    "varlock": "^0.0.15",
+    "zod": "^3.25.7"
+  },
+  "devDependencies": {
+    "@types/alpinejs": "^3.13.11",
+    "drizzle-kit": "^0.31.1",
+    "patch-package": "^8.0.1"
+  }
+}
