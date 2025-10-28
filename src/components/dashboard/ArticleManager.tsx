@@ -51,14 +51,14 @@ export default function ArticleManager() {
   }, []);
 
   const handleDelete = useCallback(async (id: number) => {
-    if (!window.confirm('確定要刪除這篇文章嗎？此操作無法復原。')) return;
+    if (!window.confirm('确定要删除这篇文章吗？此操作无法恢复。')) return;
     try {
       const { error } = await deleteArticle(id);
       if (error) throw new Error(error);
       await loadArticles();
     } catch (err) {
       console.error('Error deleting article:', err);
-      alert('刪除文章時發生錯誤');
+      alert('删除文章时发生错误');
     }
   }, [loadArticles]);
 
@@ -78,7 +78,7 @@ export default function ArticleManager() {
           href="/dashboard/article/new"
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
-          新增文章
+          新建文章
         </a>
       </div>
 

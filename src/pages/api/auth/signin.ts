@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   // Handle email/password login
   if (!email || !password) {
     return new Response(
-      JSON.stringify({ error: '請輸入電子郵件和密碼' }), 
+      JSON.stringify({ error: '请输入电子邮件和密码' }), 
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -66,8 +66,8 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     return redirect("/dashboard");
   } catch (error) {
     const errorMessage = error instanceof Error ? 
-      (error.message.includes('Invalid login credentials') ? '電子郵件或密碼不正確' : error.message) : 
-      '登入失敗，請稍後再試';
+      (error.message.includes('Invalid login credentials') ? '电子邮件或密码不正确' : error.message) : 
+      '登录失败，请稍后再试';
     
     return new Response(
       JSON.stringify({ error: errorMessage }), 

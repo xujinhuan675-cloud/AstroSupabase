@@ -3,9 +3,9 @@ import type { APIRoute } from 'astro';
 import { z } from 'zod';
 
 const SignupSchema = z.object({
-  email: z.string().email({ message: '請輸入有效的電子郵件' }),
-  password: z.string().min(6, { message: '密碼至少需要 6 個字元' }),
-  fullName: z.string().min(1, { message: '請填寫姓名' }),
+  email: z.string().email({ message: '请输入有效的电子邮件' }),
+  password: z.string().min(6, { message: '密码至少需要 6 个字符' }),
+  fullName: z.string().min(1, { message: '请填写姓名' }),
 });
 
 export const POST: APIRoute = async ({ request }) => {
@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: '請檢查您的電子郵件以完成註冊',
+          message: '请检查您的电子邮件以完成注册',
           redirectTo: '/login?message=check-email'
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request }) => {
     );
   } catch (error) {
     console.error('[Signup][POST] Signup error:', error);
-    let message = '註冊失敗，請稍後再試';
+    let message = '注册失败，请稍后再试';
     if (error instanceof z.ZodError) {
       message = error.errors[0]?.message || message;
     } else if (error instanceof Error) {
