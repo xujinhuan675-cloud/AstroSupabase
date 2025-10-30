@@ -8,22 +8,33 @@
 
 | 类别 | Quartz 总数 | 已迁移 | 未迁移 | 完成度 |
 |------|------------|--------|--------|--------|
-| **核心组件** | 25+ | 2 | 23+ | ~8% |
-| **交互脚本** | 11 | 1 | 10 | ~9% |
-| **样式文件** | 15+ | 4 | 11+ | ~27% |
-| **布局系统** | 1 | 0 | 1 | 0% |
-| **总体** | **52+** | **7** | **45+** | **~13%** |
+| **核心组件** | 25+ | 13 | 12+ | ~52% |
+| **交互脚本** | 11 | 6 | 5 | ~55% |
+| **样式文件** | 15+ | 13 | 2+ | ~87% |
+| **布局系统** | 1 | 1 | 0 | 100% |
+| **总体** | **52+** | **33** | **19+** | **~63%** |
 
 ---
 
 ## ✅ 已迁移的功能
 
-### 1. 核心组件（2/25+）
+### 1. 核心组件（13/25+）
 
 | 组件 | 状态 | 位置 | 备注 |
 |------|------|------|------|
 | **Backlinks** | ✅ 已迁移 | `src/components/Backlinks.tsx` | 使用 Quartz 样式 |
-| **Graph** | ⚠️ 部分迁移 | `src/components/KnowledgeGraph.tsx` | 使用 react-force-graph-2d，非原生 D3 |
+| **Graph (Global)** | ✅ 完整迁移 | `src/components/KnowledgeGraph.tsx` | 使用 react-force-graph-2d，完整功能 |
+| **Graph (Local)** | ✅ 完整迁移 | `src/components/LocalGraph.tsx` | 局部图谱，深度过滤 |
+| **PageTitle** | ✅ 已迁移 | `src/components/quartz/PageTitle.tsx` | 网站标题 |
+| **Breadcrumbs** | ✅ 已迁移 | `src/components/quartz/Breadcrumbs.tsx` | 面包屑导航 |
+| **ContentMeta** | ✅ 已迁移 | `src/components/quartz/ContentMeta.tsx` | 元数据显示 |
+| **TagList** | ✅ 已迁移 | `src/components/quartz/TagList.tsx` | 标签列表 |
+| **Darkmode** | ✅ 已迁移 | `src/components/quartz/Darkmode.tsx` | 暗色模式切换 |
+| **ReaderMode** | ✅ 已迁移 | `src/components/quartz/ReaderMode.tsx` | 阅读模式 |
+| **Search** | ✅ 已迁移 | `src/components/quartz/Search.tsx` | 全文搜索 |
+| **Explorer** | ✅ 已迁移 | `src/components/quartz/Explorer.tsx` | 文件浏览器 |
+| **TableOfContents** | ✅ 已迁移 | `src/components/quartz/TableOfContents.tsx` | 目录 |
+| **Footer** | ✅ 已迁移 | `src/components/quartz/Footer.tsx` | 页脚 |
 
 ### 2. 转换器（2/2）
 
@@ -40,7 +51,7 @@
 | **lang** | ✅ 完整 | `src/lib/quartz/util/lang.ts` |
 | **clone** | ✅ 完整 | `src/lib/quartz/util/clone.ts` |
 
-### 4. 样式文件（4/15+）
+### 4. 样式文件（13/15+）
 
 | 样式 | 状态 | 位置 |
 |------|------|------|
@@ -48,12 +59,26 @@
 | **callouts** | ✅ 完整 | `src/styles/quartz/callouts.css` |
 | **backlinks** | ✅ 完整 | `src/styles/quartz/backlinks.css` |
 | **graph** | ✅ 完整 | `src/styles/quartz/graph.css` |
+| **layout** | ✅ 完整 | `src/styles/quartz/layout.css` |
+| **darkmode** | ✅ 完整 | `src/styles/quartz/darkmode.css` |
+| **breadcrumbs** | ✅ 完整 | `src/styles/quartz/breadcrumbs.css` |
+| **contentmeta** | ✅ 完整 | `src/styles/quartz/contentmeta.css` |
+| **explorer** | ✅ 完整 | `src/styles/quartz/explorer.css` |
+| **footer** | ✅ 完整 | `src/styles/quartz/footer.css` |
+| **pagetitle** | ✅ 完整 | `src/styles/quartz/pagetitle.css` |
+| **search** | ✅ 完整 | `src/styles/quartz/search.css` |
+| **toc** | ✅ 完整 | `src/styles/quartz/toc.css` |
 
-### 5. 客户端脚本（1/11）
+### 5. 客户端脚本（6/11）
 
 | 脚本 | 状态 | 位置 |
 |------|------|------|
-| **callout** | ✅ 已迁移 | `src/scripts/callout.ts` |
+| **callout** | ✅ 已迁移 | `src/scripts/quartz/callout.ts` |
+| **darkmode** | ✅ 已迁移 | `src/scripts/quartz/darkmode.ts` |
+| **toc** | ✅ 已迁移 | `src/scripts/quartz/toc.ts` |
+| **readermode** | ✅ 已迁移 | `src/scripts/quartz/readermode.ts` |
+| **popover** | ✅ 已迁移 | `src/scripts/quartz/popover.ts` |
+| **clipboard** | ✅ 已迁移 | `src/scripts/quartz/clipboard.ts` |
 
 ---
 
@@ -152,7 +177,7 @@
 
 ---
 
-## 🏗️ 布局系统（未迁移）
+## 🏗️ 布局系统（✅ 已完成）
 
 ### Quartz 布局结构
 
@@ -163,7 +188,7 @@
 │              │                    │              │
 │  Left Sidebar│   Main Content     │ Right Sidebar│
 │              │                    │              │
-│ - PageTitle  │ - Breadcrumbs      │ - Graph      │
+│ - PageTitle  │ - Breadcrumbs      │ - LocalGraph │
 │ - Search     │ - ArticleTitle     │ - TOC        │
 │ - Darkmode   │ - ContentMeta      │ - Backlinks  │
 │ - ReaderMode │ - TagList          │              │
@@ -175,9 +200,10 @@
 ```
 
 **当前项目**：
-- ❌ 没有三栏布局系统
-- ❌ 没有响应式侧边栏
-- ❌ 没有统一的布局配置
+- ✅ 完整的三栏布局系统 (`QuartzLayout.astro`)
+- ✅ 响应式侧边栏
+- ✅ 统一的布局配置
+- ✅ Slot 插槽系统支持灵活组件组合
 
 ---
 
@@ -186,45 +212,45 @@
 基于 [https://quartz.jzhao.xyz/](https://quartz.jzhao.xyz/)：
 
 ### 左侧栏（Left Sidebar）
-- [ ] **Quartz 4** - 页面标题/Logo
-- [ ] **🔍 搜索框** - 全文搜索
-- [ ] **🌓 暗色模式** - 主题切换
-- [ ] **📖 阅读模式** - 专注阅读
-- [ ] **📁 Explorer** - 文件树浏览器
-  - [ ] 文件夹折叠/展开
-  - [ ] 文件计数显示
-  - [ ] 搜索过滤
+- [x] **Quartz 4** - 页面标题/Logo - ✅ 已迁移 (PageTitle)
+- [x] **🔍 搜索框** - 全文搜索 - ✅ 已迁移 (Search)
+- [x] **🌓 暗色模式** - 主题切换 - ✅ 已迁移 (Darkmode)
+- [x] **📖 阅读模式** - 专注阅读 - ✅ 已迁移 (ReaderMode)
+- [x] **📁 Explorer** - 文件树浏览器 - ✅ 已迁移 (Explorer)
+  - [x] 文件夹折叠/展开
+  - [x] 文件计数显示
+  - [x] 搜索过滤
 
 ### 主内容区（Main Content）
-- [x] 面包屑导航 - ⚠️ 部分（需要组件）
-- [x] 文章标题 - ⚠️ 部分（需要组件）
-- [x] 元数据（日期、阅读时间）- ⚠️ 部分（需要组件）
-- [x] 标签列表 - ⚠️ 部分（需要组件）
+- [x] 面包屑导航 - ✅ 已迁移 (Breadcrumbs)
+- [x] 文章标题 - ✅ 完整支持
+- [x] 元数据（日期、阅读时间）- ✅ 已迁移 (ContentMeta)
+- [x] 标签列表 - ✅ 已迁移 (TagList)
 - [x] 文章内容（支持 Obsidian 语法）- ✅ 已支持
 - [x] Callouts - ✅ 已支持
 - [x] 代码高亮 - ✅ 已支持
 - [x] Mermaid 图表 - ✅ 已支持
 
 ### 右侧栏（Right Sidebar）
-- [ ] **📊 Graph View** - 完整 D3 实现
-  - [x] 基础图谱 - ✅ 使用 react-force-graph-2d
-  - [ ] 深度过滤 - ❌
-  - [ ] 全局/局部切换 - ❌
-  - [ ] 标签节点 - ❌
-- [ ] **📑 Table of Contents** - 目录
-  - [ ] 滚动同步高亮
-  - [ ] 点击跳转
+- [x] **📊 Graph View** - ✅ 完整实现
+  - [x] 基础图谱 - ✅ 使用 react-force-graph-2d (KnowledgeGraph)
+  - [x] 深度过滤 - ✅ 已实现 (LocalGraph)
+  - [x] 全局/局部切换 - ✅ 完整图谱页 + 局部图谱组件
+  - [ ] 标签节点 - ❌ 待扩展
+- [x] **📑 Table of Contents** - 目录 - ✅ 已迁移 (TableOfContents)
+  - [x] 滚动同步高亮
+  - [x] 点击跳转
 - [x] **🔗 Backlinks** - 反向链接 - ✅ 已迁移
 
 ### 交互功能
-- [ ] **🎈 Popover Preview** - 悬浮预览
-- [ ] **⚡ SPA Navigation** - 无刷新跳转
-- [ ] **📋 Copy Code** - 代码复制按钮
+- [x] **🎈 Popover Preview** - 悬浮预览 - ✅ 已迁移
+- [ ] **⚡ SPA Navigation** - 无刷新跳转 - ❌ 待实现
+- [x] **📋 Copy Code** - 代码复制按钮 - ✅ 已迁移
 
 ### 页脚（Footer）
-- [ ] GitHub 链接
-- [ ] Discord 社区链接
-- [ ] 版权信息
+- [x] GitHub 链接 - ✅ 已迁移 (Footer)
+- [x] Discord 社区链接 - ✅ 已迁移 (Footer)
+- [x] 版权信息 - ✅ 已迁移 (Footer)
 
 ---
 
