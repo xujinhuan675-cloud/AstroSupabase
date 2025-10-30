@@ -14,8 +14,9 @@
 
 /* 主容器 */
 .page {
-  max-width: calc(1200px + 300px);
+  max-width: calc(1200px + 640px);
   margin: 0 auto;
+  width: 100%;
 }
 
 /* Grid 布局 */
@@ -23,12 +24,13 @@
   display: grid;
   column-gap: 5px;
   row-gap: 5px;
+  width: 100%;
 }
 
 /* 桌面布局 (>1200px) */
 @media (min-width: 1200px) {
   #quartz-body {
-    grid-template-columns: var(--side-panel-width) auto var(--side-panel-width);
+    grid-template-columns: var(--side-panel-width) 1fr var(--side-panel-width);
     grid-template-rows: auto auto auto;
     grid-template-areas:
       "grid-sidebar-left grid-header grid-sidebar-right"
@@ -40,7 +42,7 @@
 /* 平板布局 (800px-1200px) */
 @media (min-width: 800px) and (max-width: 1199px) {
   #quartz-body {
-    grid-template-columns: var(--side-panel-width) auto;
+    grid-template-columns: var(--side-panel-width) 1fr;
     grid-template-rows: auto auto auto auto;
     grid-template-areas:
       "grid-sidebar-left grid-header"
@@ -53,7 +55,7 @@
 /* 移动布局 (<800px) */
 @media (max-width: 799px) {
   #quartz-body {
-    grid-template-columns: auto;
+    grid-template-columns: 1fr;
     grid-template-rows: auto auto auto auto auto;
     grid-template-areas:
       "grid-sidebar-left"
@@ -89,17 +91,22 @@
 .center {
   grid-area: grid-center;
   padding: 0 2rem;
+  width: 100%;
+  max-width: var(--page-width);
+  margin: 0 auto;
 }
 
 .page-header {
   grid-area: grid-header;
   padding: 0 2rem;
+  width: 100%;
 }
 
 .page-footer {
   grid-area: grid-footer;
   padding: 0 2rem;
   margin-top: 2rem;
+  width: 100%;
 }
 
 /* 响应式：移动端隐藏侧边栏 sticky */
@@ -111,6 +118,7 @@
   
   .center {
     padding: 0 1rem;
+    max-width: 100%;
   }
   
   .page-header,

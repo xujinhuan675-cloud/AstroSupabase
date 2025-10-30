@@ -8,7 +8,11 @@ import { desc, eq } from 'drizzle-orm';
  * @returns {Promise<Article[]>} Resolves with an array of articles.
  */
 export async function getArticles(limit?: number): Promise<Article[]> {
-  let query = db.select().from(articles).orderBy(desc(articles.publishedAt));
+  let query = db
+    .select()
+    .from(articles)
+    .where(eq(articles.status, 'published'))
+    .orderBy(desc(articles.publishedAt));
 
   if (limit) {
     return await query.limit(limit);

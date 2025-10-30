@@ -11,7 +11,8 @@
     "import:git": "tsx scripts/import-from-git.ts",
     "deploy": "npm run import:git && vercel --prod",
     "db:push": "drizzle-kit push",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "diagnose": "tsx scripts/diagnose-db.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.7",
