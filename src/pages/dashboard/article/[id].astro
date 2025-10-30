@@ -5,7 +5,7 @@ import Layout from '../../../layout/Layout.astro';
 import { supabase } from '../../../lib/supabase';
 import ArticleEditor from '../../../components/dashboard/ArticleEditor';
 import { fetchArticle } from '../../../lib/api';
-// Using Astro.redirect instead of importing redirect
+import type { Article } from '../../../db/schema';
 
 const { cookies } = Astro;
 const accessToken = cookies.get('sb-access-token');
@@ -26,17 +26,26 @@ if (!session) {
   return Astro.redirect('/auth/login');
 }
 
-let article = null;
-let error = null;
+let article: Partial<Article> | null = null;
+let error: string | null = null;
+
+// 检查 id 是否存在
+if (!id) {
+  return Astro.redirect('/dashboard/article');
+}
 
 if (id !== 'new') {
   try {
     const articleId = parseInt(id);
+    if (isNaN(articleId)) {
+      return Astro.redirect('/dashboard/article');
+    }
+    
     const result = await fetchArticle(articleId);
     if (result.error) {
       error = result.error;
     } else {
-      article = result.data;
+      article = result.data || null;
     }
   } catch (err: any) {
     error = 'Failed to load article';
@@ -44,7 +53,7 @@ if (id !== 'new') {
   }
 }
 
-if (error || !article) {
+if (id !== 'new' && (error || !article)) {
   return Astro.redirect('/dashboard/article');
 }
 ---
