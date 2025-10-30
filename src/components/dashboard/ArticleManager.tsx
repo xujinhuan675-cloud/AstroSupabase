@@ -15,9 +15,13 @@ export default function ArticleManager() {
     setIsLoading(true);
     try {
       const { data, error } = await fetchArticles();
-      if (error) throw new Error(error);
+      if (error) {
+        console.error('[loadArticles] Error:', error);
+        throw new Error(error);
+      }
 
       console.info('[loadArticles] Articles loaded successfully', data);
+      console.info('[loadArticles] Number of articles:', data?.length || 0);
       setArticles(data || []);
     } catch (err) {
       console.error('Error loading articles:', err);
@@ -25,7 +29,7 @@ export default function ArticleManager() {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchArticles]);
+  }, []);
 
   useEffect(() => {
     loadArticles();

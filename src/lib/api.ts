@@ -14,9 +14,10 @@ export async function fetchArticles(): Promise<ApiResponse<Article[]>> {
       console.error(`[fetchArticles] Failed to fetch articles, status: ${response.status}`);
       throw new Error('Failed to fetch articles');
     }
-    const result = await response.json();
-    console.info('[fetchArticles] Articles fetched successfully', result);
-    return result;
+    const articles = await response.json();
+    console.info('[fetchArticles] Articles fetched successfully', articles);
+    // 返回正确的格式 { data: Article[] }
+    return { data: articles };
   } catch (error) {
     console.error('[fetchArticles] Error fetching articles:', error);
     return { error: error instanceof Error ? error.message : 'Failed to fetch articles' };
