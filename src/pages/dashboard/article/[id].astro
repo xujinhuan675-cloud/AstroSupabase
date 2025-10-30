@@ -4,7 +4,9 @@ export const prerender = false;
 import Layout from '../../../layout/Layout.astro';
 import { supabase } from '../../../lib/supabase';
 import ArticleEditor from '../../../components/dashboard/ArticleEditor';
-import { fetchArticle } from '../../../lib/api';
+import { db } from '../../../db/client';
+import { articles } from '../../../db/schema';
+import { eq } from 'drizzle-orm';
 import type { Article } from '../../../db/schema';
 
 const { cookies } = Astro;
@@ -41,15 +43,24 @@ if (id !== 'new') {
       return Astro.redirect('/dashboard/article');
     }
     
-    const result = await fetchArticle(articleId);
-    if (result.error) {
-      error = result.error;
+    // 直接使用数据库查询，避免 fetch 问题
+    console.info(`[Edit Page] Fetching article ID ${articleId} directly from database`);
+    const articleData = await db
+      .select()
+      .from(articles)
+      .where(eq(articles.id, articleId))
+      .limit(1);
+    
+    if (articleData && articleData.length > 0) {
+      article = articleData[0];
+      console.info(`[Edit Page] Article loaded successfully:`, article.title);
     } else {
-      article = result.data || null;
+      error = 'Article not found';
+      console.warn(`[Edit Page] Article ID ${articleId} not found in database`);
     }
   } catch (err: any) {
     error = 'Failed to load article';
-    console.error('Error fetching article:', err);
+    console.error('[Edit Page] Error fetching article:', err);
   }
 }
 
