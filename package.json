@@ -13,7 +13,8 @@
     "deploy": "npm run import:git && vercel --prod",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "diagnose": "tsx scripts/diagnose-db.ts"
+    "diagnose": "tsx scripts/diagnose-db.ts",
+    "warm-cache": "tsx scripts/warm-cache.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.7",
