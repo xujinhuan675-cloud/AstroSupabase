@@ -44,7 +44,15 @@ export async function saveArticle(article: Partial<Article>): Promise<ApiRespons
 
     const result = await response.json();
     console.info('[saveArticle] Article saved successfully', result);
-    return result;
+    
+    // API 返回 { success: true, data: {...} } 格式
+    if (result.success && result.data) {
+      return { data: result.data };
+    } else if (result.error) {
+      return { error: result.error };
+    }
+    
+    return { error: 'Invalid response format' };
   } catch (error) {
     console.error('[saveArticle] Error saving article:', error);
     return { error: error instanceof Error ? error.message : 'Failed to save article' };
@@ -94,7 +102,15 @@ export async function updateArticle(article: Partial<Article>): Promise<ApiRespo
 
     const result = await response.json();
     console.info('[updateArticle] Article updated successfully', result);
-    return result;
+    
+    // API 返回 { success: true, data: {...} } 格式
+    if (result.success && result.data) {
+      return { data: result.data };
+    } else if (result.error) {
+      return { error: result.error };
+    }
+    
+    return { error: 'Invalid response format' };
   } catch (error) {
     console.error('[updateArticle] Error updating article:', error);
     return { error: error instanceof Error ? error.message : 'Failed to update article' };
@@ -104,7 +120,7 @@ export async function updateArticle(article: Partial<Article>): Promise<ApiRespo
 export async function fetchArticle(id: number): Promise<ApiResponse<Article>> {
   try {
     console.info(`[fetchArticle] [GET] Fetching article with ID ${id} from /api/articles/${id}`);
-    const response = await fetch(`${import.meta.env.PUBLIC_SITE_URL}/api/articles/${id}`, {
+    const response = await fetch(`/api/articles/${id}`, {
       credentials: 'same-origin',
     });
 
@@ -115,8 +131,16 @@ export async function fetchArticle(id: number): Promise<ApiResponse<Article>> {
     }
 
     const result = await response.json();
-    console.info('[fetchArticle] Article fetched successfully');
-    return result;
+    console.info('[fetchArticle] Article fetched successfully', result);
+    
+    // API 返回 { success: true, data: {...} } 格式
+    if (result.success && result.data) {
+      return { data: result.data };
+    } else if (result.error) {
+      return { error: result.error };
+    }
+    
+    return { error: 'Invalid response format' };
   } catch (error) {
     console.error('[fetchArticle] Error fetching article:', error);
     return { error: error instanceof Error ? error.message : 'Failed to fetch article' };
