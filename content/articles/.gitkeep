@@ -1,0 +1,25 @@
+# 文章目录
+
+将你的 Markdown 文件放在这里，然后运行 `npm run import` 导入到数据库。
+
+## Markdown 文件格式示例
+
+```markdown
+---
+title: "文章标题"
+slug: "article-slug"  # 可选，不填会自动生成
+excerpt: "文章摘要"
+tags: [标签1, 标签2]
+author: "作者名"
+status: published  # 或 draft
+---
+
+# 正文标题
+
+这是文章内容。
+
+使用 [[双向链接]] 语法链接其他文章。
+
+使用 #标签 来标记内容。
+```
+

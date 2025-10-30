@@ -1,0 +1,101 @@
+/**
+ * ReaderMode 组件样式
+ * 从 Quartz 迁移
+ */
+
+.readermode {
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  background: none;
+  border: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  text-align: inherit;
+  flex-shrink: 0;
+  display: block;
+  color: var(--darkgray);
+}
+
+.readermode:hover {
+  color: var(--tertiary);
+}
+
+.readermode svg {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 0;
+  left: 0;
+  fill: var(--darkgray);
+  transition: opacity 0.1s ease;
+}
+
+.readermode:hover svg {
+  fill: var(--tertiary);
+}
+
+/* 阅读模式激活时隐藏侧边栏 */
+body.reader-mode .sidebar.left,
+body.reader-mode .sidebar.right {
+  display: none;
+}
+
+body.reader-mode .center {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* 退出阅读模式按钮 */
+.reader-mode-exit {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 5px;
+  color: var(--darkgray);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.reader-mode-exit:hover {
+  background: var(--lightgray);
+  color: var(--dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.reader-mode-exit svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.reader-mode-exit span {
+  white-space: nowrap;
+}
+
+/* 响应式：小屏幕只显示图标 */
+@media (max-width: 768px) {
+  .reader-mode-exit span {
+    display: none;
+  }
+  
+  .reader-mode-exit {
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+  }
+}
+

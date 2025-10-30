@@ -1,0 +1,64 @@
+name: Deploy to Vercel with Auto Import
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  import-and-deploy:
+    runs-on: ubuntu-latest
+    
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      # 2. 设置 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      # 3. 安装依赖
+      - name: Install dependencies
+        run: npm ci
+      
+      # 4. 导入 Markdown 文件到 Supabase
+      - name: Import Markdown files to Supabase
+        run: npm run import:git
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DEFAULT_AUTHOR_ID: ${{ secrets.DEFAULT_AUTHOR_ID }}
+      
+      # 5. 安装 Vercel CLI
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      
+      # 6. 拉取 Vercel 环境信息
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      
+      # 7. 构建项目
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+      # 8. 部署到 Vercel
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+      # 9. 通知结果
+      - name: Deployment successful
+        if: success()
+        run: echo "部署成功！文章已自动导入并部署到 Vercel。"
+      
+      - name: Deployment failed
+        if: failure()
+        run: echo "部署失败，请检查日志。"
+

@@ -1,0 +1,60 @@
+/**
+ * Backlinks 组件样式
+ * 从 Quartz 迁移
+ */
+
+.backlinks {
+  display: flex;
+  flex-direction: column;
+  margin-top: 2rem;
+  padding: 1rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 0.5rem;
+  background-color: var(--light);
+}
+
+.backlinks > h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--darkgray);
+  font-weight: 600;
+}
+
+.backlinks > ul,
+.backlinks > ul.overflow {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+  max-height: 400px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.backlinks > ul > li {
+  margin-bottom: 0.5rem;
+}
+
+.backlinks > ul > li > a {
+  background-color: transparent;
+  display: block;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s ease;
+}
+
+.backlinks > ul > li > a:hover {
+  background-color: var(--highlight);
+}
+
+.backlinks > ul > li > a.internal {
+  display: block;
+  padding: 0.5rem;
+}
+
+/* 空状态 */
+.backlinks .no-backlinks {
+  color: var(--gray);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+

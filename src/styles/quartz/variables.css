@@ -1,0 +1,102 @@
+/**
+ * Quartz 样式变量
+ * 适配到 AstroSupabase/Tailwind CSS
+ */
+
+:root {
+  /* 颜色变量 - 浅色模式 */
+  --light: #faf8f8;
+  --lightgray: #e5e5e5;
+  --gray: #b8b8b8;
+  --darkgray: #4e4e4e;
+  --dark: #2b2b2b;
+  --secondary: #284b63;
+  --tertiary: #84a59d;
+  --highlight: rgba(143, 159, 169, 0.15);
+  --textHighlight: #fff23688;
+  
+  /* 边框 */
+  --border: var(--lightgray);
+  --bg: var(--light);
+}
+
+/* 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --light: #161618;
+    --lightgray: #393639;
+    --gray: #646464;
+    --darkgray: #d4d4d4;
+    --dark: #ebebec;
+    --secondary: #7b97aa;
+    --tertiary: #84a59d;
+    --highlight: rgba(143, 159, 169, 0.15);
+    --textHighlight: #b3aa0288;
+  }
+}
+
+/* 文本高亮 */
+.text-highlight {
+  background-color: var(--textHighlight);
+  padding: 0 0.1rem;
+  border-radius: 5px;
+}
+
+/* 内部链接样式 */
+a.internal {
+  text-decoration: none;
+  background-color: var(--highlight);
+  padding: 0 0.1rem;
+  border-radius: 5px;
+  line-height: 1.4rem;
+  color: var(--secondary);
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+a.internal:hover {
+  color: var(--tertiary);
+}
+
+a.internal.broken {
+  color: var(--secondary);
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+a.internal.broken:hover {
+  opacity: 0.8;
+}
+
+/* 外部链接样式 */
+a.external {
+  color: var(--secondary);
+  font-weight: 600;
+}
+
+a.external .external-icon {
+  display: inline-block;
+  margin-left: 0.2rem;
+  vertical-align: middle;
+}
+
+/* 标签链接 */
+a.tag-link {
+  background-color: var(--highlight);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--secondary);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+a.tag-link:hover {
+  background-color: var(--lightgray);
+}
+
+a.tag-link::before {
+  content: "#";
+  opacity: 0.7;
+}
+

@@ -1,0 +1,135 @@
+---
+import Layout from '../../layout/Layout.astro';
+import { db } from '../../db/client';
+import { articles, articleTags } from '../../db/schema';
+import { eq, and } from 'drizzle-orm';
+
+const { tag } = Astro.params;
+
+if (!tag) {
+  return Astro.redirect('/404');
+}
+
+// 解码 URL 编码的标签
+const decodedTag = decodeURIComponent(tag);
+
+// 查询包含该标签的所有文章
+const taggedArticles = await db
+  .select({
+    id: articles.id,
+    title: articles.title,
+    excerpt: articles.excerpt,
+    slug: articles.slug,
+    createdAt: articles.createdAt,
+    publishedAt: articles.publishedAt,
+  })
+  .from(articles)
+  .innerJoin(articleTags, eq(articles.id, articleTags.articleId))
+  .where(eq(articleTags.tag, decodedTag))
+  .orderBy(articles.publishedAt);
+---
+
+<Layout title={`标签: ${decodedTag}`}>
+  <div class="max-w-4xl mx-auto px-4 py-10">
+    <!-- 返回导航 -->
+    <nav class="mb-8">
+      <a 
+        href="/" 
+        class="text-base font-medium flex items-center gap-1 inline-flex hover:opacity-80"
+        style="color: var(--secondary);"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        返回首页
+      </a>
+    </nav>
+
+    <!-- 标签标题 -->
+    <header class="mb-10">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-5xl">🏷️</span>
+        <h1 class="text-4xl font-extrabold" style="color: var(--dark);">
+          {decodedTag}
+        </h1>
+      </div>
+      <p class="text-lg" style="color: var(--gray);">
+        共 {taggedArticles.length} 篇文章包含此标签
+      </p>
+    </header>
+
+    <!-- 文章列表 -->
+    {taggedArticles.length > 0 ? (
+      <div class="space-y-6">
+        {taggedArticles.map((article) => {
+          const formattedDate = new Date(article.publishedAt || article.createdAt).toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+          
+          return (
+            <article class="rounded-lg p-6 hover:shadow-lg transition-shadow" style="background-color: var(--light); border: 1px solid var(--lightgray);">
+              <a href={`/articles/${article.id}`}>
+                <h2 class="text-2xl font-bold mb-2 transition-colors hover:opacity-80" style="color: var(--dark);">
+                  {article.title}
+                </h2>
+              </a>
+              
+              {article.excerpt && (
+                <p class="mb-4 line-clamp-3" style="color: var(--gray);">
+                  {article.excerpt}
+                </p>
+              )}
+              
+              <div class="flex items-center text-sm" style="color: var(--gray);">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                {formattedDate}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    ) : (
+      <div class="text-center py-20">
+        <p class="text-xl" style="color: var(--gray);">暂无文章包含此标签</p>
+      </div>
+    )}
+
+    <!-- 底部操作 -->
+    <div class="mt-12 pt-8 flex justify-between items-center" style="border-top: 1px solid var(--lightgray);">
+      <a 
+        href="/" 
+        class="flex items-center gap-2 hover:opacity-80"
+        style="color: var(--gray);"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        返回列表
+      </a>
+      <a 
+        href="/graph" 
+        class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+        style="background-color: var(--tertiary); color: var(--light);"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+        </svg>
+        查看知识图谱
+      </a>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+

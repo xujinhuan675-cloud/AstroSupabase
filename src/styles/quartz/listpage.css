@@ -1,0 +1,47 @@
+/**
+ * ListPage 列表页样式
+ * 从 Quartz 迁移
+ * 
+ * 功能：文章列表、标签页等列表布局
+ */
+
+ul.section-ul {
+  list-style: none;
+  margin-top: 2em;
+  padding-left: 0;
+}
+
+li.section-li {
+  margin-bottom: 1em;
+}
+
+li.section-li > .section {
+  display: grid;
+  grid-template-columns: fit-content(8em) 3fr 1fr;
+}
+
+li.section-li > .section > .desc > h3 > a {
+  background-color: transparent;
+}
+
+li.section-li > .section .meta {
+  margin: 0 1em 0 0;
+  opacity: 0.6;
+}
+
+/* Popover 上下文中的修改 */
+.popover .section {
+  grid-template-columns: fit-content(8em) 1fr !important;
+}
+
+.popover .section > .tags {
+  display: none;
+}
+
+/* 响应式：移动端隐藏标签 */
+@media (max-width: 768px) {
+  li.section-li > .section > .tags {
+    display: none;
+  }
+}
+

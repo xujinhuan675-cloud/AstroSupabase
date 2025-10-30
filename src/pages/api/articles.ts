@@ -1,5 +1,5 @@
 import { db } from '../../db/client';
-import { articles } from '../../db/schema';
+import { articles, articleTags } from '../../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import type { APIRoute } from 'astro';
 import { supabase } from '../../lib/supabase';
@@ -7,24 +7,37 @@ import { supabase } from '../../lib/supabase';
 export const prerender = false;
 
 /**
- * @description Handles GET requests to fetch all non-deleted articles, ordered by published date descending.
+ * @description Handles GET requests to fetch all non-deleted articles with tags, ordered by published date descending.
  * @route /api/articles
  * @method GET
- * @returns {Response} JSON response containing an array of articles or an error message.
+ * @returns {Response} JSON response containing an array of articles with tags or an error message.
  */
 export const GET: APIRoute = async () => {
   try {
     console.info('[GET] Fetching articles...');
-    const data = await db
+    const articlesData = await db
       .select()
       .from(articles)
       .where(eq(articles.isDeleted, false))
       .orderBy(desc(articles.publishedAt));
-    console.info(`[GET] Successfully fetched ${data.length} articles`);
-    return new Response(JSON.stringify({
-      success: true,
-      data,
-    }), {
+    
+    // 为每篇文章获取标签
+    const articlesWithTags = await Promise.all(
+      articlesData.map(async (article) => {
+        const tags = await db
+          .select({ tag: articleTags.tag })
+          .from(articleTags)
+          .where(eq(articleTags.articleId, article.id));
+        
+        return {
+          ...article,
+          tags: tags.map(t => t.tag)
+        };
+      })
+    );
+    
+    console.info(`[GET] Successfully fetched ${articlesWithTags.length} articles`);
+    return new Response(JSON.stringify(articlesWithTags), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

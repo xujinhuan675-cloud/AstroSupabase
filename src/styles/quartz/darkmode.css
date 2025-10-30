@@ -1,0 +1,85 @@
+/**
+ * Darkmode 样式
+ * 从 Quartz 迁移
+ */
+
+.darkmode {
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  background: none;
+  border: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  text-align: inherit;
+  flex-shrink: 0;
+  display: block !important;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.darkmode svg {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 0;
+  left: 0;
+  fill: var(--darkgray);
+  transition: opacity 0.1s ease;
+  display: block;
+}
+
+/* 主题控制 */
+:root[saved-theme="dark"] {
+  color-scheme: dark;
+}
+
+:root[saved-theme="light"] {
+  color-scheme: light;
+}
+
+/* 暗色模式下的图标显示 */
+:root[saved-theme="dark"] .darkmode > .dayIcon {
+  display: none;
+}
+
+:root[saved-theme="dark"] .darkmode > .nightIcon {
+  display: inline;
+}
+
+/* 亮色模式下的图标显示 */
+:root .darkmode > .dayIcon {
+  display: inline;
+}
+
+:root .darkmode > .nightIcon {
+  display: none;
+}
+
+/* 暗色模式颜色变量 */
+:root[saved-theme="dark"] {
+  --light: #161618;
+  --lightgray: #393639;
+  --gray: #646464;
+  --darkgray: #d4d4d4;
+  --dark: #ebebec;
+  --secondary: #7b97aa;
+  --tertiary: #84a59d;
+  --highlight: rgba(143, 159, 169, 0.15);
+  --textHighlight: #b3aa0288;
+}
+
+/* 亮色模式颜色变量（默认在 variables.css 中已定义） */
+:root[saved-theme="light"] {
+  --light: #faf8f8;
+  --lightgray: #e5e5e5;
+  --gray: #b8b8b8;
+  --darkgray: #4e4e4e;
+  --dark: #2b2b2b;
+  --secondary: #284b63;
+  --tertiary: #84a59d;
+  --highlight: rgba(143, 159, 169, 0.15);
+  --textHighlight: #fff23688;
+}
+

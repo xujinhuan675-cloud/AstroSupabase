@@ -1,0 +1,223 @@
+---
+/**
+ * Quartz 三栏布局
+ * 完整迁移自 quartz-4
+ * 
+ * 布局结构：
+ * - Left Sidebar: PageTitle, Search, Darkmode, Explorer
+ * - Center: Header, Content, Footer
+ * - Right Sidebar: Graph, TableOfContents, Backlinks
+ */
+
+interface Props {
+  title: string;
+  description?: string;
+  currentSlug?: string;
+}
+
+const { title, description, currentSlug } = Astro.props;
+const pageTitle = title || "IOTO Digital Garden";
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{pageTitle}</title>
+  {description && <meta name="description" content={description} />}
+  
+  <!-- Quartz 样式 -->
+  <link rel="stylesheet" href="/src/styles/quartz/variables.css">
+  <link rel="stylesheet" href="/src/styles/quartz/darkmode.css">
+  <link rel="stylesheet" href="/src/styles/quartz/layout.css">
+  <link rel="stylesheet" href="/src/styles/quartz/callouts.css">
+  <link rel="stylesheet" href="/src/styles/quartz/backlinks.css">
+  <link rel="stylesheet" href="/src/styles/quartz/graph.css">
+  <link rel="stylesheet" href="/src/styles/quartz/pagetitle.css">
+  <link rel="stylesheet" href="/src/styles/quartz/footer.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+</head>
+
+<body data-slug={currentSlug}>
+  <div id="quartz-root" class="page">
+    <div id="quartz-body">
+      <!-- Left Sidebar -->
+      <div class="left sidebar">
+        <slot name="left-sidebar">
+          <!-- 默认左侧栏组件 -->
+          <div style="padding: 1rem;">
+            <h2 style="margin: 0; font-size: 1.5rem;">IOTO</h2>
+            <p style="color: var(--gray); font-size: 0.875rem; margin-top: 0.5rem;">
+              Digital Garden
+            </p>
+          </div>
+        </slot>
+      </div>
+
+      <!-- Header -->
+      <div class="page-header" style="grid-area: grid-header;">
+        <header>
+          <slot name="header">
+            <!-- 默认 Header -->
+          </slot>
+        </header>
+      </div>
+
+      <!-- Center Content -->
+      <div class="center">
+        <div class="popover-hint">
+          <slot name="before-body">
+            <!-- Breadcrumbs, ArticleTitle 等 -->
+          </slot>
+        </div>
+        
+        <article class="popover-hint">
+          <slot>
+            <!-- 主要内容 -->
+          </slot>
+        </article>
+        
+        <hr />
+        
+        <div class="page-footer">
+          <slot name="after-body">
+            <!-- 页脚内容 -->
+          </slot>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="right sidebar">
+        <slot name="right-sidebar">
+          <!-- Graph, TOC, Backlinks -->
+        </slot>
+      </div>
+
+      <!-- Footer -->
+      <div style="grid-area: grid-footer;">
+        <slot name="footer">
+          <!-- 页脚链接 -->
+        </slot>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全局脚本 -->
+  <script>
+    // 添加清理函数（Quartz 兼容）
+    if (typeof window !== 'undefined') {
+      (window as any).addCleanup = (fn: () => void) => {
+        const cleanupFns = (window as any)._cleanupFns || [];
+        cleanupFns.push(fn);
+        (window as any)._cleanupFns = cleanupFns;
+      };
+    }
+  </script>
+  
+  <!-- Darkmode 脚本 -->
+  <script src="/src/scripts/quartz/darkmode.ts"></script>
+</body>
+</html>
+
+<style is:global>
+  /* 基础样式重置 */
+  * {
+    box-sizing: border-box;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    text-size-adjust: none;
+    overflow-x: hidden;
+    width: 100vw;
+  }
+  
+  body {
+    margin: 0;
+    background-color: var(--light);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    color: var(--darkgray);
+    line-height: 1.6;
+  }
+  
+  /* 文章内容通用样式 */
+  article {
+    font-size: 1rem;
+  }
+  
+  article h1,
+  article h2,
+  article h3,
+  article h4,
+  article h5,
+  article h6 {
+    color: var(--dark);
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  
+  article p {
+    margin: 1em 0;
+  }
+  
+  article ul,
+  article ol {
+    margin: 1em 0;
+    padding-left: 1.5em;
+  }
+  
+  article code {
+    background-color: var(--highlight);
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-family: "Courier New", Courier, monospace;
+  }
+  
+  article pre {
+    background-color: var(--highlight);
+    padding: 1em;
+    border-radius: 5px;
+    overflow-x: auto;
+  }
+  
+  article pre code {
+    background-color: transparent;
+    padding: 0;
+  }
+  
+  article blockquote {
+    border-left: 3px solid var(--secondary);
+    padding-left: 1em;
+    margin-left: 0;
+    color: var(--gray);
+  }
+  
+  article img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+  }
+  
+  article table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+  }
+  
+  article th,
+  article td {
+    border: 1px solid var(--lightgray);
+    padding: 0.5em;
+  }
+  
+  article th {
+    background-color: var(--highlight);
+    font-weight: 600;
+  }
+</style>
+

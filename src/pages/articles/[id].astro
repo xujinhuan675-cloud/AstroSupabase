@@ -1,6 +1,21 @@
 ---
 import { getArticleById } from '../../lib/articles';
-import Layout from '../../layout/Layout.astro';
+import { processMarkdown } from '../../lib/markdown-processor';
+import { getArticleTags, getForwardLinks } from '../../lib/links-service';
+import { db } from '../../db/client';
+import { articles } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+import QuartzLayout from '../../layouts/QuartzLayout.astro';
+import Backlinks from '../../components/Backlinks';
+import TableOfContents from '../../components/quartz/TableOfContents';
+import PageTitle from '../../components/quartz/PageTitle';
+import Breadcrumbs from '../../components/quartz/Breadcrumbs';
+import ContentMeta from '../../components/quartz/ContentMeta';
+import TagList from '../../components/quartz/TagList';
+import Darkmode from '../../components/quartz/Darkmode';
+import ReaderMode from '../../components/quartz/ReaderMode';
+import Search from '../../components/quartz/Search';
+import Explorer from '../../components/quartz/Explorer';
 
 const { id } = Astro.params;
 
@@ -20,43 +35,190 @@ if (!article) {
   return Astro.redirect('/404');
 }
 
-const formattedDate = new Date(article.createdAt).toLocaleDateString('zh-CN', {
+// 处理 Markdown 内容
+const processed = await processMarkdown(
+  article.content,
+  {}, // options
+  async (permalink: string) => {
+    const result = await db
+      .select()
+      .from(articles)
+      .where(eq(articles.slug, permalink))
+      .limit(1);
+    return result.length > 0;
+  }
+);
+
+// 获取标签和前向链接
+const tags = await getArticleTags(articleId);
+const forwardLinks = await getForwardLinks(articleId);
+
+const formattedDate = new Date(article.publishedAt || article.createdAt).toLocaleDateString('zh-CN', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
 });
 ---
 
-<Layout title={article.title}>
-  <nav class="bg-white border-b border-gray-100 mb-10 py-4">
-    <div class="max-w-4xl mx-auto px-4 flex items-center">
-      <a href="/" class="text-indigo-600 hover:text-indigo-800 text-base font-medium flex items-center gap-1">
-        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-        </svg>
-        首页
-      </a>
-    </div>
-  </nav>
-
-  <article class="max-w-4xl mx-auto px-4 py-10 sm:py-16">
-    <header class="mb-12">
-      <h1 class="text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
-        {article.title}
-      </h1>
-      <div class="flex items-center text-gray-500 text-sm space-x-2">
-        <span>
-          {article.authorId}
-        </span>
-        <span aria-hidden="true">•</span>
-        <div>{formattedDate}</div>
-      </div>
-    </header>
+<QuartzLayout title={article.title} currentSlug={`articles/${id}`}>
+  <!-- Left Sidebar -->
+  <div slot="left-sidebar">
+    <!-- PageTitle 组件 -->
+    <PageTitle title="IOTO Digital Garden" client:load />
     
-    <div class="prose prose-indigo prose-lg max-w-none text-gray-800">
-      {article.content.split('\n\n').map((paragraph) => (
-        <p>{paragraph}</p>
-      ))}
+    <!-- Darkmode 切换 & ReaderMode -->
+    <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; padding: 1rem; border: 1px solid var(--lightgray); border-radius: 5px; background: var(--light);">
+      <span style="font-size: 0.875rem; color: var(--darkgray); font-weight: 600;">控制：</span>
+      <Darkmode client:only="react" />
+      <ReaderMode client:only="react" />
     </div>
+    
+    <!-- Search 搜索组件 -->
+    <Search client:only="react" enablePreview={true} />
+    
+    <!-- Explorer 文件浏览器 -->
+    <Explorer client:only="react" title="文章浏览" folderDefaultState="open" />
+  </div>
+
+  <!-- Right Sidebar -->
+  <div slot="right-sidebar">
+    <TableOfContents client:load />
+  </div>
+
+  <!-- Before Body (Breadcrumbs, Meta, Tags) -->
+  <div slot="before-body">
+    <Breadcrumbs 
+      items={[
+        { label: '首页', path: '/' },
+        { label: '文章', path: '/articles' },
+        { label: article.title, path: `/articles/${id}` }
+      ]}
+      client:load
+    />
+    
+    <ContentMeta 
+      publishedAt={new Date(article.publishedAt || article.createdAt)}
+      readingTime={processed.readingTime}
+      author={article.authorId.toString()}
+      client:load
+    />
+    
+    {tags.length > 0 && (
+      <TagList tags={tags} client:load />
+    )}
+  </div>
+
+  <!-- Main Content -->
+  <article>
+    {/* Popover 预览提示内容 */}
+    <div class="popover-hint">
+      <header class="mb-8">
+        <h1 class="text-4xl font-extrabold mb-4 leading-tight" style="color: var(--dark);">
+          {article.title}
+        </h1>
+
+        {/* 摘要 */}
+        {article.excerpt && (
+          <p class="text-xl mb-4 leading-relaxed" style="color: var(--gray);">
+            {article.excerpt}
+          </p>
+        )}
+
+        {/* 前向链接提示 */}
+        {forwardLinks.length > 0 && (
+          <div class="text-sm mb-4" style="color: var(--gray);">
+            链接到 {forwardLinks.length} 篇文章
+          </div>
+        )}
+      </header>
+      
+      {/* Markdown 渲染内容 */}
+      <div 
+        class="prose prose-indigo prose-lg max-w-none"
+        style="color: var(--dark);"
+        set:html={processed.html}
+      />
+    </div>
+
+    {/* 前向链接（文章链接到的其他文章） */}
+    {forwardLinks.length > 0 && (
+      <div class="mt-12 p-6 rounded-lg" style="border: 1px solid var(--lightgray); background-color: var(--highlight);">
+        <h3 class="text-lg font-semibold mb-4" style="color: var(--dark);">
+          🔗 相关链接 ({forwardLinks.length})
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {forwardLinks.map((link) => (
+            <a
+              href={`/articles/${link.id}`}
+              class="block p-3 rounded-md transition-colors"
+              style="background-color: var(--light); border: 1px solid transparent;"
+            >
+              <h4 class="font-medium" style="color: var(--secondary);">
+                {link.title}
+              </h4>
+              {link.excerpt && (
+                <p class="text-sm mt-1 line-clamp-2" style="color: var(--gray);">
+                  {link.excerpt}
+                </p>
+              )}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* 反向链接组件 */}
+    <Backlinks articleId={articleId} client:load />
   </article>
-</Layout>
+</QuartzLayout>
+
+<style>
+  /* 增强 prose 样式以支持双向链接 */
+  .prose a {
+    color: var(--secondary);
+    text-decoration: underline;
+    text-decoration-color: var(--secondary);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
+  
+  .prose a:hover {
+    opacity: 0.8;
+  }
+  
+  /* 内部链接标记（用于 Popover） */
+  .prose a[href^="/articles/"],
+  .prose a[href^="/tags/"] {
+    /* 为内部链接添加 internal 类通过 JS 处理 */
+  }
+  
+  .prose code {
+    background-color: var(--highlight);
+    color: var(--dark);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  .prose pre {
+    background-color: var(--darkgray);
+    color: var(--lightgray);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .prose pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+  }
+  
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    color: var(--dark);
+  }
+  
+  .prose p, .prose li {
+    color: var(--dark);
+  }
+</style>

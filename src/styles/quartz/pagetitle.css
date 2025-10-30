@@ -1,0 +1,21 @@
+/**
+ * PageTitle 样式
+ * 从 Quartz 迁移
+ */
+
+.page-title {
+  font-size: 1.75rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.page-title a {
+  color: var(--dark);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.page-title a:hover {
+  color: var(--secondary);
+}
+

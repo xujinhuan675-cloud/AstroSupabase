@@ -1,6 +1,14 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
+import '../styles/quartz/variables.css';
+import '../styles/quartz/darkmode.css';
+import '../styles/quartz/popover.css';
+import '../styles/quartz/clipboard.css';
+import '../styles/quartz/recentnotes.css';
+import '../styles/quartz/listpage.css';
+import '../styles/quartz/mermaid.css';
+import Darkmode from '../components/quartz/Darkmode';
 
 interface Props {
   title?: string;
@@ -17,9 +25,32 @@ const { title = 'Todo App' } = Astro.props;
     <title>{title}</title>
     <ClientRouter />
   </head>
-  <body class="min-h-full bg-gray-50">
+  <body class="min-h-full" style="background-color: var(--light); color: var(--dark);">
+    <!-- Darkmode 按钮（固定在右上角） -->
+    <div class="darkmode-container">
+      <Darkmode client:only="react" />
+    </div>
+    
     <main class="min-h-screen">
       <slot />
     </main>
+    
+    <!-- Quartz 客户端脚本 -->
+    <script>
+      import '../scripts/quartz/popover';
+      import '../scripts/quartz/clipboard';
+      import '../scripts/quartz/toc';
+      import '../scripts/quartz/callout';
+      import '../scripts/quartz/checkbox';
+    </script>
   </body>
 </html>
+
+<style is:global>
+  .darkmode-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+  }
+</style>

@@ -1,0 +1,217 @@
+---
+/**
+ * 测试 Quartz 布局
+ * 验证三栏布局是否正常工作
+ */
+import QuartzLayout from '../layouts/QuartzLayout.astro';
+import PageTitle from '../components/quartz/PageTitle';
+import Footer from '../components/quartz/Footer';
+import Darkmode from '../components/quartz/Darkmode';
+import Explorer from '../components/quartz/Explorer';
+import Search from '../components/quartz/Search';
+import TableOfContents from '../components/quartz/TableOfContents';
+import ContentMeta from '../components/quartz/ContentMeta';
+import TagList from '../components/quartz/TagList';
+import Breadcrumbs from '../components/quartz/Breadcrumbs';
+import ReaderMode from '../components/quartz/ReaderMode';
+---
+
+<QuartzLayout title="测试 Quartz 布局" currentSlug="test-layout">
+  <!-- Left Sidebar -->
+  <div slot="left-sidebar">
+    <!-- PageTitle 组件 -->
+    <PageTitle title="IOTO Digital Garden" client:load />
+    
+    <!-- Darkmode 切换 & ReaderMode -->
+    <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; padding: 1rem; border: 1px solid var(--lightgray); border-radius: 5px; background: var(--light);">
+      <span style="font-size: 0.875rem; color: var(--darkgray); font-weight: 600;">控制：</span>
+      <Darkmode client:only="react" />
+      <ReaderMode client:only="react" />
+    </div>
+    
+    <!-- Search 搜索组件 -->
+    <Search client:only="react" enablePreview={true} />
+    
+    <!-- Explorer 文件浏览器 -->
+    <Explorer client:only="react" title="文章浏览" folderDefaultState="open" />
+    
+    <div style="padding: 1rem; background: var(--highlight); border-radius: 5px; margin-top: 1rem;">
+      <p style="font-size: 0.875rem; color: var(--gray); margin: 0 0 0.5rem 0; font-weight: 600;">
+        ✅ 已完成组件（12/17，71%）：
+      </p>
+      <ul style="font-size: 0.75rem; margin: 0; padding-left: 1.5rem; color: var(--gray);">
+        <li>✅ PageTitle</li>
+        <li>✅ Darkmode</li>
+        <li>✅ ReaderMode</li>
+        <li>✅ Popover</li>
+        <li>✅ Search</li>
+        <li>✅ Explorer</li>
+        <li>✅ TableOfContents</li>
+        <li>✅ Breadcrumbs</li>
+        <li>✅ ContentMeta</li>
+        <li>✅ TagList</li>
+        <li>✅ Footer</li>
+        <li>✅ Backlinks (已有)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div slot="header">
+    <h1 style="margin: 0;">测试页面标题</h1>
+  </div>
+
+  <!-- Before Body -->
+  <div slot="before-body">
+    <!-- Breadcrumbs 面包屑导航 -->
+    <Breadcrumbs 
+      items={[
+        { label: '首页', path: '/' },
+        { label: '测试', path: '/test' },
+        { label: 'Quartz 布局测试', path: '/test-layout' }
+      ]}
+      client:load
+    />
+    
+    <!-- ContentMeta 元数据 -->
+    <ContentMeta 
+      publishedAt={new Date()}
+      readingTime="2 分钟阅读"
+      author="Admin"
+      client:load
+    />
+    
+    <!-- TagList 标签列表 -->
+    <TagList 
+      tags={['Quartz', '布局测试', '组件迁移']}
+      client:load
+    />
+  </div>
+
+  <!-- Main Content -->
+  {/* Popover 预览提示内容 */}
+  <div class="popover-hint">
+    <h1>Quartz 布局测试</h1>
+    
+    <!-- Popover 功能测试 -->
+    <div style="margin-bottom: 2rem; padding: 1rem; border: 1px solid var(--lightgray); border-radius: 5px; background: var(--highlight);">
+      <h3 style="color: var(--dark); font-size: 1.25rem; margin-bottom: 0.5rem;">🔍 Popover 悬浮预览测试</h3>
+      <p style="color: var(--gray); font-size: 0.875rem; margin-bottom: 1rem;">
+        将鼠标悬停在下面的链接上，查看 Popover 预览效果（桌面端有效）：
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <p style="color: var(--dark);">
+          测试内部链接：<a href="/articles/1" class="internal" style="color: var(--secondary); text-decoration: underline;">示例文章 1</a>
+        </p>
+        <p style="color: var(--dark);">
+          测试标签链接：<a href="/tags/技术" class="internal" style="color: var(--secondary); text-decoration: underline;">#技术</a>
+        </p>
+        <p style="color: var(--gray); font-size: 0.75rem; font-style: italic;">
+          注意：如果文章不存在，预览将不会显示。需要在数据库中有真实文章才能看到预览效果。
+        </p>
+      </div>
+    </div>
+    
+    <p>这是主要内容区域。在桌面端（>1200px）时：</p>
+  <ul>
+    <li><strong>左侧</strong>：显示侧边栏（固定宽度 320px）</li>
+    <li><strong>中间</strong>：显示主要内容（自适应宽度）</li>
+    <li><strong>右侧</strong>：显示侧边栏（固定宽度 320px）</li>
+  </ul>
+  
+  <p>在平板端（800px-1200px）时：</p>
+  <ul>
+    <li><strong>左侧</strong>：显示侧边栏</li>
+    <li><strong>右侧</strong>：移到下方</li>
+  </ul>
+  
+  <p>在移动端（小于 800px）时：</p>
+  <ul>
+    <li>所有内容垂直堆叠</li>
+  </ul>
+
+  <h2>测试 Callout</h2>
+  
+  <div class="callout" data-callout="note">
+    <div class="callout-title">
+      <div class="callout-icon"></div>
+      <div class="callout-title-inner">笔记</div>
+    </div>
+    <div class="callout-content" style="grid-template-rows: 1fr;">
+      <div>
+        <p>这是一个测试 Callout，验证样式是否正常。</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>测试链接样式</h2>
+  
+  <p>
+    这是一个 <a href="#" class="internal">内部链接</a>，
+    这是一个 <a href="https://example.com" class="external">外部链接</a>，
+    这是一个 <a href="#" class="tag-link">标签链接</a>。
+  </p>
+
+  <p>
+    这是 <span class="text-highlight">高亮文本</span> 的样式测试。
+  </p>
+
+  <!-- After Body -->
+  <div slot="after-body">
+    <div style="padding: 1rem; background: var(--highlight); border-radius: 5px;">
+      <p style="font-size: 0.875rem; margin: 0;">
+        ℹ️ After Body 区域（可以放置相关文章推荐等）
+      </p>
+    </div>
+  </div>
+
+  <!-- Right Sidebar -->
+  <div slot="right-sidebar">
+    <!-- TableOfContents 目录组件 -->
+    <TableOfContents client:only="react" />
+    
+    <div style="padding: 1rem; background: var(--highlight); border-radius: 5px; margin-top: 1rem;">
+      <p style="font-size: 0.875rem; color: var(--gray); margin: 0;">
+        ⬇️ 下一步将添加：
+      </p>
+      <ul style="font-size: 0.875rem; margin: 0.5rem 0; padding-left: 1.5rem;">
+        <li>Graph 知识图谱</li>
+        <li>Backlinks 反向链接</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div slot="footer">
+    <Footer 
+      links={{
+        "GitHub": "https://github.com/yourusername/ioto-doc",
+        "文档": "https://quartz.jzhao.xyz/"
+      }}
+      client:load 
+    />
+  </div>
+</QuartzLayout>
+
+<script>
+  // 显示当前主题
+  function updateThemeDisplay() {
+    const currentTheme = document.documentElement.getAttribute('saved-theme') || 'light';
+    const themeEl = document.getElementById('current-theme');
+    if (themeEl) {
+      themeEl.textContent = currentTheme;
+      themeEl.style.fontWeight = '600';
+      themeEl.style.color = currentTheme === 'dark' ? '#7b97aa' : '#284b63';
+    }
+  }
+  
+  // 初始显示
+  updateThemeDisplay();
+  
+  // 监听主题变化
+  document.addEventListener('themechange', updateThemeDisplay);
+  
+  // 定期更新（调试用）
+  setInterval(updateThemeDisplay, 500);
+</script>
+
