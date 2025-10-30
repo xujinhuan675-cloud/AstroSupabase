@@ -1,9 +1,10 @@
 import { db } from '../db/client';
 import { articles, type Article } from '../db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 
 /**
  * Fetches a list of articles ordered by published date (descending).
+ * Only returns published and non-deleted articles.
  * @param {number} [limit] - Optional maximum number of articles to fetch.
  * @returns {Promise<Article[]>} Resolves with an array of articles.
  */
@@ -11,7 +12,12 @@ export async function getArticles(limit?: number): Promise<Article[]> {
   let query = db
     .select()
     .from(articles)
-    .where(eq(articles.status, 'published'))
+    .where(
+      and(
+        eq(articles.status, 'published'),
+        eq(articles.isDeleted, false)
+      )
+    )
     .orderBy(desc(articles.publishedAt));
 
   if (limit) {

@@ -119,8 +119,15 @@ export async function updateArticle(article: Partial<Article>): Promise<ApiRespo
 
 export async function fetchArticle(id: number): Promise<ApiResponse<Article>> {
   try {
-    console.info(`[fetchArticle] [GET] Fetching article with ID ${id} from /api/articles/${id}`);
-    const response = await fetch(`/api/articles/${id}`, {
+    // 服务端需要完整的 URL，客户端可以使用相对路径
+    const isServer = typeof window === 'undefined';
+    const baseUrl = isServer 
+      ? (import.meta.env.PUBLIC_SITE_URL || 'http://localhost:4321')
+      : '';
+    const url = `${baseUrl}/api/articles/${id}`;
+    
+    console.info(`[fetchArticle] [GET] Fetching article with ID ${id} from ${url}`);
+    const response = await fetch(url, {
       credentials: 'same-origin',
     });
 
