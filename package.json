@@ -9,6 +9,7 @@
     "astro": "astro",
     "import": "tsx scripts/import-markdown.ts",
     "import:git": "tsx scripts/import-from-git.ts",
+    "sync": "tsx scripts/sync-articles.ts",
     "deploy": "npm run import:git && vercel --prod",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
