@@ -13,6 +13,7 @@
     "deploy": "npm run import:git && vercel --prod",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate-add-cache-fields.ts",
     "diagnose": "tsx scripts/diagnose-db.ts",
     "warm-cache": "tsx scripts/warm-cache.ts"
   },
