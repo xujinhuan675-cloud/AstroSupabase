@@ -23,6 +23,7 @@ export const articles = pgTable('articles', {
   slug: text('slug').notNull(),
   excerpt: text('excerpt'),
   content: text('content').notNull(),
+  htmlContent: text('html_content'), // 缓存的 HTML 内容，避免每次都处理 Markdown
   authorId: text('author_id').notNull(),
   featuredImage: text('featured_image'),
   status: text('status', { enum: ['draft', 'published', 'archived'] }).notNull().default('draft'),
@@ -31,6 +32,7 @@ export const articles = pgTable('articles', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
   publishedAt: timestamp('published_at'),
+  readingTime: text('reading_time'), // 缓存的阅读时间
 });
 
 // 文章标签表 - 支持多标签系统

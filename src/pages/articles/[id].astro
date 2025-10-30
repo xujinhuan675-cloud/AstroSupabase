@@ -36,23 +36,47 @@ if (!article) {
   return Astro.redirect('/404');
 }
 
-// 处理 Markdown 内容
-const processed = await processMarkdown(
-  article.content,
-  {}, // options
-  async (permalink: string) => {
-    const result = await db
-      .select()
-      .from(articles)
-      .where(eq(articles.slug, permalink))
-      .limit(1);
-    return result.length > 0;
-  }
-);
+// 并行查询标签和前向链接
+const [tags, forwardLinks] = await Promise.all([
+  getArticleTags(articleId),
+  getForwardLinks(articleId),
+]);
 
-// 获取标签和前向链接
-const tags = await getArticleTags(articleId);
-const forwardLinks = await getForwardLinks(articleId);
+// 使用缓存的 HTML 或实时处理 Markdown
+let processed: { html: string; readingTime: string; };
+
+if (article.htmlContent && article.readingTime) {
+  // 使用缓存的 HTML（极快！）
+  processed = {
+    html: article.htmlContent,
+    readingTime: article.readingTime,
+  };
+} else {
+  // 缓存未命中，需要处理 Markdown（首次访问或内容更新后）
+  const allArticleSlugs = await db
+    .select({ slug: articles.slug })
+    .from(articles)
+    .where(eq(articles.status, 'published'))
+    .then(results => new Set(results.map(r => r.slug)));
+
+  processed = await processMarkdown(
+    article.content,
+    {}, // options
+    async (permalink: string) => {
+      return allArticleSlugs.has(permalink);
+    }
+  );
+
+  // 更新缓存（异步，不阻塞页面渲染）
+  db.update(articles)
+    .set({
+      htmlContent: processed.html,
+      readingTime: processed.readingTime,
+    })
+    .where(eq(articles.id, articleId))
+    .then(() => console.log(`Cached HTML for article ${articleId}`))
+    .catch(err => console.error('Failed to cache HTML:', err));
+}
 
 const formattedDate = new Date(article.publishedAt || article.createdAt).toLocaleDateString('zh-CN', {
   year: 'numeric',
