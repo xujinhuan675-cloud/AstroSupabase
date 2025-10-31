@@ -111,21 +111,25 @@ npm run deploy:full
 
 ## ⚡ 性能优化详解
 
-### 1. 多线程并行处理
+### 1. 并行批处理
 
 **自动并发数计算**：
 ```typescript
 const cpuCount = cpus().length;
-const CHUNK_SIZE = 128;
 const maxConcurrency = Math.min(
-  Math.max(Math.floor(articles.length / CHUNK_SIZE), 1),
-  Math.min(cpuCount, 4) // 最多 4 个线程
+  Math.max(Math.floor(allArticles.length / 10), 1),
+  20 // 最多同时处理 20 个
+);
+
+// 使用 Promise.all 并行处理
+const batchResults = await Promise.all(
+  batch.map(article => processSingleArticle(article))
 );
 ```
 
 **效果**：
-- 100 篇文章（单线程）：~60 秒
-- 100 篇文章（4 线程）：~15-20 秒
+- 100 篇文章（串行）：~60 秒
+- 100 篇文章（并行）：~15-20 秒
 - **速度提升 3-4 倍**
 
 ### 2. 批量数据库更新
@@ -183,20 +187,23 @@ await db.update(articles).set({
 
 ## 🛠️ 技术细节
 
-### Worker 线程架构
+### 并行处理架构
 
 ```
-主线程 (pre-render.ts)
-  ├─ Worker 1 (markdown-worker.ts)
-  ├─ Worker 2 (markdown-worker.ts)
-  ├─ Worker 3 (markdown-worker.ts)
-  └─ Worker 4 (markdown-worker.ts)
+主进程 (pre-render.ts)
+  ├─ Promise.all([
+  │    processSingleArticle(article1),
+  │    processSingleArticle(article2),
+  │    ...
+  │    processSingleArticle(articleN)
+  │  ])
+  └─ 批量更新数据库
 
-每个 Worker:
-  1. 接收文章数据
-  2. 处理 Markdown → HTML
-  3. 返回结果
-  4. 处理下一篇文章
+每批处理:
+  1. 并发处理 N 个文章（默认 10-20）
+  2. 等待当前批次完成
+  3. 处理下一批
+  4. 批量更新数据库
 ```
 
 ### Markdown 处理优化
@@ -242,7 +249,10 @@ UPDATE articles SET html_content = NULL, reading_time = NULL;
 
 **A**: 修改 `scripts/pre-render.ts`：
 ```typescript
-const maxConcurrency = Math.min(cpuCount, 8); // 最多 8 线程
+const maxConcurrency = Math.min(
+  Math.max(Math.floor(allArticles.length / 10), 1),
+  30 // 调整这个数字，最多同时处理 30 个
+);
 ```
 
 ---
@@ -336,10 +346,9 @@ vercel --prod
 
 ## 🔗 相关文件
 
-- `scripts/pre-render.ts` - 主预渲染脚本
-- `scripts/markdown-worker.ts` - Worker 线程
+- `scripts/pre-render.ts` - 主预渲染脚本（含并行处理逻辑）
 - `src/pages/articles/[id].astro` - 文章页面（支持缓存）
-- `QUARTZ_PERFORMANCE_ANALYSIS.md` - Quartz 性能分析
+- `DEPLOYMENT_GUIDE.md` - 部署指南
 
 ---
 
