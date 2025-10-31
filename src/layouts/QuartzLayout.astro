@@ -15,6 +15,15 @@ interface Props {
   currentSlug?: string;
 }
 
+import '../styles/quartz/variables.css';
+import '../styles/quartz/darkmode.css';
+import '../styles/quartz/layout.css';
+import '../styles/quartz/callouts.css';
+import '../styles/quartz/backlinks.css';
+import '../styles/quartz/graph.css';
+import '../styles/quartz/pagetitle.css';
+import '../styles/quartz/footer.css';
+
 const { title, description, currentSlug } = Astro.props;
 const pageTitle = title || "IOTO Digital Garden";
 ---
@@ -26,16 +35,6 @@ const pageTitle = title || "IOTO Digital Garden";
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{pageTitle}</title>
   {description && <meta name="description" content={description} />}
-  
-  <!-- Quartz 样式 -->
-  <link rel="stylesheet" href="/src/styles/quartz/variables.css">
-  <link rel="stylesheet" href="/src/styles/quartz/darkmode.css">
-  <link rel="stylesheet" href="/src/styles/quartz/layout.css">
-  <link rel="stylesheet" href="/src/styles/quartz/callouts.css">
-  <link rel="stylesheet" href="/src/styles/quartz/backlinks.css">
-  <link rel="stylesheet" href="/src/styles/quartz/graph.css">
-  <link rel="stylesheet" href="/src/styles/quartz/pagetitle.css">
-  <link rel="stylesheet" href="/src/styles/quartz/footer.css">
   
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -118,7 +117,9 @@ const pageTitle = title || "IOTO Digital Garden";
   </script>
   
   <!-- Darkmode 脚本 -->
-  <script src="/src/scripts/quartz/darkmode.ts"></script>
+  <script>
+    import '../scripts/quartz/darkmode.ts';
+  </script>
 </body>
 </html>
 
