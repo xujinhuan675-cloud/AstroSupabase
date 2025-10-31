@@ -45,15 +45,19 @@ const [tags, forwardLinks, backlinks] = await Promise.all([
 
 // 使用缓存的 HTML 或实时处理 Markdown
 let processed: { html: string; readingTime: string; };
+const renderStart = Date.now();
 
 if (article.htmlContent && article.readingTime) {
-  // 使用缓存的 HTML（极快！）
+  // 使用缓存的 HTML（极快！构建时预处理）
   processed = {
     html: article.htmlContent,
     readingTime: article.readingTime,
   };
+  console.log(`[CACHE HIT] Article ${articleId} loaded from pre-rendered cache in ${Date.now() - renderStart}ms`);
 } else {
-  // 缓存未命中，需要处理 Markdown（首次访问或内容更新后）
+  // 缓存未命中，需要实时处理 Markdown（建议运行 npm run pre-render）
+  console.warn(`[CACHE MISS] Article ${articleId} - processing Markdown at runtime (slow!)`);
+  
   const allArticleSlugs = await db
     .select({ slug: articles.slug })
     .from(articles)
@@ -68,6 +72,9 @@ if (article.htmlContent && article.readingTime) {
     }
   );
 
+  const processingTime = Date.now() - renderStart;
+  console.log(`[RUNTIME PROCESSING] Article ${articleId} processed in ${processingTime}ms`);
+
   // 更新缓存（异步，不阻塞页面渲染）
   db.update(articles)
     .set({
@@ -75,7 +82,7 @@ if (article.htmlContent && article.readingTime) {
       readingTime: processed.readingTime,
     })
     .where(eq(articles.id, articleId))
-    .then(() => console.log(`Cached HTML for article ${articleId}`))
+    .then(() => console.log(`[CACHE UPDATED] Article ${articleId}`))
     .catch(err => console.error('Failed to cache HTML:', err));
 }
 
