@@ -4,9 +4,11 @@
  */
 
 .page-title {
-  font-size: 1.75rem;
+  font-size: 1rem;
   margin: 0;
+  padding: 0.25rem 0;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .page-title a {

@@ -89,17 +89,16 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   <!-- Left Sidebar -->
   <div slot="left-sidebar">
     <!-- PageTitle 组件 -->
-    <PageTitle title="IOTO Digital Garden" client:load />
+    <PageTitle title="I want to learn" client:load />
     
-    <!-- Darkmode 切换 & ReaderMode -->
-    <div style="display: flex; align-items: center; gap: 1rem; margin-top: 1rem; padding: 1rem; border: 1px solid var(--lightgray); border-radius: 5px; background: var(--light);">
-      <span style="font-size: 0.875rem; color: var(--darkgray); font-weight: 600;">控制：</span>
-      <Darkmode client:only="react" />
-      <ReaderMode client:only="react" />
+    <!-- Search, Darkmode & ReaderMode 同一行 -->
+    <div class="search-controls-row">
+      <Search client:only="react" enablePreview={true} />
+      <div class="control-icons">
+        <Darkmode client:only="react" />
+        <ReaderMode client:only="react" />
+      </div>
     </div>
-    
-    <!-- Search 搜索组件 -->
-    <Search client:only="react" enablePreview={true} />
     
     <!-- Explorer 文件浏览器 -->
     <Explorer client:only="react" title="文章浏览" folderDefaultState="open" />
@@ -249,5 +248,42 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   
   .prose p, .prose li {
     color: var(--dark);
+  }
+  
+  /* 搜索和控制图标行布局 */
+  .search-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .control-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  
+  /* 控制图标按钮样式 */
+  .control-icons .darkmode,
+  .control-icons .readermode {
+    border: 1px solid var(--lightgray);
+    border-radius: 5px;
+    padding: 0.5rem;
+    background: var(--light);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .control-icons .darkmode:hover,
+  .control-icons .readermode:hover {
+    border-color: var(--secondary);
+    background: var(--highlight);
+  }
+  
+  .control-icons .darkmode svg,
+  .control-icons .readermode svg {
+    display: block;
   }
 </style>

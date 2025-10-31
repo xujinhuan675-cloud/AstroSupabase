@@ -5,7 +5,7 @@
  * 功能：全文搜索
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import '../../styles/quartz/search.css';
 
 interface SearchResult {
@@ -24,6 +24,8 @@ export default function Search({ enablePreview = true }: SearchProps) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -58,11 +60,75 @@ export default function Search({ enablePreview = true }: SearchProps) {
     return () => clearTimeout(debounce);
   }, [searchQuery]);
 
+  // 点击外部区域关闭搜索弹窗（不包括搜索框按钮本身）
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!showSearch) return;
+      
+      const target = event.target as Node;
+      
+      // 如果点击的是搜索框按钮，不关闭弹窗
+      if (searchButtonRef.current && searchButtonRef.current.contains(target)) {
+        return;
+      }
+      
+      // 如果点击的是搜索弹窗内部，不关闭
+      if (searchContainerRef.current && searchContainerRef.current.contains(target)) {
+        return;
+      }
+      
+      // 点击外部区域，关闭弹窗
+      setShowSearch(false);
+    };
+
+    if (showSearch) {
+      // 使用 mousedown 而不是 click，避免与按钮的 onClick 冲突
+      document.addEventListener('mousedown', handleClickOutside);
+      // 阻止body滚动
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (showSearch) {
+        document.body.style.overflow = '';
+      }
+    };
+  }, [showSearch]);
+
+  const handleCloseSearch = () => {
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const handleSearchButtonClick = (e: React.MouseEvent) => {
+    // 如果弹窗已打开，点击搜索按钮不关闭，保持打开状态
+    // 如果弹窗未打开，点击搜索按钮打开弹窗
+    if (!showSearch) {
+      setShowSearch(true);
+    }
+    // 阻止事件冒泡，避免触发外部点击关闭
+    e.stopPropagation();
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    // 只有点击蒙层本身（不是搜索框区域）时关闭弹窗
+    if (e.target === e.currentTarget) {
+      e.preventDefault();
+      e.stopPropagation();
+      setShowSearch(false);
+    }
+  };
+
   return (
     <div className="search">
       <button 
-        className="search-button"
-        onClick={() => setShowSearch(!showSearch)}
+        ref={searchButtonRef}
+        className="search-button search-box-button"
+        onClick={handleSearchButtonClick}
         aria-label="搜索"
       >
         <svg role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.9 19.7">
@@ -72,23 +138,40 @@ export default function Search({ enablePreview = true }: SearchProps) {
             <circle cx="8" cy="8" r="7" />
           </g>
         </svg>
-        <p>搜索</p>
+        <span className="search-text">搜索</span>
       </button>
       
       {showSearch && (
-        <div className="search-container">
+        <div 
+          className="search-container" 
+          ref={searchContainerRef}
+          onClick={handleOverlayClick}
+        >
           <div className="search-space">
-            <input
-              autoComplete="off"
-              className="search-bar"
-              name="search"
-              type="text"
-              aria-label="搜索文章"
-              placeholder="搜索文章..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus
-            />
+            <div className="search-bar-wrapper">
+              <input
+                autoComplete="off"
+                className="search-bar"
+                name="search"
+                type="text"
+                aria-label="搜索文章"
+                placeholder="搜索文章..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus
+              />
+              <button 
+                className="search-close-button"
+                onClick={handleCloseSearch}
+                aria-label="关闭搜索"
+                title="关闭搜索"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
             
             <div className={`search-layout ${enablePreview ? 'preview-enabled' : ''}`}>
               {isSearching && <div className="search-loading">搜索中...</div>}

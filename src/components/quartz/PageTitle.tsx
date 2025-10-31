@@ -12,7 +12,7 @@ interface PageTitleProps {
   title?: string;
 }
 
-export default function PageTitle({ title = "IOTO Digital Garden" }: PageTitleProps) {
+export default function PageTitle({ title = "I want to learn" }: PageTitleProps) {
   return (
     <h2 className="page-title">
       <a href="/">{title}</a>

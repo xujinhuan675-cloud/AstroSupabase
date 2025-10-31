@@ -1,41 +1,56 @@
 ---
-import Layout from '../layout/Layout.astro';
-import { getArticles } from '../lib/articles';
-import ArticleCard from '../components/ArticleCard.astro';
+/**
+ * Landing Page - 欢迎页
+ * 参考 https://openeducation.vercel.app/
+ * 功能：星空背景 + 知识图谱 + 点击跳转到博客
+ */
+import { Image } from 'astro:assets';
+import '../styles/landing.css';
+import LandingGraph from '../components/LandingGraph';
+import logo from '../assets/logo.png';
 
-const articles = await getArticles(6);
+const title = 'I want to learn';
+const subtitle = 'Ship your Second Brain into the Cyber-Space';
 ---
 
-<Layout title="欢迎来到我的博客">
-  <main class="min-h-screen py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col">
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-extrabold sm:text-5xl sm:tracking-tight lg:text-6xl mb-6" style="color: var(--dark);">
-          欢迎来到我的博客
-        </h1>
-        <p class="text-xl max-w-3xl mx-auto" style="color: var(--gray);">
-          分享技术见解、生活点滴与学习心得
-        </p>
-      </div>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+  <meta name="description" content={subtitle}>
+</head>
+<body>
+  <div class="landing-container">
+    <!-- 星空背景 -->
+    <div class="stars"></div>
+    <div class="twinkling"></div>
+    <div class="clouds"></div>
 
-      <!-- Featured Articles -->
-      <div class="mb-16">
-        <h2 class="text-2xl font-bold mb-8" style="color: var(--dark);">最新文章</h2>
-        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {articles.map(article => (
-            <ArticleCard article={article} />
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <a href="/auth/login" class="rounded-lg p-4 flex items-center gap-3 mb-10 hover:opacity-80 transition w-96" style="background-color: var(--highlight); border: 1px solid var(--lightgray);">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--secondary);">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM4 20v-1c0-2.21 3.58-4 8-4s8 1.79 8 4v1"/>
-          </svg>
-          <span class="font-medium" style="color: var(--secondary);">管理员后台入口</span>
-        </a>
-      </div>
+    <!-- 知识图谱 -->
+    <div class="graph-container">
+      <LandingGraph client:only="react" />
     </div>
-  </main>
-</Layout>
+
+    <!-- Logo -->
+    <a href="/blog">
+      <section class="logo-container">
+        <Image
+          src={logo}
+          alt={title}
+          class="logo"
+        />
+      </section>
+    </a>
+
+    <!-- 标题和副标题 -->
+    <a href="/blog">
+      <section class="title-container">
+        <h1 class="title">{title}</h1>
+        <p class="subtitle">{subtitle}</p>
+      </section>
+    </a>
+  </div>
+</body>
+</html>
