@@ -1,0 +1,163 @@
+---
+/**
+ * 学科分类导航页
+ */
+import Layout from '../../layout/Layout.astro';
+import MainNav from '../../components/MainNav.astro';
+import { db } from '../../db/client';
+import { articles } from '../../db/schema';
+import { eq, sql } from 'drizzle-orm';
+
+// 预定义的学科分类
+const categories = [
+  { 
+    id: 'math', 
+    name: '数学', 
+    icon: '📐',
+    description: '数学相关的知识和学习笔记',
+    color: '#3B82F6'
+  },
+  { 
+    id: 'physics', 
+    name: '物理', 
+    icon: '⚛️',
+    description: '物理学原理和实验',
+    color: '#8B5CF6'
+  },
+  { 
+    id: 'chemistry', 
+    name: '化学', 
+    icon: '🧪',
+    description: '化学知识和实验记录',
+    color: '#10B981'
+  },
+  { 
+    id: 'biology', 
+    name: '生物', 
+    icon: '🧬',
+    description: '生物学和生命科学',
+    color: '#EF4444'
+  },
+  { 
+    id: 'computer', 
+    name: '计算机', 
+    icon: '💻',
+    description: '编程和计算机科学',
+    color: '#F59E0B'
+  },
+  { 
+    id: 'literature', 
+    name: '文学', 
+    icon: '📚',
+    description: '文学作品和语言学习',
+    color: '#EC4899'
+  },
+];
+
+// 获取每个分类的文章数量
+const categoryCounts = await Promise.all(
+  categories.map(async (category) => {
+    const count = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(articles)
+      .where(eq(articles.status, 'published'))
+      .then(result => result[0]?.count || 0);
+    
+    return {
+      ...category,
+      articleCount: count,
+    };
+  })
+);
+---
+
+<Layout title="学科分类 - IOTO Digital Garden">
+  <!-- 主导航栏 -->
+  <MainNav />
+  
+  <main class="min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- 页面标题 -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-extrabold mb-4" style="color: var(--dark);">
+          学科分类
+        </h1>
+        <p class="text-xl" style="color: var(--gray);">
+          探索不同学科的知识文档
+        </p>
+      </div>
+
+      <!-- 分类网格 -->
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {categoryCounts.map(category => (
+          <a 
+            href={`/categories/${category.id}`}
+            class="category-card"
+            style={`--category-color: ${category.color}`}
+          >
+            <div class="category-icon">{category.icon}</div>
+            <h2 class="category-name">{category.name}</h2>
+            <p class="category-description">{category.description}</p>
+            <div class="category-count">
+              {category.articleCount} 篇文章
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .category-card {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    background: var(--light);
+    border: 2px solid var(--lightgray);
+    border-radius: 1rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .category-card:hover {
+    border-color: var(--category-color);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .category-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .category-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .category-description {
+    color: var(--gray);
+    margin-bottom: 1rem;
+    flex-grow: 1;
+  }
+
+  .category-count {
+    font-size: 0.875rem;
+    color: var(--category-color);
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .category-icon {
+      font-size: 2rem;
+    }
+
+    .category-name {
+      font-size: 1.25rem;
+    }
+  }
+</style>
+

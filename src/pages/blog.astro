@@ -2,11 +2,15 @@
 import Layout from '../layout/Layout.astro';
 import { getArticles } from '../lib/articles';
 import ArticleCard from '../components/ArticleCard.astro';
+import MainNav from '../components/MainNav.astro';
 
 const articles = await getArticles(6);
 ---
 
 <Layout title="欢迎来到我的博客">
+  <!-- 主导航栏 -->
+  <MainNav />
+  
   <main class="min-h-screen py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col">
       <div class="text-center mb-12">

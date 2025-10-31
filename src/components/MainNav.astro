@@ -1,0 +1,310 @@
+---
+/**
+ * 主导航栏组件
+ * 包含：首页、文章、学科分类、标签、图谱
+ */
+const currentPath = Astro.url.pathname;
+
+const isActive = (path: string) => {
+  if (path === '/' && currentPath === '/') return true;
+  if (path !== '/' && currentPath.startsWith(path)) return true;
+  return false;
+};
+---
+
+<nav class="main-nav">
+  <div class="nav-container">
+    <!-- Logo / 标题 -->
+    <a href="/" class="nav-logo">
+      IOTO Digital Garden
+    </a>
+
+    <!-- 导航链接 -->
+    <div class="nav-links">
+      <a href="/" class:list={['nav-link', { active: isActive('/') && currentPath === '/' }]}>
+        首页
+      </a>
+
+      <a href="/blog" class:list={['nav-link', { active: isActive('/blog') || isActive('/articles') }]}>
+        文章
+      </a>
+
+      <!-- 学科分类下拉菜单 -->
+      <div class="nav-dropdown">
+        <button class:list={['nav-link', 'dropdown-toggle', { active: isActive('/categories') }]}>
+          学科分类 <span class="arrow">▼</span>
+        </button>
+        <div class="dropdown-menu">
+          <a href="/categories" class="dropdown-item all-categories">
+            查看所有分类
+          </a>
+          <div class="dropdown-divider"></div>
+          <a href="/categories/math" class="dropdown-item">📐 数学</a>
+          <a href="/categories/physics" class="dropdown-item">⚛️ 物理</a>
+          <a href="/categories/chemistry" class="dropdown-item">🧪 化学</a>
+          <a href="/categories/biology" class="dropdown-item">🧬 生物</a>
+          <a href="/categories/computer" class="dropdown-item">💻 计算机</a>
+          <a href="/categories/literature" class="dropdown-item">📚 文学</a>
+        </div>
+      </div>
+
+      <a href="/tags" class:list={['nav-link', { active: isActive('/tags') }]}>
+        标签
+      </a>
+
+      <a href="/graph" class:list={['nav-link', { active: isActive('/graph') }]}>
+        图谱
+      </a>
+    </div>
+
+    <!-- 移动端菜单按钮 -->
+    <button class="mobile-menu-toggle" aria-label="切换菜单">
+      <span class="hamburger"></span>
+    </button>
+  </div>
+</nav>
+
+<style>
+  .main-nav {
+    background: var(--light);
+    border-bottom: 1px solid var(--lightgray);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .nav-logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--dark);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+  }
+
+  .nav-logo:hover {
+    color: var(--secondary);
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .nav-link {
+    padding: 0.5rem 1rem;
+    color: var(--darkgray);
+    text-decoration: none;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+
+  .nav-link:hover {
+    color: var(--dark);
+    background: var(--highlight);
+  }
+
+  .nav-link.active {
+    color: var(--secondary);
+    background: var(--highlight);
+  }
+
+  /* 下拉菜单 */
+  .nav-dropdown {
+    position: relative;
+  }
+
+  .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .arrow {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+  }
+
+  .nav-dropdown:hover .arrow {
+    transform: rotate(-180deg);
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    min-width: 200px;
+    background: var(--light);
+    border: 1px solid var(--lightgray);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    padding: 0.5rem 0;
+  }
+
+  .nav-dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .dropdown-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: var(--darkgray);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .dropdown-item:hover {
+    background: var(--highlight);
+    color: var(--dark);
+  }
+
+  .dropdown-item.all-categories {
+    color: var(--secondary);
+    font-weight: 600;
+  }
+
+  .dropdown-divider {
+    height: 1px;
+    background: var(--lightgray);
+    margin: 0.5rem 0;
+  }
+
+  /* 移动端菜单按钮 */
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+  }
+
+  .hamburger {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--dark);
+    position: relative;
+    transition: background 0.2s ease;
+  }
+
+  .hamburger::before,
+  .hamburger::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background: var(--dark);
+    left: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .hamburger::before {
+    top: -8px;
+  }
+
+  .hamburger::after {
+    bottom: -8px;
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .nav-container {
+      padding: 0 1rem;
+    }
+
+    .nav-links {
+      display: none;
+      position: absolute;
+      top: 64px;
+      left: 0;
+      right: 0;
+      background: var(--light);
+      border-bottom: 1px solid var(--lightgray);
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 1rem 0;
+    }
+
+    .nav-links.active {
+      display: flex;
+    }
+
+    .nav-link {
+      padding: 1rem 1.5rem;
+      border-radius: 0;
+    }
+
+    .nav-dropdown {
+      width: 100%;
+    }
+
+    .dropdown-menu {
+      position: static;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      box-shadow: none;
+      border: none;
+      border-top: 1px solid var(--lightgray);
+      border-radius: 0;
+      display: none;
+    }
+
+    .nav-dropdown:hover .dropdown-menu,
+    .nav-dropdown.active .dropdown-menu {
+      display: block;
+    }
+
+    .mobile-menu-toggle {
+      display: block;
+    }
+  }
+</style>
+
+<script>
+  // 移动端菜单切换
+  const menuToggle = document.querySelector('.mobile-menu-toggle');
+  const navLinks = document.querySelector('.nav-links');
+
+  menuToggle?.addEventListener('click', () => {
+    navLinks?.classList.toggle('active');
+  });
+
+  // 移动端下拉菜单切换
+  const dropdownToggle = document.querySelector('.dropdown-toggle');
+  const dropdown = document.querySelector('.nav-dropdown');
+
+  dropdownToggle?.addEventListener('click', (e) => {
+    if (window.innerWidth <= 768) {
+      e.preventDefault();
+      dropdown?.classList.toggle('active');
+    }
+  });
+</script>
+

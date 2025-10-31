@@ -1,7 +1,7 @@
 ---
 import { getArticleById } from '../../lib/articles';
 import { processMarkdown } from '../../lib/markdown-processor';
-import { getArticleTags, getForwardLinks } from '../../lib/links-service';
+import { getArticleTags, getForwardLinks, getBacklinks } from '../../lib/links-service';
 import { db } from '../../db/client';
 import { articles } from '../../db/schema';
 import { eq } from 'drizzle-orm';
@@ -36,10 +36,11 @@ if (!article) {
   return Astro.redirect('/404');
 }
 
-// 并行查询标签和前向链接
-const [tags, forwardLinks] = await Promise.all([
+// 并行查询标签、前向链接和反向链接
+const [tags, forwardLinks, backlinks] = await Promise.all([
   getArticleTags(articleId),
   getForwardLinks(articleId),
+  getBacklinks(articleId),
 ]);
 
 // 使用缓存的 HTML 或实时处理 Markdown
@@ -89,7 +90,7 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   <!-- Left Sidebar -->
   <div slot="left-sidebar">
     <!-- PageTitle 组件 -->
-    <PageTitle title="I want to learn" client:load />
+    <PageTitle title="I want to learn" />
     
     <!-- Search, Darkmode & ReaderMode 同一行 -->
     <div class="search-controls-row">
@@ -100,17 +101,17 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
       </div>
     </div>
     
-    <!-- Explorer 文件浏览器 -->
-    <Explorer client:only="react" title="文章浏览" folderDefaultState="open" />
+    <!-- Explorer 文件浏览器 - 浏览器空闲时加载 -->
+    <Explorer client:idle title="文章浏览" folderDefaultState="open" />
   </div>
 
   <!-- Right Sidebar -->
   <div slot="right-sidebar">
-    <!-- 局部知识图谱 -->
-    <LocalGraph articleId={articleId} client:load />
+    <!-- 局部知识图谱 - 可见时才加载 -->
+    <LocalGraph articleId={articleId} client:visible />
     
-    <!-- 目录 -->
-    <TableOfContents client:load />
+    <!-- 目录 - 浏览器空闲时加载 -->
+    <TableOfContents client:idle />
   </div>
 
   <!-- Before Body (Breadcrumbs, Meta, Tags) -->
@@ -118,21 +119,19 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
     <Breadcrumbs 
       items={[
         { label: '首页', path: '/' },
-        { label: '文章', path: '/articles' },
+        { label: '文章', path: '/blog' },
         { label: article.title, path: `/articles/${id}` }
       ]}
-      client:load
     />
     
     <ContentMeta 
       publishedAt={new Date(article.publishedAt || article.createdAt)}
       readingTime={processed.readingTime}
       author={article.authorId.toString()}
-      client:load
     />
     
     {tags.length > 0 && (
-      <TagList tags={tags} client:load />
+      <TagList tags={tags} />
     )}
   </div>
 
@@ -195,8 +194,8 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
       </div>
     )}
 
-    {/* 反向链接组件 */}
-    <Backlinks articleId={articleId} client:load />
+    {/* 反向链接组件 - 服务端已获取数据，延迟加载 */}
+    <Backlinks articleId={articleId} backlinks={backlinks} client:idle />
   </article>
 </QuartzLayout>
 

@@ -14,11 +14,14 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate-add-cache-fields.ts",
+    "db:indexes": "tsx scripts/add-indexes.ts",
     "diagnose": "tsx scripts/diagnose-db.ts",
     "warm-cache": "tsx scripts/warm-cache.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.7",
+    "@astrojs/rss": "^4.0.13",
+    "@astrojs/sitemap": "^3.6.0",
     "@astrojs/tailwind": "^6.0.0",
     "@astrojs/vercel": "^9.0.0",
     "@floating-ui/dom": "^1.7.4",

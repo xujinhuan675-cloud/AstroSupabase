@@ -1,0 +1,52 @@
+---
+/**
+ * 文章列表页 - /articles
+ * 显示所有已发布的文章
+ */
+import Layout from '../../layout/Layout.astro';
+import { getArticles } from '../../lib/articles';
+import ArticleCard from '../../components/ArticleCard.astro';
+import MainNav from '../../components/MainNav.astro';
+
+const articles = await getArticles();
+---
+
+<Layout title="所有文章 - IOTO Digital Garden">
+  <!-- 主导航栏 -->
+  <MainNav />
+  
+  <main class="min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- 页面标题 -->
+      <div class="mb-12">
+        <h1 class="text-4xl font-extrabold mb-4" style="color: var(--dark);">
+          所有文章
+        </h1>
+        <p class="text-xl" style="color: var(--gray);">
+          共 {articles.length} 篇文章
+        </p>
+      </div>
+
+      <!-- 文章网格 -->
+      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {articles.map(article => (
+          <ArticleCard article={article} />
+        ))}
+      </div>
+
+      <!-- 空状态 -->
+      {articles.length === 0 && (
+        <div class="text-center py-16">
+          <p class="text-xl" style="color: var(--gray);">
+            暂无文章
+          </p>
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>
+
+<style>
+  /* 可以添加额外样式 */
+</style>
+

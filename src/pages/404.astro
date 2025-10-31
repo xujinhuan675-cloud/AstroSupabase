@@ -1,0 +1,124 @@
+---
+/**
+ * 404 页面 - 页面未找到
+ */
+import Layout from '../layout/Layout.astro';
+---
+
+<Layout title="404 - 页面未找到">
+  <main class="error-page">
+    <div class="error-container">
+      <div class="error-code">404</div>
+      <h1 class="error-title">页面未找到</h1>
+      <p class="error-message">
+        抱歉，您访问的页面不存在或已被移除。
+      </p>
+      <div class="error-actions">
+        <a href="/" class="btn-primary">返回首页</a>
+        <a href="/blog" class="btn-secondary">浏览文章</a>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .error-page {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .error-container {
+    text-align: center;
+    max-width: 600px;
+  }
+
+  .error-code {
+    font-size: 8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--secondary), var(--tertiary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+
+  .error-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 1rem;
+  }
+
+  .error-message {
+    font-size: 1.125rem;
+    color: var(--gray);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.75rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: var(--secondary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+
+  .btn-secondary {
+    background: var(--highlight);
+    color: var(--dark);
+    border: 1px solid var(--lightgray);
+  }
+
+  .btn-secondary:hover {
+    background: var(--light);
+    border-color: var(--secondary);
+  }
+
+  @media (max-width: 768px) {
+    .error-code {
+      font-size: 5rem;
+    }
+
+    .error-title {
+      font-size: 1.5rem;
+    }
+
+    .error-message {
+      font-size: 1rem;
+    }
+
+    .error-actions {
+      flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      width: 100%;
+    }
+  }
+</style>
+

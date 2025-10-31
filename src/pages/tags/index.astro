@@ -1,0 +1,235 @@
+---
+/**
+ * 标签索引页 - /tags
+ * 显示所有标签和每个标签的文章数量
+ */
+import Layout from '../../layout/Layout.astro';
+import MainNav from '../../components/MainNav.astro';
+import { db } from '../../db/client';
+import { sql } from 'drizzle-orm';
+import { getArticleTags } from '../../lib/links-service';
+
+interface TagCount {
+  tag: string;
+  count: number;
+}
+
+// 获取所有已发布文章
+const articles = await db.query.articles.findMany({
+  where: (articles, { eq }) => eq(articles.status, 'published'),
+});
+
+// 统计标签
+const tagMap = new Map<string, number>();
+
+// 为每篇文章获取标签并统计
+for (const article of articles) {
+  const tags = await getArticleTags(article.id);
+  
+  tags.forEach((tag) => {
+    tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+  });
+}
+
+// 转换为数组并按文章数量排序
+const tagCounts: TagCount[] = Array.from(tagMap.entries())
+  .map(([tag, count]) => ({ tag, count }))
+  .sort((a, b) => b.count - a.count);
+
+// 按字母排序的标签
+const tagsByAlpha = [...tagCounts].sort((a, b) => 
+  a.tag.localeCompare(b.tag, 'zh-CN')
+);
+
+// 热门标签（前10）
+const popularTags = tagCounts.slice(0, 10);
+---
+
+<Layout title="标签 - IOTO Digital Garden">
+  <!-- 主导航栏 -->
+  <MainNav />
+  
+  <main class="min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- 页面标题 -->
+      <div class="mb-12">
+        <h1 class="text-4xl font-extrabold mb-4" style="color: var(--dark);">
+          标签
+        </h1>
+        <p class="text-xl" style="color: var(--gray);">
+          共 {tagCounts.length} 个标签，{articles.length} 篇文章
+        </p>
+      </div>
+
+      <!-- 热门标签 -->
+      {popularTags.length > 0 && (
+        <section class="mb-12">
+          <h2 class="text-2xl font-bold mb-6" style="color: var(--dark);">
+            🔥 热门标签
+          </h2>
+          <div class="tag-cloud popular">
+            {popularTags.map(({ tag, count }) => (
+              <a 
+                href={`/tags/${encodeURIComponent(tag)}`} 
+                class="tag-item popular"
+                style={`--tag-size: ${Math.min(2, 1 + count / 10)}em`}
+              >
+                <span class="tag-name">{tag}</span>
+                <span class="tag-count">{count}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- 所有标签（按字母排序） -->
+      <section>
+        <h2 class="text-2xl font-bold mb-6" style="color: var(--dark);">
+          📑 所有标签
+        </h2>
+        <div class="tag-grid">
+          {tagsByAlpha.map(({ tag, count }) => (
+            <a 
+              href={`/tags/${encodeURIComponent(tag)}`} 
+              class="tag-card"
+            >
+              <div class="tag-card-name">{tag}</div>
+              <div class="tag-card-count">{count} 篇文章</div>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <!-- 空状态 -->
+      {tagCounts.length === 0 && (
+        <div class="empty-state">
+          <p>暂无标签</p>
+          <a href="/blog" class="btn-primary">浏览文章</a>
+        </div>
+      )}
+    </div>
+  </main>
+</Layout>
+
+<style>
+  /* 热门标签云 */
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--light);
+    border: 2px solid var(--lightgray);
+    border-radius: 2rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: var(--tag-size, 1rem);
+  }
+
+  .tag-item.popular {
+    border-color: var(--secondary);
+    background: linear-gradient(135deg, var(--light), var(--highlight));
+  }
+
+  .tag-item:hover {
+    border-color: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .tag-name {
+    color: var(--dark);
+    font-weight: 500;
+  }
+
+  .tag-count {
+    background: var(--secondary);
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* 标签网格 */
+  .tag-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .tag-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    background: var(--light);
+    border: 1px solid var(--lightgray);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .tag-card:hover {
+    border-color: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .tag-card-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .tag-card-count {
+    font-size: 0.875rem;
+    color: var(--gray);
+  }
+
+  /* 空状态 */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .empty-state p {
+    font-size: 1.25rem;
+    color: var(--gray);
+    margin-bottom: 2rem;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--secondary);
+    color: white;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
+  }
+
+  /* 响应式 */
+  @media (max-width: 768px) {
+    .tag-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .tag-item {
+      font-size: 0.875rem;
+    }
+  }
+</style>
+
