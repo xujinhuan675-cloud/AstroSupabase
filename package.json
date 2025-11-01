@@ -19,7 +19,8 @@
     "db:migrate": "tsx scripts/migrate-add-cache-fields.ts",
     "db:indexes": "tsx scripts/add-indexes.ts",
     "diagnose": "tsx scripts/diagnose-db.ts",
-    "warm-cache": "tsx scripts/warm-cache.ts"
+    "warm-cache": "tsx scripts/warm-cache.ts",
+    "test:graph": "tsx scripts/test-graph.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.7",
@@ -29,6 +30,7 @@
     "@astrojs/vercel": "^9.0.0",
     "@floating-ui/dom": "^1.7.4",
     "@supabase/supabase-js": "^2.49.5",
+    "@tweenjs/tween.js": "^25.0.0",
     "@types/d3": "^7.4.3",
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
@@ -43,6 +45,7 @@
     "hast-util-to-html": "^9.0.5",
     "mdast-util-find-and-replace": "^3.0.2",
     "mdast-util-to-hast": "^13.2.0",
+    "pixi.js": "^8.14.0",
     "postgres": "^3.4.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

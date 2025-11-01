@@ -878,6 +878,11 @@
   resolved "https://registry.npmjs.org/@oxc-project/types/-/types-0.82.3.tgz"
   integrity sha512-6nCUxBnGX0c6qfZW5MaF6/fmu5dHJDMiMPaioKHKs5mi5+8/FHQ7WGjgQIz1zxpmceMYfdIXkOaLYE+ejbuOtA==
 
+"@pixi/colord@^2.9.6":
+  version "2.9.6"
+  resolved "https://registry.npmjs.org/@pixi/colord/-/colord-2.9.6.tgz"
+  integrity sha512-nezytU2pw587fQstUu1AsJZDVEynjskwOL+kibwcdxsMBFqPsFFNA7xl0ii/gXuDi6M0xj3mfRJj8pBSc2jCfA==
+
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
   resolved "https://registry.npmjs.org/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
@@ -1247,7 +1252,7 @@
   resolved "https://registry.npmjs.org/@tsconfig/node16/-/node16-1.0.4.tgz"
   integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
 
-"@tweenjs/tween.js@18 - 25":
+"@tweenjs/tween.js@^25.0.0", "@tweenjs/tween.js@18 - 25":
   version "25.0.0"
   resolved "https://registry.npmjs.org/@tweenjs/tween.js/-/tween.js-25.0.0.tgz"
   integrity sha512-XKLA6syeBUaPzx4j3qwMqzzq+V4uo72BnlbOjmuljLrRqdsd3qnzvZZoxvMHZ23ndsRS4aufU6JOZYpCbU6T1A==
@@ -1291,6 +1296,11 @@
   integrity sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==
   dependencies:
     "@babel/types" "^7.28.2"
+
+"@types/css-font-loading-module@^0.0.12":
+  version "0.0.12"
+  resolved "https://registry.npmjs.org/@types/css-font-loading-module/-/css-font-loading-module-0.0.12.tgz"
+  integrity sha512-x2tZZYkSxXqWvTDgveSynfjq/T2HyiZHXb00j/+gy19yp70PHCizM48XFdjBCWH7eHBD0R5i/pw9yMBP/BH5uA==
 
 "@types/d3-array@*":
   version "3.2.2"
@@ -1508,6 +1518,11 @@
   integrity sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==
   dependencies:
     "@types/ms" "*"
+
+"@types/earcut@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.npmjs.org/@types/earcut/-/earcut-3.0.0.tgz"
+  integrity sha512-k/9fOUGO39yd2sCjrbAJvGDEQvRwRnQIZlBz43roGwUZo5SHAmyVvSFyaVVZkicRVCaDXPKlbxrUcBuJoSWunQ==
 
 "@types/estree@^1.0.0", "@types/estree@1.0.8":
   version "1.0.8"
@@ -1900,6 +1915,16 @@
     "@rolldown/pluginutils" "1.0.0-beta.27"
     "@types/babel__core" "^7.20.5"
     react-refresh "^0.17.0"
+
+"@webgpu/types@^0.1.40":
+  version "0.1.66"
+  resolved "https://registry.npmjs.org/@webgpu/types/-/types-0.1.66.tgz"
+  integrity sha512-YA2hLrwLpDsRueNDXIMqN9NTzD6bCDkuXbOSe0heS+f8YE8usA6Gbv1prj81pzVHrbaAma7zObnIC+I6/sXJgA==
+
+"@xmldom/xmldom@^0.8.10":
+  version "0.8.11"
+  resolved "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.8.11.tgz"
+  integrity sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==
 
 abbrev@^3.0.0:
   version "3.0.1"
@@ -2886,6 +2911,11 @@ dset@^3.1.4:
   resolved "https://registry.npmjs.org/dset/-/dset-3.1.4.tgz"
   integrity sha512-2QF/g9/zTaPDc3BjNcVTGoBbXBgYfMTTceLaYcFJ/W9kggFUkhxD/hMEeuLKbugyef9SqAx8cpgwlIP/jinUTA==
 
+earcut@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.npmjs.org/earcut/-/earcut-3.0.2.tgz"
+  integrity sha512-X7hshQbLyMJ/3RPhyObLARM2sNxxmRALLKx1+NVFFnQ9gKzmCrxm9+uLIAdBcvc8FNLpctqlQ2V6AE92Ol9UDQ==
+
 eastasianwidth@^0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/eastasianwidth/-/eastasianwidth-0.2.0.tgz"
@@ -3378,6 +3408,13 @@ get-tsconfig@^4.7.0, get-tsconfig@^4.7.5:
   dependencies:
     resolve-pkg-maps "^1.0.0"
 
+gifuct-js@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.npmjs.org/gifuct-js/-/gifuct-js-2.1.2.tgz"
+  integrity sha512-rI2asw77u0mGgwhV3qA+OEgYqaDn5UNqgs+Bx0FGwSpuqfYn+Ir6RQY5ENNQ8SbIiG/m5gVa7CD5RriO4f4Lsg==
+  dependencies:
+    js-binary-schema-parser "^2.0.3"
+
 github-slugger@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npmjs.org/github-slugger/-/github-slugger-2.0.0.tgz"
@@ -3764,6 +3801,11 @@ isexe@^2.0.0:
   resolved "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz"
   integrity sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==
 
+ismobilejs@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.npmjs.org/ismobilejs/-/ismobilejs-1.1.1.tgz"
+  integrity sha512-VaFW53yt8QO61k2WJui0dHf4SlL8lxBofUuUmwBo0ljPk0Drz2TiuDW4jo3wDcv41qy/SxrJ+VAzJ/qYqsmzRw==
+
 jackspeak@^3.1.2:
   version "3.4.3"
   resolved "https://registry.npmjs.org/jackspeak/-/jackspeak-3.4.3.tgz"
@@ -3792,6 +3834,11 @@ jose@5.9.6:
   version "5.9.6"
   resolved "https://registry.npmjs.org/jose/-/jose-5.9.6.tgz"
   integrity sha512-AMlnetc9+CV9asI19zHmrgS/WYsWUwCn2R7RzlbJWD7F9eWYUTGyBmU9o6PxngtLGOiDGPRu+Uc4fhKzbpteZQ==
+
+js-binary-schema-parser@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.npmjs.org/js-binary-schema-parser/-/js-binary-schema-parser-2.0.3.tgz"
+  integrity sha512-xezGJmOb4lk/M1ZZLTR/jaBHQ4gG/lqQnJqdIv4721DMggsa1bDVlHXNeHYogaIEHD9vCRv0fcL4hMA+Coarkg==
 
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
@@ -4793,6 +4840,11 @@ parse-ms@^2.1.0:
   resolved "https://registry.npmjs.org/parse-ms/-/parse-ms-2.1.0.tgz"
   integrity sha512-kHt7kzLoS9VBZfUsiKjv43mr91ea+U05EyKkEtqp7vNbHxmaVuEqN7XxeEVnGrMtYOAxGrDElSi96K7EgO1zCA==
 
+parse-svg-path@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.npmjs.org/parse-svg-path/-/parse-svg-path-0.1.2.tgz"
+  integrity sha512-JyPSBnkTJ0AI8GGJLfMXvKq42cj5c006fnLz6fXy6zfoVjJizi8BNTpu8on8ziI1cKy9d9DGNuY17Ce7wuejpQ==
+
 parse5@^7.0.0:
   version "7.3.0"
   resolved "https://registry.npmjs.org/parse5/-/parse5-7.3.0.tgz"
@@ -4897,6 +4949,23 @@ pirates@^4.0.1:
   version "4.0.7"
   resolved "https://registry.npmjs.org/pirates/-/pirates-4.0.7.tgz"
   integrity sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==
+
+pixi.js@^8.14.0:
+  version "8.14.0"
+  resolved "https://registry.npmjs.org/pixi.js/-/pixi.js-8.14.0.tgz"
+  integrity sha512-ituDiEBb1Oqx56RYwTtC6MjPUhPfF/i15fpUv5oEqmzC/ce3SaSumulJcOjKG7+y0J0Ekl9Rl4XTxaUw+MVFZw==
+  dependencies:
+    "@pixi/colord" "^2.9.6"
+    "@types/css-font-loading-module" "^0.0.12"
+    "@types/earcut" "^3.0.0"
+    "@webgpu/types" "^0.1.40"
+    "@xmldom/xmldom" "^0.8.10"
+    earcut "^3.0.2"
+    eventemitter3 "^5.0.1"
+    gifuct-js "^2.1.2"
+    ismobilejs "^1.1.1"
+    parse-svg-path "^0.1.2"
+    tiny-lru "^11.4.5"
 
 postcss-import@^15.1.0:
   version "15.1.0"
@@ -5744,6 +5813,11 @@ tiny-inflate@^1.0.0, tiny-inflate@^1.0.3:
   version "1.0.3"
   resolved "https://registry.npmjs.org/tiny-inflate/-/tiny-inflate-1.0.3.tgz"
   integrity sha512-pkY1fj1cKHb2seWDy0B16HeWyczlJA9/WW3u3c4z/NiWDsO3DOU5D7nhTLE9CF0yXv/QZFY7sEJmj24dK+Rrqw==
+
+tiny-lru@^11.4.5:
+  version "11.4.5"
+  resolved "https://registry.npmjs.org/tiny-lru/-/tiny-lru-11.4.5.tgz"
+  integrity sha512-hkcz3FjNJfKXjV4mjQ1OrXSLAehg8Hw+cEZclOVT+5c/cWQWImQ9wolzTjth+dmmDe++p3bme3fTxz6Q4Etsqw==
 
 tinycolor2@^1.6.0:
   version "1.6.0"

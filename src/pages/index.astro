@@ -6,7 +6,7 @@
  */
 import { Image } from 'astro:assets';
 import '../styles/landing.css';
-import LandingGraph from '../components/LandingGraph';
+import QuartzGraph from '../components/quartz/QuartzGraph';
 import logo from '../assets/logo.png';
 
 const title = 'I want to learn';
@@ -30,7 +30,13 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
 
     <!-- 知识图谱 -->
     <div class="graph-container">
-      <LandingGraph client:only="react" />
+      <QuartzGraph 
+        client:only="react"
+        isGlobal={true}
+        height={600}
+        showTitle={false}
+        globalGraph={{ depth: -1, enableRadial: true }}
+      />
     </div>
 
     <!-- Logo -->

@@ -16,7 +16,7 @@ import Darkmode from '../../components/quartz/Darkmode';
 import ReaderMode from '../../components/quartz/ReaderMode';
 import Search from '../../components/quartz/Search';
 import Explorer from '../../components/quartz/Explorer';
-import LocalGraph from '../../components/LocalGraph';
+import QuartzGraph from '../../components/quartz/QuartzGraph';
 
 const { id } = Astro.params;
 
@@ -115,7 +115,12 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   <!-- Right Sidebar -->
   <div slot="right-sidebar">
     <!-- 局部知识图谱 - 可见时才加载 -->
-    <LocalGraph articleId={articleId} client:visible />
+    <QuartzGraph 
+      client:visible
+      currentSlug={article.slug}
+      height={250}
+      localGraph={{ depth: 1 }}
+    />
     
     <!-- 目录 - 浏览器空闲时加载 -->
     <TableOfContents client:idle />
