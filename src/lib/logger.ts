@@ -2,9 +2,12 @@
  * 统一的日志管理工具
  * 开发环境显示所有日志，生产环境只显示错误
  */
-
-const isDev = import.meta.env.DEV;
-const isProduction = import.meta.env.PROD;
+// 兼容 Astro/Vite 与 Node（Vercel 构建/运行时）环境
+// - 在浏览器或 Astro SSR 中使用 import.meta.env
+// - 在 Node 环境（例如 tsx 脚本、Vercel 构建钩子）使用 process.env
+const astroEnv: any = (import.meta as any).env || {};
+const isDev: boolean = astroEnv?.DEV ?? (process.env.NODE_ENV !== 'production');
+const isProduction: boolean = astroEnv?.PROD ?? (process.env.NODE_ENV === 'production');
 
 export interface Logger {
   info: (...args: unknown[]) => void;
