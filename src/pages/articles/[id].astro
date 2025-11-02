@@ -8,7 +8,6 @@ import { eq } from 'drizzle-orm';
 import QuartzLayout from '../../layouts/QuartzLayout.astro';
 import Backlinks from '../../components/Backlinks';
 import TableOfContents from '../../components/quartz/TableOfContents';
-import PageTitle from '../../components/quartz/PageTitle';
 import Breadcrumbs from '../../components/quartz/Breadcrumbs';
 import ContentMeta from '../../components/quartz/ContentMeta';
 import TagList from '../../components/quartz/TagList';
@@ -17,6 +16,7 @@ import ReaderMode from '../../components/quartz/ReaderMode';
 import Search from '../../components/quartz/Search';
 import Explorer from '../../components/quartz/Explorer';
 import QuartzGraph from '../../components/quartz/QuartzGraph';
+import MainNav from '../../components/MainNav.astro';
 
 const { id } = Astro.params;
 
@@ -94,11 +94,13 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
 ---
 
 <QuartzLayout title={article.title} currentSlug={`articles/${id}`}>
+  <!-- 主导航栏 -->
+  <div slot="header">
+    <MainNav />
+  </div>
+  
   <!-- Left Sidebar -->
   <div slot="left-sidebar">
-    <!-- PageTitle 组件 -->
-    <PageTitle title="I want to learn" />
-    
     <!-- Search, Darkmode & ReaderMode 同一行 -->
     <div class="search-controls-row">
       <Search client:only="react" enablePreview={true} />

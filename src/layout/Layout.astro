@@ -1,5 +1,6 @@
 ---
 import { ClientRouter } from 'astro:transitions';
+import SpeedInsights from '@vercel/speed-insights/astro';
 import '../styles/global.css';
 import '../styles/quartz/variables.css';
 import '../styles/quartz/darkmode.css';
@@ -34,6 +35,9 @@ const { title = 'Todo App' } = Astro.props;
     <main class="min-h-screen">
       <slot />
     </main>
+    
+    <!-- Vercel Speed Insights -->
+    <SpeedInsights />
     
     <!-- Quartz 客户端脚本 -->
     <script>

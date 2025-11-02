@@ -1,38 +1,24 @@
-import type { APIRoute } from 'astro';
 import { getForwardLinks } from '../../../../lib/links-service';
+import { createApiHandler, parseIdParam } from '../../../../lib/api-handler';
+import { createModuleLogger } from '../../../../lib/logger';
 
-export const GET: APIRoute = async ({ params }) => {
-  const articleId = parseInt(params.id || '0');
+const logger = createModuleLogger('API.ForwardLinks');
 
-  if (!articleId || isNaN(articleId)) {
-    return new Response(JSON.stringify({ 
-      error: 'Invalid article ID',
-      forwardLinks: [] 
-    }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  try {
-    const forwardLinks = await getForwardLinks(articleId);
-    
-    return new Response(JSON.stringify({ 
-      forwardLinks,
-      count: forwardLinks.length 
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    console.error('Error fetching forward links:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      forwardLinks: [] 
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-};
+/**
+ * @description Handles GET requests to fetch forward links for an article
+ * @route /api/articles/[id]/forward-links
+ * @method GET
+ */
+export const GET = createApiHandler(async (context) => {
+  const articleId = parseIdParam(context.params?.id, 'article id');
+  
+  logger.info('Fetching forward links', { articleId });
+  const forwardLinks = await getForwardLinks(articleId);
+  
+  logger.debug(`Successfully fetched ${forwardLinks.length} forward links`);
+  return {
+    forwardLinks,
+    count: forwardLinks.length,
+  };
+});
 

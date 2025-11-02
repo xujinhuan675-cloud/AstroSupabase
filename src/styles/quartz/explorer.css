@@ -9,6 +9,8 @@
   overflow-y: hidden;
   min-height: 1.2rem;
   flex: 0 1 auto;
+  /* 与上方搜索区域保持更舒适的间距 */
+  margin-top: 0.75rem;
 }
 
 .explorer.collapsed {
@@ -17,6 +19,14 @@
 
 .explorer.collapsed .fold {
   transform: rotateZ(-90deg);
+}
+
+.explorer.collapsed .explorer-content {
+  display: none;
+}
+
+.explorer:not(.collapsed) .explorer-content {
+  display: block;
 }
 
 .explorer .fold {

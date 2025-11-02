@@ -23,7 +23,7 @@ export default function TagList({ tags }: TagListProps) {
         {tags.map((tag) => (
           <li key={tag}>
             <a href={`/tags/${encodeURIComponent(tag)}`} className="tag-link">
-              #{tag}
+              {tag}
             </a>
           </li>
         ))}

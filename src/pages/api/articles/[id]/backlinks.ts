@@ -1,38 +1,24 @@
-import type { APIRoute } from 'astro';
 import { getBacklinks } from '../../../../lib/links-service';
+import { createApiHandler, parseIdParam } from '../../../../lib/api-handler';
+import { createModuleLogger } from '../../../../lib/logger';
 
-export const GET: APIRoute = async ({ params }) => {
-  const articleId = parseInt(params.id || '0');
+const logger = createModuleLogger('API.Backlinks');
 
-  if (!articleId || isNaN(articleId)) {
-    return new Response(JSON.stringify({ 
-      error: 'Invalid article ID',
-      backlinks: [] 
-    }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  try {
-    const backlinks = await getBacklinks(articleId);
-    
-    return new Response(JSON.stringify({ 
-      backlinks,
-      count: backlinks.length 
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    console.error('Error fetching backlinks:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Internal server error',
-      backlinks: [] 
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-};
+/**
+ * @description Handles GET requests to fetch backlinks for an article
+ * @route /api/articles/[id]/backlinks
+ * @method GET
+ */
+export const GET = createApiHandler(async (context) => {
+  const articleId = parseIdParam(context.params?.id, 'article id');
+  
+  logger.info('Fetching backlinks', { articleId });
+  const backlinks = await getBacklinks(articleId);
+  
+  logger.debug(`Successfully fetched ${backlinks.length} backlinks`);
+  return {
+    backlinks,
+    count: backlinks.length,
+  };
+});
 

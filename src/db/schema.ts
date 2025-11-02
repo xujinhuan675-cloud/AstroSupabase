@@ -1,4 +1,4 @@
-import { boolean, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, serial, integer, text, timestamp } from 'drizzle-orm/pg-core';
 
 // Example table - modify according to your needs
 export const users = pgTable('users', {
@@ -27,6 +27,7 @@ export const articles = pgTable('articles', {
   authorId: text('author_id').notNull(),
   featuredImage: text('featured_image'),
   status: text('status', { enum: ['draft', 'published', 'archived'] }).notNull().default('draft'),
+  category: text('category', { enum: ['math', 'physics', 'chemistry', 'biology', 'computer', 'literature'] }),
   isDeleted: boolean('is_deleted').default(false).notNull(),
   deletedAt: timestamp('deleted_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -38,7 +39,7 @@ export const articles = pgTable('articles', {
 // 文章标签表 - 支持多标签系统
 export const articleTags = pgTable('article_tags', {
   id: serial('id').primaryKey(),
-  articleId: serial('article_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
+  articleId: integer('article_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
   tag: text('tag').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -46,8 +47,8 @@ export const articleTags = pgTable('article_tags', {
 // 文章链接关系表 - 支持双向链接和知识图谱
 export const articleLinks = pgTable('article_links', {
   id: serial('id').primaryKey(),
-  sourceId: serial('source_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
-  targetId: serial('target_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
+  sourceId: integer('source_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
+  targetId: integer('target_id').notNull().references(() => articles.id, { onDelete: 'cascade' }),
   linkType: text('link_type', { enum: ['internal', 'external', 'embed'] }).default('internal'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });

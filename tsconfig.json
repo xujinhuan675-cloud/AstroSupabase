@@ -5,7 +5,10 @@
     "**/*"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    ".vercel",
+    "node_modules",
+    "**/test-layout.astro"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",

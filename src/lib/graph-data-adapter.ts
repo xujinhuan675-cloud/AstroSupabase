@@ -5,28 +5,53 @@
 
 import { getGraphData, getArticleTags } from './links-service';
 import type { GraphNode, GraphLink } from './links-service';
+import { createModuleLogger } from './logger';
+
+const logger = createModuleLogger('GraphDataAdapter');
 
 /**
  * Quartz ContentDetails 格式
+ * 
  * 与 Quartz 的 ContentDetails 类型保持一致
  * 扩展添加 id 字段以支持 AstroSupabase 的路由系统
  */
 export type QuartzContentDetails = {
-  slug: string;           // 文章的 slug，例如 "my-article"
-  filePath: string;       // 文件路径，例如 "articles/my-article"
-  title: string;         // 文章标题
-  links: string[];        // 出链：链接到的其他文章的 slug 数组
-  tags: string[];        // 标签数组
-  content: string;        // 文章内容（可选，用于全文搜索）
-  id?: number;            // 文章 ID（AstroSupabase 特有，用于路由跳转）
+  /** 文章的 slug，例如 "my-article" */
+  slug: string;
+  /** 文件路径，例如 "articles/my-article" */
+  filePath: string;
+  /** 文章标题 */
+  title: string;
+  /** 出链：链接到的其他文章的 slug 数组 */
+  links: string[];
+  /** 标签数组 */
+  tags: string[];
+  /** 文章内容（可选，用于全文搜索） */
+  content: string;
+  /** 文章 ID（AstroSupabase 特有，用于路由跳转） */
+  id?: number;
 };
 
+/**
+ * Quartz 内容索引类型
+ * 
+ * 键为文章的 slug，值为对应的 ContentDetails
+ */
 export type QuartzContentIndex = Record<string, QuartzContentDetails>;
 
 /**
  * 将 AstroSupabase 的图谱数据转换为 Quartz 格式
  * 
+ * 注意：此函数使用逐个查询标签的方式，对于大量文章可能较慢
+ * 推荐使用 `convertToQuartzFormatOptimized()` 获取更好的性能
+ * 
  * @returns Quartz 格式的内容索引
+ * @throws {Error} 当数据获取或转换失败时抛出错误
+ * @example
+ * ```typescript
+ * const index = await convertToQuartzFormat();
+ * console.log(index['my-article']); // { slug: 'my-article', ... }
+ * ```
  */
 export async function convertToQuartzFormat(): Promise<QuartzContentIndex> {
   try {
@@ -59,7 +84,7 @@ export async function convertToQuartzFormat(): Promise<QuartzContentIndex> {
       try {
         tags = await getArticleTags(node.id);
       } catch (error) {
-        console.warn(`Failed to fetch tags for article ${node.id}:`, error);
+        logger.warn(`Failed to fetch tags for article ${node.id}:`, error);
       }
       
       // 构建 ContentDetails
@@ -76,14 +101,24 @@ export async function convertToQuartzFormat(): Promise<QuartzContentIndex> {
     
     return contentIndex;
   } catch (error) {
-    console.error('Error converting to Quartz format:', error);
+    logger.error('Error converting to Quartz format:', error);
     return {};
   }
 }
 
 /**
  * 批量获取标签（优化版本）
- * 减少数据库查询次数
+ * 
+ * 使用并发查询优化性能，减少数据库查询次数
+ * 推荐在生产环境使用此函数
+ * 
+ * @returns Quartz 格式的内容索引
+ * @throws {Error} 当数据获取或转换失败时抛出错误
+ * @example
+ * ```typescript
+ * const index = await convertToQuartzFormatOptimized();
+ * console.log(`转换了 ${Object.keys(index).length} 篇文章`);
+ * ```
  */
 export async function convertToQuartzFormatOptimized(): Promise<QuartzContentIndex> {
   try {
@@ -132,7 +167,7 @@ export async function convertToQuartzFormatOptimized(): Promise<QuartzContentInd
     
     return contentIndex;
   } catch (error) {
-    console.error('Error converting to Quartz format (optimized):', error);
+    logger.error('Error converting to Quartz format (optimized):', error);
     return {};
   }
 }
@@ -144,7 +179,7 @@ export function validateQuartzFormat(index: QuartzContentIndex): boolean {
   for (const [slug, details] of Object.entries(index)) {
     // 验证必需字段
     if (!details.slug || !details.title || !Array.isArray(details.links) || !Array.isArray(details.tags)) {
-      console.error(`Invalid ContentDetails for slug: ${slug}`, details);
+      logger.error(`Invalid ContentDetails for slug: ${slug}`, details);
       return false;
     }
     

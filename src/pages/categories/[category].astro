@@ -7,31 +7,24 @@ import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
 import { getArticles } from '../../lib/articles';
 import ArticleCard from '../../components/ArticleCard.astro';
+import { getCategoryInfo, isValidCategory } from '../../lib/categories';
 
-const { category } = Astro.params;
+const { category: categoryParam } = Astro.params;
 
-// 分类信息
-const categoryInfo: Record<string, { name: string; icon: string; description: string }> = {
-  math: { name: '数学', icon: '📐', description: '数学相关的知识和学习笔记' },
-  physics: { name: '物理', icon: '⚛️', description: '物理学原理和实验' },
-  chemistry: { name: '化学', icon: '🧪', description: '化学知识和实验记录' },
-  biology: { name: '生物', icon: '🧬', description: '生物学和生命科学' },
-  computer: { name: '计算机', icon: '💻', description: '编程和计算机科学' },
-  literature: { name: '文学', icon: '📚', description: '文学作品和语言学习' },
-};
+// 验证分类参数
+if (!categoryParam || !isValidCategory(categoryParam)) {
+  return Astro.redirect('/404');
+}
 
-const currentCategory = categoryInfo[category || ''];
+const category = categoryParam;
+const currentCategory = getCategoryInfo(category);
 
 if (!currentCategory) {
   return Astro.redirect('/404');
 }
 
-// 获取所有文章（后续可以根据分类过滤）
-// TODO: 在数据库中添加 category 字段
-const allArticles = await getArticles();
-
-// 暂时通过标签过滤（后续可以改为专门的分类字段）
-const articles = allArticles; // 可以根据需要过滤
+// 根据分类获取文章
+const articles = await getArticles(undefined, category);
 ---
 
 <Layout title={`${currentCategory.name} - 学科分类`}>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Article } from '../../db/schema';
 import { saveArticle, updateArticle } from '../../lib/api';
+import { getAllCategories, categoryInfo, type Category } from '../../lib/categories';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.css'
 
@@ -14,7 +15,12 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
   const [slug, setSlug] = useState(article?.slug || '');
   const [excerpt, setExcerpt] = useState(article?.excerpt || '');
   const [content, setContent] = useState(article?.content || '');
-  const [status, setStatus] = useState(article?.status || 'draft');
+  const [status, setStatus] = useState<'draft' | 'published' | 'archived'>(
+    (article?.status as 'draft' | 'published' | 'archived') || 'draft'
+  );
+  const [category, setCategory] = useState<Category | ''>(
+    (article?.category as Category) || ''
+  );
   const [featuredImage, setFeaturedImage] = useState(article?.featuredImage || '');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -47,7 +53,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
         text: '文章已成功保存',
       });
     } catch (err) {
-      console.error('Error saving article:', err);
+      // Error logging handled by api functions
       Swal.fire({
         icon: 'error',
         title: '保存文章时发生错误',
@@ -65,6 +71,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
       setExcerpt(article.excerpt || '');
       setContent(article.content || '');
       setStatus(article.status || 'draft');
+      setCategory((article.category as Category) || '');
       setFeaturedImage(article.featuredImage || '');
     }
   }, [article]);
@@ -78,6 +85,7 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
       excerpt,
       content,
       status,
+      category: category || null,
       featuredImage,
       updatedAt: new Date(),
       ...(status === 'published' && !article?.publishedAt && { publishedAt: new Date() })
@@ -163,12 +171,41 @@ export default function ArticleEditor({ article, onCancel }: ArticleEditorProps)
             <select
               id="status"
               value={status}
-              onChange={(e) => setStatus(e.target.value as any)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === 'draft' || value === 'published' || value === 'archived') {
+                  setStatus(value);
+                }
+              }}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
             >
               <option value="draft">草稿</option>
               <option value="published">已发布</option>
               <option value="archived">已归档</option>
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+              分类
+            </label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || getAllCategories().includes(value as Category)) {
+                  setCategory(value as Category | '');
+                }
+              }}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+            >
+              <option value="">无分类</option>
+              {getAllCategories().map((cat) => (
+                <option key={cat} value={cat}>
+                  {categoryInfo[cat].icon} {categoryInfo[cat].name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

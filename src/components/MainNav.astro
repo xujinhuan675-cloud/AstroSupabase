@@ -1,8 +1,10 @@
 ---
 /**
  * 主导航栏组件
- * 包含：首页、文章、学科分类、标签、图谱
+ * 包含：首页、文章、学科分类、标签、搜索
  */
+import Search from './quartz/Search';
+
 const currentPath = Astro.url.pathname;
 
 const isActive = (path: string) => {
@@ -51,6 +53,11 @@ const isActive = (path: string) => {
       <a href="/tags" class:list={['nav-link', { active: isActive('/tags') }]}>
         标签
       </a>
+      
+      <!-- 搜索组件 -->
+      <div class="nav-search">
+        <Search client:only="react" enablePreview={true} />
+      </div>
     </div>
 
     <!-- 移动端菜单按钮 -->
@@ -94,7 +101,7 @@ const isActive = (path: string) => {
   }
 
   .nav-links {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 0.5rem;
   }
@@ -190,6 +197,23 @@ const isActive = (path: string) => {
     margin: 0.5rem 0;
   }
 
+  /* 搜索组件 */
+  .nav-search {
+    margin-left: 1rem;
+    flex-shrink: 0;
+    min-width: 180px;
+  }
+  
+  /* 导航栏中的搜索框样式调整 */
+  .nav-search :global(.search) {
+    width: 100%;
+  }
+  
+  .nav-search :global(.search-box-button) {
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
   /* 移动端菜单按钮 */
   .mobile-menu-toggle {
     display: none;
@@ -234,7 +258,7 @@ const isActive = (path: string) => {
     }
 
     .nav-links {
-      display: none;
+      display: none !important;
       position: absolute;
       top: 64px;
       left: 0;
@@ -245,6 +269,12 @@ const isActive = (path: string) => {
       align-items: stretch;
       gap: 0;
       padding: 1rem 0;
+    }
+    
+    .nav-search {
+      margin-left: 0;
+      padding: 0.5rem 1.5rem;
+      width: 100%;
     }
 
     .nav-links.active {

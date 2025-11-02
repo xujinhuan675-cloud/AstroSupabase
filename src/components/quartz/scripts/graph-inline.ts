@@ -103,13 +103,37 @@ export async function initGraph(
   const visited = getVisited();
   removeAllChildren(graph);
 
-  // 获取配置
+  // 获取配置（提供默认值，防止配置为空导致的问题）
+  const defaultConfig: D3Config = {
+    drag: true,
+    zoom: true,
+    depth: 1,
+    scale: 1.1,
+    repelForce: 1.5,
+    centerForce: 0.3,
+    linkDistance: 45,
+    fontSize: 0.75,
+    opacityScale: 1,
+    removeTags: [],
+    showTags: true,
+    focusOnHover: false,
+    enableRadial: false,
+  };
+
   let config: D3Config;
   try {
-    config = JSON.parse(graph.dataset['cfg'] || '{}') as D3Config;
-  } catch {
-    console.error('Failed to parse graph config');
-    return;
+    const datasetConfig = graph.dataset['cfg'];
+    if (datasetConfig) {
+      const parsed = JSON.parse(datasetConfig) as Partial<D3Config>;
+      config = { ...defaultConfig, ...parsed };
+    } else {
+      // 如果 dataset 为空，使用默认配置
+      config = defaultConfig;
+    }
+  } catch (error) {
+    console.error('Failed to parse graph config:', error);
+    // 使用默认配置而不是直接返回
+    config = defaultConfig;
   }
 
   const {
@@ -165,6 +189,10 @@ export async function initGraph(
   // 计算邻域（按深度过滤）
   const neighbourhood = new Set<string>();
   const wl: (string | '__SENTINEL')[] = [slug, '__SENTINEL'];
+  
+  // 确保当前 slug 始终包含在邻域中
+  neighbourhood.add(slug);
+  
   if (depth >= 0) {
     let currentDepth = depth;
     while (currentDepth >= 0 && wl.length > 0) {
@@ -185,8 +213,14 @@ export async function initGraph(
       }
     }
   } else {
+    // depth < 0 表示显示所有节点
     validLinks.forEach((id) => neighbourhood.add(id));
     if (showTags) tags.forEach((tag) => neighbourhood.add(tag));
+  }
+  
+  // 再次确保当前 slug 在邻域中（防止被过滤掉）
+  if (!neighbourhood.has(slug) && data.has(slug)) {
+    neighbourhood.add(slug);
   }
 
   // 构建节点数据
@@ -201,15 +235,45 @@ export async function initGraph(
     };
   });
 
+  // 过滤链接，确保源和目标都在节点列表中
+  const filteredLinks = links.filter(
+    (l) => neighbourhood.has(l.source) && neighbourhood.has(l.target)
+  );
+
+  // 构建链接数据，确保节点存在
+  const graphLinks: LinkData[] = filteredLinks
+    .map((l) => {
+      const sourceNode = nodes.find((n) => n.id === l.source);
+      const targetNode = nodes.find((n) => n.id === l.target);
+      if (sourceNode && targetNode) {
+        return {
+          source: sourceNode,
+          target: targetNode,
+        };
+      }
+      return null;
+    })
+    .filter((l): l is LinkData => l !== null);
+
   const graphData: { nodes: NodeData[]; links: LinkData[] } = {
     nodes,
-    links: links
-      .filter((l) => neighbourhood.has(l.source) && neighbourhood.has(l.target))
-      .map((l) => ({
-        source: nodes.find((n) => n.id === l.source)!,
-        target: nodes.find((n) => n.id === l.target)!,
-      })),
+    links: graphLinks,
   };
+
+  // 验证图谱数据
+  if (nodes.length === 0) {
+    console.warn('Graph has no nodes to display. Content index might be empty or slug not found.');
+    // 至少显示当前节点（如果数据中存在）
+    if (data.has(slug)) {
+      const currentNodeData = data.get(slug)!;
+      graphData.nodes = [{
+        id: slug,
+        text: currentNodeData.title || slug,
+        tags: currentNodeData.tags ?? [],
+      }];
+      graphData.links = [];
+    }
+  }
 
   const width = graph.offsetWidth || 800;
   const height = Math.max(graph.offsetHeight, 250);
@@ -397,7 +461,7 @@ export async function initGraph(
   tweens.forEach((tween) => tween.stop());
   tweens.clear();
 
-  // 初始化 PixiJS
+  // 初始化 PixiJS（带 WebGL 降级支持）
   const app = new Application() as any;
   try {
     await app.init({
@@ -407,13 +471,30 @@ export async function initGraph(
       autoStart: false,
       autoDensity: true,
       backgroundAlpha: 0,
-      preference: 'webgpu',
+      preference: 'webgpu', // 优先使用 WebGPU
+      fallback: 'webgl', // 降级到 WebGL
       resolution: window.devicePixelRatio,
       eventMode: 'static',
     });
   } catch (error) {
-    console.error('Failed to initialize PixiJS:', error);
-    return;
+    console.error('Failed to initialize PixiJS with WebGPU, trying WebGL:', error);
+    try {
+      // 如果 WebGPU 失败，尝试 WebGL
+      await app.init({
+        width,
+        height,
+        antialias: true,
+        autoStart: false,
+        autoDensity: true,
+        backgroundAlpha: 0,
+        preference: 'webgl',
+        resolution: window.devicePixelRatio,
+        eventMode: 'static',
+      });
+    } catch (fallbackError) {
+      console.error('Failed to initialize PixiJS with WebGL:', fallbackError);
+      return;
+    }
   }
 
   graph.appendChild(app.canvas);
@@ -430,6 +511,14 @@ export async function initGraph(
   for (const n of graphData.nodes) {
     const nodeId = n.id;
 
+    // 动态获取文字颜色，确保在暗色模式下使用浅色
+    const getTextColor = () => {
+      const currentDarkValue = getComputedStyle(document.documentElement)
+        .getPropertyValue('--dark')
+        .trim();
+      return currentDarkValue || computedStyleMap['--dark'] || '#2d2d2d';
+    };
+
     const label = new Text({
       interactive: false,
       eventMode: 'none',
@@ -438,7 +527,7 @@ export async function initGraph(
       anchor: { x: 0.5, y: 1.2 },
       style: {
         fontSize: fontSize * 16, // 调整为 16，标签文字大小适中
-        fill: computedStyleMap['--dark'] || '#2d2d2d',
+        fill: getTextColor(),
         fontFamily: computedStyleMap['--bodyFont'] || 'Sans-Serif',
       },
       resolution: window.devicePixelRatio * 4,
@@ -664,11 +753,45 @@ export async function initGraph(
 
   requestAnimationFrame(animate);
 
+  // 监听暗色模式切换，更新标签颜色
+  const updateLabelColors = () => {
+    const currentDarkValue = getComputedStyle(document.documentElement)
+      .getPropertyValue('--dark')
+      .trim();
+    const textColor = currentDarkValue || computedStyleMap['--dark'] || '#2d2d2d';
+    
+    // 更新所有标签颜色
+    for (const nodeRender of nodeRenderData) {
+      if (nodeRender.label) {
+        (nodeRender.label.style as any).fill = textColor;
+      }
+    }
+  };
+
+  // 监听主题变化
+  const themeObserver = new MutationObserver(() => {
+    updateLabelColors();
+  });
+
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['saved-theme', 'class'],
+  });
+
+  // 也监听媒体查询变化（系统暗色模式）
+  const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const handleDarkModeChange = () => {
+    updateLabelColors();
+  };
+  darkModeMediaQuery.addEventListener('change', handleDarkModeChange);
+
   // 返回清理函数
   return () => {
     stopAnimation = true;
     tweens.forEach((t) => t.stop());
     tweens.clear();
+    themeObserver.disconnect();
+    darkModeMediaQuery.removeEventListener('change', handleDarkModeChange);
     try {
       app.destroy(true);
     } catch (error) {

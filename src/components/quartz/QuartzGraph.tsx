@@ -6,6 +6,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { D3Config } from '../../types/graph-quartz';
 import { initGraph } from './scripts/graph-inline';
+import { graphConfig } from '../../config';
 import '../../styles/quartz/graph-quartz.css';
 
 export interface QuartzGraphProps {
@@ -25,37 +26,9 @@ export interface QuartzGraphProps {
   isGlobal?: boolean;
 }
 
-const defaultLocalGraph: Partial<D3Config> = {
-  drag: true,
-  zoom: true,
-  depth: 1,
-  scale: 1.1,
-  repelForce: 1.5, // 进一步增加到 1.5，更强的排斥力
-  centerForce: 0.3,
-  linkDistance: 45, // 进一步增加到 45，更大的节点间距
-  fontSize: 0.75, // 调整为 0.75，使标签文字适中
-  opacityScale: 1,
-  showTags: true,
-  removeTags: [],
-  focusOnHover: false,
-  enableRadial: false,
-};
-
-const defaultGlobalGraph: Partial<D3Config> = {
-  drag: true,
-  zoom: true,
-  depth: -1,
-  scale: 0.9,
-  repelForce: 1.2, // 进一步增加到 1.2，全局图谱也需要更大的间距
-  centerForce: 0.2,
-  linkDistance: 45, // 进一步增加到 45，更大的节点间距
-  fontSize: 0.7, // 调整为 0.7，全局图谱标签文字稍小
-  opacityScale: 1,
-  showTags: true,
-  removeTags: [],
-  focusOnHover: true,
-  enableRadial: true,
-};
+// 使用集中管理的配置
+const defaultLocalGraph = graphConfig.defaultLocal;
+const defaultGlobalGraph = graphConfig.defaultGlobal;
 
 export default function QuartzGraph({
   currentSlug,

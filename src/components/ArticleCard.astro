@@ -11,7 +11,7 @@ const excerpt = content.substring(0, 150) + '...';
 const date = new Date(createdAt).toLocaleDateString('zh-CN');
 ---
 
-<article class="rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300" style="background-color: transparent;">
+<article class="article-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300" style="background-color: transparent;">
   <div class="p-6">
     <div class="flex justify-between items-center mb-2 text-sm" style="color: var(--gray);">
       <span>{authorId}</span>
@@ -35,3 +35,21 @@ const date = new Date(createdAt).toLocaleDateString('zh-CN');
     </a>
   </div>
 </article>
+
+<style>
+  /* 移除被 popover 脚本自动标记的 internal 链接在卡片内的背景样式 */
+  .article-card a.internal {
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* 保持标题与按钮的颜色风格一致 */
+  .article-card h2 a.internal {
+    color: var(--dark);
+  }
+
+  .article-card a.internal:hover {
+    color: var(--secondary);
+  }
+</style>
