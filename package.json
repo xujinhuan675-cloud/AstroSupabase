@@ -19,7 +19,6 @@
     "db:migrate": "tsx scripts/migrate-add-cache-fields.ts",
     "db:indexes": "tsx scripts/add-indexes.ts",
     "diagnose": "tsx scripts/diagnose-db.ts",
-    "warm-cache": "tsx scripts/warm-cache.ts",
     "test:graph": "tsx scripts/test-graph.ts",
     "test:perf": "tsx scripts/test-performance.ts"
   },
