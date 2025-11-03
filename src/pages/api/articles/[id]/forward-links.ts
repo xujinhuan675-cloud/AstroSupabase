@@ -2,6 +2,8 @@ import { getForwardLinks } from '../../../../lib/links-service';
 import { createApiHandler, parseIdParam } from '../../../../lib/api-handler';
 import { createModuleLogger } from '../../../../lib/logger';
 
+export const prerender = false;
+
 const logger = createModuleLogger('API.ForwardLinks');
 
 /**

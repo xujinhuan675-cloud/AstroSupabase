@@ -7,6 +7,8 @@ import { z } from "zod";
 import { createModuleLogger } from "../../../lib/logger";
 import { ApiErrors, handleApiError } from "../../../lib/api-error";
 
+export const prerender = false;
+
 const logger = createModuleLogger('API.Articles');
 
 // Zod schema for article updates (PATCH)
@@ -153,5 +155,3 @@ export const DELETE: APIRoute = async ({ params }) => {
     return handleApiError(error);
   }
 };
-
-export const prerender = false;

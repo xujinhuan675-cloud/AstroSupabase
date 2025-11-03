@@ -4,6 +4,8 @@ import { cache } from '../../lib/cache';
 import { cacheConfig } from '../../config';
 import { createModuleLogger } from '../../lib/logger';
 
+export const prerender = false;
+
 const logger = createModuleLogger('API.ContentIndex');
 const CACHE_KEY = 'content-index';
 

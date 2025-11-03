@@ -18,6 +18,18 @@ import Explorer from '../../components/quartz/Explorer';
 import QuartzGraph from '../../components/quartz/QuartzGraph';
 import MainNav from '../../components/MainNav.astro';
 
+// 构建时获取所有文章 ID，生成静态路径
+export async function getStaticPaths() {
+  const allArticles = await db
+    .select({ id: articles.id })
+    .from(articles)
+    .where(eq(articles.status, 'published'));
+  
+  return allArticles.map(article => ({
+    params: { id: article.id.toString() },
+  }));
+}
+
 const { id } = Astro.params;
 
 if (!id) {

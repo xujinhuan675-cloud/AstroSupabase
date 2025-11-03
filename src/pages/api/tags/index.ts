@@ -2,6 +2,8 @@ import { getAllTags } from '../../../lib/links-service';
 import { createApiHandler } from '../../../lib/api-handler';
 import { createModuleLogger } from '../../../lib/logger';
 
+export const prerender = false;
+
 const logger = createModuleLogger('API.Tags');
 
 /**

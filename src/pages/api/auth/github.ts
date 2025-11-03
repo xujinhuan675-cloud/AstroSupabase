@@ -1,6 +1,8 @@
 import { supabase } from '../../../lib/supabase';
 import type { APIRoute } from 'astro';
 
+export const prerender = false;
+
 export const get: APIRoute = async ({ request, redirect }) => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'github',

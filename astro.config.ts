@@ -20,6 +20,7 @@ export default defineConfig({
     sitemap(),
   ],
   
-  output: 'server',
+  output: 'static',
   adapter: vercel(),
+  // 静态优先模式：默认所有页面静态化，仅后台/认证/API 使用 SSR
 });

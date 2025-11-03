@@ -7,7 +7,16 @@ import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
 import { getArticles } from '../../lib/articles';
 import ArticleCard from '../../components/ArticleCard.astro';
-import { getCategoryInfo, isValidCategory } from '../../lib/categories';
+import { getCategoryInfo, isValidCategory, getAllCategories } from '../../lib/categories';
+
+// 构建时获取所有分类，生成静态路径
+export async function getStaticPaths() {
+  const categories = getAllCategories();
+  
+  return categories.map(category => ({
+    params: { category },
+  }));
+}
 
 const { category: categoryParam } = Astro.params;
 

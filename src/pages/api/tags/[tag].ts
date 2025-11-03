@@ -3,6 +3,8 @@ import { createApiHandler, parseIdParam } from '../../../lib/api-handler';
 import { ApiErrors } from '../../../lib/api-error';
 import { createModuleLogger } from '../../../lib/logger';
 
+export const prerender = false;
+
 const logger = createModuleLogger('API.Tags');
 
 /**
