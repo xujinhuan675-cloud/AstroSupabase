@@ -3,6 +3,7 @@
  * 用于 GitHub Actions 自动化部署
  */
 
+import 'dotenv/config';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
