@@ -3,8 +3,8 @@ import { getArticleById } from '../../lib/articles';
 import { processMarkdown } from '../../lib/markdown-processor';
 import { getArticleTags, getForwardLinks, getBacklinks } from '../../lib/links-service';
 import { db } from '../../db/client';
-import { articles } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { articles, articleTags } from '../../db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import QuartzLayout from '../../layouts/QuartzLayout.astro';
 import Backlinks from '../../components/Backlinks';
 import TableOfContents from '../../components/quartz/TableOfContents';
@@ -20,17 +20,52 @@ import MainNav from '../../components/MainNav.astro';
 
 // 构建时获取所有文章 ID，生成静态路径
 export async function getStaticPaths() {
+  // 获取所有已发布文章的基本信息（用于生成路径）
   const allArticles = await db
-    .select({ id: articles.id })
+    .select({ 
+      id: articles.id,
+      title: articles.title,
+    })
     .from(articles)
     .where(eq(articles.status, 'published'));
   
+  // 批量获取所有文章的标签（避免 N+1 查询）
+  const allTags = await db
+    .select({
+      articleId: articleTags.articleId,
+      tag: articleTags.tag,
+    })
+    .from(articleTags)
+    .innerJoin(articles, eq(articleTags.articleId, articles.id))
+    .where(eq(articles.status, 'published'));
+  
+  // 构建标签映射：articleId -> tags[]
+  const tagsMap = new Map<number, string[]>();
+  allTags.forEach(({ articleId, tag }) => {
+    if (!tagsMap.has(articleId)) {
+      tagsMap.set(articleId, []);
+    }
+    tagsMap.get(articleId)!.push(tag);
+  });
+  
+  // 为每篇文章附加标签信息
+  const articlesWithTags = allArticles.map(article => ({
+    id: article.id,
+    title: article.title,
+    tags: tagsMap.get(article.id) || [],
+  }));
+  
   return allArticles.map(article => ({
     params: { id: article.id.toString() },
+    // 将所有文章数据（含标签）作为 props 传递给每个页面（用于 Explorer 静态渲染）
+    props: { 
+      allArticlesForExplorer: articlesWithTags 
+    },
   }));
 }
 
 const { id } = Astro.params;
+const { allArticlesForExplorer } = Astro.props;
 
 if (!id) {
   return Astro.redirect('/404');
@@ -122,8 +157,13 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
       </div>
     </div>
     
-    <!-- Explorer 文件浏览器 - 浏览器空闲时加载 -->
-    <Explorer client:idle title="文章浏览" folderDefaultState="open" />
+    <!-- Explorer 文件浏览器 - 使用构建时静态数据 -->
+    <Explorer 
+      client:idle 
+      title="文章浏览" 
+      folderDefaultState="open"
+      initialData={allArticlesForExplorer}
+    />
   </div>
 
   <!-- Right Sidebar -->

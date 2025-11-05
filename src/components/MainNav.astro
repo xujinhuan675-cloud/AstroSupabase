@@ -27,8 +27,12 @@ const isActive = (path: string) => {
         首页
       </a>
 
-      <a href="/blog" class:list={['nav-link', { active: isActive('/blog') || isActive('/articles') }]}>
+      <a href="/blog" class:list={['nav-link', { active: currentPath.startsWith('/blog') }]}>
         文章
+      </a>
+
+      <a href="/articles" class:list={['nav-link', { active: isActive('/articles') }]}>
+        所有文章
       </a>
 
       <!-- 学科分类下拉菜单 -->

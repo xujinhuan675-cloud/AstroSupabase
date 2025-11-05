@@ -156,12 +156,19 @@ async function importArticle(parsed: ParsedArticle): Promise<number | null> {
       ? new Date(parsed.frontmatter.date) 
       : now;
     
+    const frontmatterAuthor =
+      typeof parsed.frontmatter.author === 'string'
+        ? parsed.frontmatter.author.trim()
+        : undefined;
+
     const articleData = {
       title: parsed.title,
       slug: parsed.slug,
       content: parsed.content,
       excerpt: parsed.excerpt,
-      authorId: config.defaultAuthorId,
+      authorId: frontmatterAuthor && frontmatterAuthor.length > 0
+        ? frontmatterAuthor
+        : config.defaultAuthorId,
       status: config.defaultStatus,
       isDeleted: false,
       publishedAt,

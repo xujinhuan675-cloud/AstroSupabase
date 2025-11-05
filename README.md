@@ -758,6 +758,18 @@ Building Astro site...
 3. 确认 `DATABASE_URL` 已配置
 4. 重新部署
 
+**问题 2: GitHub Actions 部署失败，提示 `_render (nodejs18.x)` 或 `Function Runtimes must have a valid version`**
+
+解决方案：
+
+1. 更新项目文件：
+   - 在 `.github/workflows/deploy.yml` 中，将 `actions/setup-node` 的 `node-version` 调整为 `20`，并在 npm 缓存 key 中加入版本号前缀（例如 `node-20-`）。
+   - 在 `package.json` 中新增 `"engines": { "node": ">=20 <21" }`，确保构建环境选择 Node 20。
+   - 在 `vercel.json` 中移除 `functions` 节点，避免旧版 CLI 对运行时配置的兼容性问题。
+2. 登录 Vercel 控制台，进入 Project → Settings → Functions，确认 Node.js Version 设为 `20.x`。
+3. 推送上述改动到 `main` 分支，触发新的 GitHub Actions 部署。
+4. 重新运行工作流，日志中不再出现 `nodejs18.x`，部署即会成功。
+
 **问题 2: 预渲染时间过长**
 
 正常情况：

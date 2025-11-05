@@ -26,12 +26,15 @@ interface ExplorerProps {
   title?: string;
   folderDefaultState?: 'collapsed' | 'open';
   folderClickBehavior?: 'collapse' | 'link';
+  /** 预加载的文章数据（构建时传入，避免运行时 API 请求） */
+  initialData?: ArticleItem[];
 }
 
 export default function Explorer({
   title = '浏览',
   folderDefaultState = 'collapsed',
-  folderClickBehavior = 'collapse'
+  folderClickBehavior = 'collapse',
+  initialData
 }: ExplorerProps) {
   const [explorerData, setExplorerData] = useState<ExplorerNode[]>([]);
   const [collapsed, setCollapsed] = useState(false);
@@ -40,10 +43,78 @@ export default function Explorer({
     folderDefaultState === 'open' ? new Set(['all']) : new Set()
   );
 
+  // 构建树结构的核心函数（从文章列表构建文件夹树）
+  const buildTreeFromArticles = (articles: ArticleItem[]): ExplorerNode[] => {
+    if (!articles || articles.length === 0) {
+      console.log('Explorer: 没有文章数据');
+      return [];
+    }
+    
+    const tree: ExplorerNode[] = [];
+    const folderMap = new Map<string, ExplorerNode>();
+    
+    articles.forEach((article: ArticleItem) => {
+      // 创建文章节点
+      const articleNode: ExplorerNode = {
+        name: article.title,
+        path: `/articles/${article.id}`,
+        isFolder: false
+      };
+      
+      // 如果有标签，放到对应文件夹下
+      if (article.tags && article.tags.length > 0) {
+        article.tags.forEach((tag: string) => {
+          if (!folderMap.has(tag)) {
+            const folderNode: ExplorerNode = {
+              name: tag,
+              path: `/tags/${encodeURIComponent(tag)}`,
+              isFolder: true,
+              children: []
+            };
+            folderMap.set(tag, folderNode);
+            tree.push(folderNode);
+          }
+          folderMap.get(tag)!.children!.push(articleNode);
+        });
+      } else {
+        // 未分类文章
+        if (!folderMap.has('未分类')) {
+          const folderNode: ExplorerNode = {
+            name: '未分类',
+            path: '#',
+            isFolder: true,
+            children: []
+          };
+          folderMap.set('未分类', folderNode);
+          tree.push(folderNode);
+        }
+        folderMap.get('未分类')!.children!.push(articleNode);
+      }
+    });
+    
+    console.log('Explorer: 构建了', tree.length, '个文件夹，包含', articles.length, '篇文章');
+    return tree;
+  };
+
   useEffect(() => {
-    // 加载文章数据并构建树结构
+    // 优先使用静态数据（构建时传入）
+    if (initialData) {
+      console.log('Explorer: 使用静态预加载数据（构建时生成）');
+      const tree = buildTreeFromArticles(initialData);
+      setExplorerData(tree);
+      
+      // 如果默认状态是 open，自动展开所有文件夹
+      if (folderDefaultState === 'open' && tree.length > 0) {
+        const allFolderPaths = new Set(tree.map(node => node.path));
+        setExpandedFolders(allFolderPaths);
+      }
+      return;
+    }
+    
+    // 回退到运行时 API 请求（旧方式）
     const loadExplorerData = async () => {
       try {
+        console.log('Explorer: 从 API 动态加载数据（运行时请求）');
         const response = await fetch('/api/articles');
         const result = await response.json();
         
@@ -58,57 +129,7 @@ export default function Explorer({
           return;
         }
         
-        if (!articles || articles.length === 0) {
-          console.log('Explorer: 没有文章数据');
-          return;
-        }
-        
-        // 构建简单的树结构
-        const tree: ExplorerNode[] = [];
-        
-        // 根据标签分组
-        const folderMap = new Map<string, ExplorerNode>();
-        
-        articles.forEach((article: ArticleItem) => {
-          // 创建文章节点
-          const articleNode: ExplorerNode = {
-            name: article.title,
-            path: `/articles/${article.id}`,
-            isFolder: false
-          };
-          
-          // 如果有标签，放到对应文件夹下
-          if (article.tags && article.tags.length > 0) {
-            article.tags.forEach((tag: string) => {
-              if (!folderMap.has(tag)) {
-                const folderNode: ExplorerNode = {
-                  name: tag,
-                  path: `/tags/${encodeURIComponent(tag)}`,
-                  isFolder: true,
-                  children: []
-                };
-                folderMap.set(tag, folderNode);
-                tree.push(folderNode);
-              }
-              folderMap.get(tag)!.children!.push(articleNode);
-            });
-          } else {
-            // 未分类文章
-            if (!folderMap.has('未分类')) {
-              const folderNode: ExplorerNode = {
-                name: '未分类',
-                path: '#',
-                isFolder: true,
-                children: []
-              };
-              folderMap.set('未分类', folderNode);
-              tree.push(folderNode);
-            }
-            folderMap.get('未分类')!.children!.push(articleNode);
-          }
-        });
-        
-        console.log('Explorer: 构建了', tree.length, '个文件夹，包含', articles.length, '篇文章');
+        const tree = buildTreeFromArticles(articles);
         setExplorerData(tree);
         
         // 如果默认状态是 open，自动展开所有文件夹
@@ -123,7 +144,7 @@ export default function Explorer({
     };
     
     loadExplorerData();
-  }, [folderDefaultState]);
+  }, [folderDefaultState, initialData]);
 
   const toggleFolder = (path: string) => {
     const newExpanded = new Set(expandedFolders);
