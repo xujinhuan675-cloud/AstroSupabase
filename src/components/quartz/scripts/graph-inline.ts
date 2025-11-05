@@ -74,10 +74,18 @@ type TweenNode = {
 };
 
 /**
- * 从 API 获取内容索引数据
+ * 从静态文件或 API 获取内容索引数据
+ * 优先使用构建时生成的静态文件，回退到动态 API
  */
 async function fetchContentIndex(): Promise<Record<string, ContentDetails>> {
   try {
+    // 优先尝试静态文件（构建时生成）
+    const staticResponse = await fetch('/content-index.json');
+    if (staticResponse.ok) {
+      return await staticResponse.json();
+    }
+    
+    // 回退到动态 API
     const response = await fetch('/api/content-index.json');
     if (!response.ok) {
       throw new Error(`Failed to fetch content index: ${response.status}`);
