@@ -1,8 +1,12 @@
 ---
-title: 自动导入测试文章
-tags: [测试, 自动化, GitHub Actions]
+title: "自动导入测试文章"
 date: 2025-01-15
-excerpt: 这是一篇测试 GitHub Actions 自动导入功能的文章
+updated: 2025-11-05
+slug: test-import
+excerpt: "这是一篇测试 GitHub Actions 自动导入功能的文章"
+tags: [测试, 自动化, GitHub Actions]
+author: System
+status: published
 ---
 # 自动导入测试文章
 
