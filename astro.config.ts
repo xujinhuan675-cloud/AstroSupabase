@@ -20,9 +20,7 @@ export default defineConfig({
     sitemap(),
   ],
   
-  output: 'hybrid',
-  adapter: vercel({
-    runtime: 'nodejs20.x',
-  }),
-  // 混合模式：默认静态化，使用 export const prerender = false 标记需要 SSR 的页面
+  output: 'server',
+  adapter: vercel(),
+  // Server 模式：支持 SSR 和 API 路由，但大部分页面在构建时仍会预渲染
 });
