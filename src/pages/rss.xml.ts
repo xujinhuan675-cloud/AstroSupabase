@@ -13,10 +13,10 @@ export async function GET(context: APIContext) {
 
     return rss({
       // 网站标题
-      title: 'IOTO Digital Garden',
+      title: 'Openeducation',
       
       // 网站描述
-      description: 'Ship your Second Brain into the Cyber-Space - 分享技术见解、生活点滴与学习心得',
+      description: 'Ship your Second Brain into the Cyber-Space - 分享持续生长的知识网络',
       
       // 网站地址（从 context 获取，确保使用正确的域名）
       site: context.site?.toString() || 'https://astrosupabase.vercel.app',
@@ -45,7 +45,7 @@ export async function GET(context: APIContext) {
       // 自定义 XML 样式（可选）
       customData: `
         <language>zh-CN</language>
-        <copyright>Copyright ${new Date().getFullYear()} IOTO Digital Garden</copyright>
+        <copyright>Copyright ${new Date().getFullYear()} Openeducation</copyright>
         <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
       `,
       
