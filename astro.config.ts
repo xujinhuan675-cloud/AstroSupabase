@@ -20,7 +20,9 @@ export default defineConfig({
     sitemap(),
   ],
   
-  output: 'static',
-  adapter: vercel(),
-  // 静态优先模式：默认所有页面静态化，仅后台/认证/API 使用 SSR
+  output: 'hybrid',
+  adapter: vercel({
+    runtime: 'nodejs20.x',
+  }),
+  // 混合模式：默认静态化，使用 export const prerender = false 标记需要 SSR 的页面
 });
