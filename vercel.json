@@ -3,5 +3,11 @@
   "outputDirectory": "dist",
   "framework": "astro",
   "installCommand": "npm install",
-  "devCommand": "npm run dev"
+  "devCommand": "npm run dev",
+  "crons": [
+    {
+      "path": "/api/keep-alive",
+      "schedule": "0 0 */6 * *"
+    }
+  ]
 }

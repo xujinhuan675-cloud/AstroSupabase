@@ -1,10 +1,18 @@
 ---
+/**
+ * 文章详情页 - 静态生成版本
+ * 
+ * 优化策略：
+ * 1. 所有数据在构建时通过 getStaticPaths() 获取
+ * 2. 运行时零数据库查询
+ * 3. 页面部署到 Edge CDN，全球加速
+ */
 import { getArticleById } from '../../lib/articles';
 import { processMarkdown } from '../../lib/markdown-processor';
 import { getArticleTags, getForwardLinks, getBacklinks } from '../../lib/links-service';
 import { db } from '../../db/client';
-import { articles, articleTags } from '../../db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { articles, articleTags, articleLinks } from '../../db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
 import QuartzLayout from '../../layouts/QuartzLayout.astro';
 import Backlinks from '../../components/Backlinks';
 import TableOfContents from '../../components/quartz/TableOfContents';
@@ -17,122 +25,168 @@ import Search from '../../components/quartz/Search';
 import Explorer from '../../components/quartz/Explorer';
 import QuartzGraph from '../../components/quartz/QuartzGraph';
 import MainNav from '../../components/MainNav.astro';
+import type { Article } from '../../db/schema';
 
-// 构建时获取所有文章 ID，生成静态路径
+// 定义 props 类型
+interface ArticlePageProps {
+  article: Article;
+  tags: string[];
+  forwardLinks: Array<{ id: number; title: string; slug: string; excerpt: string | null }>;
+  backlinks: Array<{ id: number; title: string; slug: string; excerpt: string | null }>;
+  allArticlesForExplorer: Array<{ id: number; title: string; tags: string[] }>;
+  processedHtml: string;
+  readingTime: string;
+}
+
+// 构建时获取所有文章数据，生成静态页面
 export async function getStaticPaths() {
-  // 获取所有已发布文章的基本信息（用于生成路径）
-  const allArticles = await db
-    .select({ 
-      id: articles.id,
-      title: articles.title,
-    })
-    .from(articles)
-    .where(eq(articles.status, 'published'));
+  console.log('[BUILD] Starting static path generation for articles...');
+  const buildStart = Date.now();
   
-  // 批量获取所有文章的标签（避免 N+1 查询）
-  const allTags = await db
+  // 1. 获取所有已发布文章的完整数据
+  const allArticles = await db
+    .select()
+    .from(articles)
+    .where(and(
+      eq(articles.status, 'published'),
+      eq(articles.isDeleted, false)
+    ));
+  
+  console.log(`[BUILD] Found ${allArticles.length} published articles`);
+  
+  // 2. 批量获取所有标签（避免 N+1 查询）
+  const allTagsData = await db
     .select({
       articleId: articleTags.articleId,
       tag: articleTags.tag,
     })
     .from(articleTags)
     .innerJoin(articles, eq(articleTags.articleId, articles.id))
-    .where(eq(articles.status, 'published'));
+    .where(and(
+      eq(articles.status, 'published'),
+      eq(articles.isDeleted, false)
+    ));
   
   // 构建标签映射：articleId -> tags[]
   const tagsMap = new Map<number, string[]>();
-  allTags.forEach(({ articleId, tag }) => {
+  allTagsData.forEach(({ articleId, tag }) => {
     if (!tagsMap.has(articleId)) {
       tagsMap.set(articleId, []);
     }
     tagsMap.get(articleId)!.push(tag);
   });
+
+  // 3. 批量获取所有链接关系
+  const allLinksData = await db
+    .select({
+      sourceId: articleLinks.sourceId,
+      targetId: articleLinks.targetId,
+    })
+    .from(articleLinks);
   
-  // 为每篇文章附加标签信息
-  const articlesWithTags = allArticles.map(article => ({
+  // 构建链接映射
+  const forwardLinksMap = new Map<number, number[]>();
+  const backlinksMap = new Map<number, number[]>();
+  
+  allLinksData.forEach(({ sourceId, targetId }) => {
+    // 前向链接：sourceId -> targetId
+    if (!forwardLinksMap.has(sourceId)) {
+      forwardLinksMap.set(sourceId, []);
+    }
+    forwardLinksMap.get(sourceId)!.push(targetId);
+    
+    // 反向链接：targetId <- sourceId
+    if (!backlinksMap.has(targetId)) {
+      backlinksMap.set(targetId, []);
+    }
+    backlinksMap.get(targetId)!.push(sourceId);
+  });
+  
+  // 4. 构建文章 ID -> 文章数据的映射（用于链接信息）
+  const articleMap = new Map(allArticles.map(a => [a.id, a]));
+  
+  // 5. 为 Explorer 准备的文章列表（含标签）
+  const allArticlesForExplorer = allArticles.map(article => ({
     id: article.id,
     title: article.title,
     tags: tagsMap.get(article.id) || [],
   }));
   
-  return allArticles.map(article => ({
-    params: { id: article.id.toString() },
-    // 将所有文章数据（含标签）作为 props 传递给每个页面（用于 Explorer 静态渲染）
-    props: { 
-      allArticlesForExplorer: articlesWithTags 
-    },
-  }));
-}
-
-const { id } = Astro.params;
-const { allArticlesForExplorer } = Astro.props;
-
-if (!id) {
-  return Astro.redirect('/404');
-}
-
-const articleId = parseInt(id);
-
-if (isNaN(articleId)) {
-  return Astro.redirect('/404');
-}
-
-const article = await getArticleById(articleId);
-
-if (!article) {
-  return Astro.redirect('/404');
-}
-
-// 并行查询标签、前向链接和反向链接
-const [tags, forwardLinks, backlinks] = await Promise.all([
-  getArticleTags(articleId),
-  getForwardLinks(articleId),
-  getBacklinks(articleId),
-]);
-
-// 使用缓存的 HTML 或实时处理 Markdown
-let processed: { html: string; readingTime: string; };
-const renderStart = Date.now();
-
-if (article.htmlContent && article.readingTime) {
-  // 使用缓存的 HTML（极快！构建时预处理）
-  processed = {
-    html: article.htmlContent,
-    readingTime: article.readingTime,
-  };
-  console.log(`[CACHE HIT] Article ${articleId} loaded from pre-rendered cache in ${Date.now() - renderStart}ms`);
-} else {
-  // 缓存未命中，需要实时处理 Markdown（建议运行 npm run pre-render）
-  console.warn(`[CACHE MISS] Article ${articleId} - processing Markdown at runtime (slow!)`);
+  // 6. 获取所有文章 slug（用于 Markdown 处理）
+  const allArticleSlugs = new Set(allArticles.map(a => a.slug));
   
-  const allArticleSlugs = await db
-    .select({ slug: articles.slug })
-    .from(articles)
-    .where(eq(articles.status, 'published'))
-    .then(results => new Set(results.map(r => r.slug)));
-
-  processed = await processMarkdown(
-    article.content,
-    {}, // options
-    async (permalink: string) => {
-      return allArticleSlugs.has(permalink);
+  // 7. 为每篇文章生成静态路径和 props
+  const paths = await Promise.all(allArticles.map(async (article) => {
+    // 获取标签
+    const tags = tagsMap.get(article.id) || [];
+    
+    // 获取前向链接详情
+    const forwardLinkIds = forwardLinksMap.get(article.id) || [];
+    const forwardLinks = forwardLinkIds
+      .map(id => articleMap.get(id))
+      .filter((a): a is Article => a !== undefined && a.status === 'published' && !a.isDeleted)
+      .map(a => ({
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        excerpt: a.excerpt,
+      }));
+    
+    // 获取反向链接详情
+    const backlinkIds = backlinksMap.get(article.id) || [];
+    const backlinks = backlinkIds
+      .map(id => articleMap.get(id))
+      .filter((a): a is Article => a !== undefined && a.status === 'published' && !a.isDeleted)
+      .map(a => ({
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        excerpt: a.excerpt,
+      }));
+    
+    // 处理 Markdown（使用缓存或实时处理）
+    let processedHtml: string;
+    let readingTime: string;
+    
+    if (article.htmlContent && article.readingTime) {
+      // 使用预渲染缓存
+      processedHtml = article.htmlContent;
+      readingTime = article.readingTime;
+    } else {
+      // 构建时处理 Markdown
+      console.warn(`[BUILD] Article ${article.id} has no cached HTML, processing...`);
+      const processed = await processMarkdown(
+        article.content,
+        {},
+        async (permalink: string) => allArticleSlugs.has(permalink)
+      );
+      processedHtml = processed.html;
+      readingTime = processed.readingTime;
     }
-  );
-
-  const processingTime = Date.now() - renderStart;
-  console.log(`[RUNTIME PROCESSING] Article ${articleId} processed in ${processingTime}ms`);
-
-  // 更新缓存（异步，不阻塞页面渲染）
-  db.update(articles)
-    .set({
-      htmlContent: processed.html,
-      readingTime: processed.readingTime,
-    })
-    .where(eq(articles.id, articleId))
-    .then(() => console.log(`[CACHE UPDATED] Article ${articleId}`))
-    .catch(err => console.error('Failed to cache HTML:', err));
+    
+    return {
+      params: { id: article.id.toString() },
+      props: {
+        article,
+        tags,
+        forwardLinks,
+        backlinks,
+        allArticlesForExplorer,
+        processedHtml,
+        readingTime,
+      } as ArticlePageProps,
+    };
+  }));
+  
+  console.log(`[BUILD] Static paths generated in ${Date.now() - buildStart}ms`);
+  return paths;
 }
 
+// 从 props 获取所有数据（构建时已准备好，运行时零查询）
+const { article, tags, forwardLinks, backlinks, allArticlesForExplorer, processedHtml, readingTime } = Astro.props as ArticlePageProps;
+const { id } = Astro.params;
+
+// 格式化日期
 const formattedDate = new Date(article.publishedAt || article.createdAt).toLocaleDateString('zh-CN', {
   year: 'numeric',
   month: 'long',
@@ -150,10 +204,10 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   <div slot="left-sidebar">
     <!-- Search, Darkmode & ReaderMode 同一行 -->
     <div class="search-controls-row">
-      <Search client:only="react" enablePreview={true} />
+      <Search client:idle enablePreview={true} />
       <div class="control-icons">
-        <Darkmode client:only="react" />
-        <ReaderMode client:only="react" />
+        <Darkmode client:load />
+        <ReaderMode client:idle />
       </div>
     </div>
     
@@ -192,7 +246,7 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
     
     <ContentMeta 
       publishedAt={new Date(article.publishedAt || article.createdAt)}
-      readingTime={processed.readingTime}
+      readingTime={readingTime}
       author={article.authorId.toString()}
     />
     
@@ -229,7 +283,7 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
       <div 
         class="prose prose-indigo prose-lg max-w-none"
         style="color: var(--dark);"
-        set:html={processed.html}
+        set:html={processedHtml}
       />
     </div>
 
@@ -260,10 +314,11 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
       </div>
     )}
 
-    {/* 反向链接组件 - 服务端已获取数据，延迟加载 */}
-    <Backlinks articleId={articleId} backlinks={backlinks} client:idle />
+    {/* 反向链接组件 - 数据已在构建时获取 */}
+    <Backlinks articleId={article.id} backlinks={backlinks} client:idle />
   </article>
 </QuartzLayout>
+
 
 <style>
   /* 增强 prose 样式以支持双向链接 */
@@ -277,12 +332,6 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   
   .prose a:hover {
     opacity: 0.8;
-  }
-  
-  /* 内部链接标记（用于 Popover） */
-  .prose a[href^="/articles/"],
-  .prose a[href^="/tags/"] {
-    /* 为内部链接添加 internal 类通过 JS 处理 */
   }
   
   .prose code {
