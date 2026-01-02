@@ -1,39 +1,50 @@
 ---
 /**
- * 学科分类文章列表页
- * 显示特定学科的所有文章
+ * 学科分类文章列表页 - 静态生成版本
+ * 
+ * 优化策略：
+ * 1. 所有数据在构建时通过 getStaticPaths() 获取
+ * 2. 运行时零数据库查询
  */
 import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
 import { getArticles } from '../../lib/articles';
 import ArticleCard from '../../components/ArticleCard.astro';
-import { getCategoryInfo, isValidCategory, getAllCategories } from '../../lib/categories';
+import { getCategoryInfo, isValidCategory, getAllCategories, type CategoryInfo } from '../../lib/categories';
+import type { Article } from '../../db/schema';
 
-// 构建时获取所有分类，生成静态路径
+// 定义 props 类型
+interface CategoryPageProps {
+  currentCategory: CategoryInfo;
+  articles: Article[];
+}
+
+// 构建时获取所有分类及其文章，生成静态路径
 export async function getStaticPaths() {
+  console.log('[BUILD] Starting static path generation for categories...');
+  
   const categories = getAllCategories();
   
-  return categories.map(category => ({
-    params: { category },
+  // 为每个分类获取文章列表
+  const paths = await Promise.all(categories.map(async (category) => {
+    const categoryInfo = getCategoryInfo(category);
+    const categoryArticles = await getArticles(undefined, category);
+    
+    return {
+      params: { category },
+      props: {
+        currentCategory: categoryInfo!,
+        articles: categoryArticles,
+      } as CategoryPageProps,
+    };
   }));
+  
+  console.log(`[BUILD] Category static paths generated for ${categories.length} categories`);
+  return paths;
 }
 
-const { category: categoryParam } = Astro.params;
-
-// 验证分类参数
-if (!categoryParam || !isValidCategory(categoryParam)) {
-  return Astro.redirect('/404');
-}
-
-const category = categoryParam;
-const currentCategory = getCategoryInfo(category);
-
-if (!currentCategory) {
-  return Astro.redirect('/404');
-}
-
-// 根据分类获取文章
-const articles = await getArticles(undefined, category);
+// 从 props 获取所有数据（构建时已准备好，运行时零查询）
+const { currentCategory, articles } = Astro.props as CategoryPageProps;
 ---
 
 <Layout title={`${currentCategory.name} - 学科分类`}>

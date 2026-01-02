@@ -1,9 +1,18 @@
 ---
+/**
+ * 博客首页 - 静态生成版本
+ * 
+ * 优化策略：
+ * 1. 构建时获取文章数据
+ * 2. 运行时零数据库查询
+ * 3. 页面部署到 Edge CDN，全球加速
+ */
 import Layout from '../layout/Layout.astro';
 import { getArticles } from '../lib/articles';
 import ArticleCard from '../components/ArticleCard.astro';
 import MainNav from '../components/MainNav.astro';
 
+// 构建时获取文章数据（hybrid 模式下默认静态）
 const articles = await getArticles(6);
 ---
 

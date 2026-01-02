@@ -1,43 +1,75 @@
 ---
+/**
+ * 标签文章列表页 - 静态生成版本
+ * 
+ * 优化策略：
+ * 1. 所有数据在构建时通过 getStaticPaths() 获取
+ * 2. 运行时零数据库查询
+ */
 import Layout from '../../layout/Layout.astro';
 import { db } from '../../db/client';
 import { articles, articleTags } from '../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 
-// 构建时获取所有标签，生成静态路径
+// 定义 props 类型
+interface TagPageProps {
+  decodedTag: string;
+  taggedArticles: Array<{
+    id: number;
+    title: string;
+    excerpt: string | null;
+    slug: string;
+    createdAt: Date;
+    publishedAt: Date | null;
+  }>;
+}
+
+// 构建时获取所有标签及其文章，生成静态路径
 export async function getStaticPaths() {
+  console.log('[BUILD] Starting static path generation for tags...');
+  
+  // 1. 获取所有唯一标签
   const allTags = await db
     .selectDistinct({ tag: articleTags.tag })
     .from(articleTags);
   
-  return allTags.map(({ tag }) => ({
-    params: { tag: encodeURIComponent(tag) },
+  console.log(`[BUILD] Found ${allTags.length} unique tags`);
+  
+  // 2. 为每个标签获取文章列表
+  const paths = await Promise.all(allTags.map(async ({ tag }) => {
+    const taggedArticles = await db
+      .select({
+        id: articles.id,
+        title: articles.title,
+        excerpt: articles.excerpt,
+        slug: articles.slug,
+        createdAt: articles.createdAt,
+        publishedAt: articles.publishedAt,
+      })
+      .from(articles)
+      .innerJoin(articleTags, eq(articles.id, articleTags.articleId))
+      .where(and(
+        eq(articleTags.tag, tag),
+        eq(articles.status, 'published'),
+        eq(articles.isDeleted, false)
+      ))
+      .orderBy(desc(articles.publishedAt));
+    
+    return {
+      params: { tag: encodeURIComponent(tag) },
+      props: {
+        decodedTag: tag,
+        taggedArticles,
+      } as TagPageProps,
+    };
   }));
+  
+  console.log('[BUILD] Tag static paths generated');
+  return paths;
 }
 
-const { tag } = Astro.params;
-
-if (!tag) {
-  return Astro.redirect('/404');
-}
-
-// 解码 URL 编码的标签
-const decodedTag = decodeURIComponent(tag);
-
-// 查询包含该标签的所有文章
-const taggedArticles = await db
-  .select({
-    id: articles.id,
-    title: articles.title,
-    excerpt: articles.excerpt,
-    slug: articles.slug,
-    createdAt: articles.createdAt,
-    publishedAt: articles.publishedAt,
-  })
-  .from(articles)
-  .innerJoin(articleTags, eq(articles.id, articleTags.articleId))
-  .where(eq(articleTags.tag, decodedTag))
-  .orderBy(articles.publishedAt);
+// 从 props 获取所有数据（构建时已准备好，运行时零查询）
+const { decodedTag, taggedArticles } = Astro.props as TagPageProps;
 ---
 
 <Layout title={`标签: ${decodedTag}`}>

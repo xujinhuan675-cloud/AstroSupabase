@@ -20,10 +20,11 @@ export default defineConfig({
     sitemap(),
   ],
   
-  // 关键变更：从 'server' 改为 'static'，实现静态优先
-  // 大部分页面在构建时预渲染为静态 HTML，部署到 Edge CDN
-  // 动态页面（dashboard、auth、api）通过 prerender: false 保持 SSR
-  output: 'static',
+  // 关键变更：使用 'hybrid' 模式
+  // - 默认静态预渲染（大部分页面）
+  // - 动态页面（dashboard、auth、api）通过 prerender: false 保持 SSR
+  // 注意：'static' 模式不支持 SSR 页面，必须使用 'hybrid'
+  output: 'hybrid',
   adapter: vercel({
     // 启用图片优化服务
     imageService: true,
