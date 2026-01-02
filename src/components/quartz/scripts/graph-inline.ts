@@ -1,18 +1,44 @@
 /**
  * Quartz Graph 渲染脚本（适配版）
  * 适配 AstroSupabase 的路径和导航系统
+ * 
+ * 性能优化：
+ * 1. D3 按需导入 - 只导入需要的模块，减少 ~150KB
+ * 2. 数据缓存 - 避免重复 fetch
+ * 3. 动画优化 - 静止时降低帧率
+ * 4. 节点数量限制 - 防止大图谱卡顿
  */
 
 import type { ContentDetails } from '../../../types/graph-quartz';
 import type { D3Config } from '../../../types/graph-quartz';
-import * as d3 from 'd3';
-import type {
-  SimulationNodeDatum,
-  SimulationLinkDatum,
-} from 'd3';
+
+// D3 按需导入 - 只导入需要的模块（减少约 150KB）
+import { 
+  forceSimulation, 
+  forceManyBody, 
+  forceCenter, 
+  forceLink, 
+  forceCollide, 
+  forceRadial,
+  type Simulation,
+  type SimulationNodeDatum,
+  type SimulationLinkDatum 
+} from 'd3-force';
+import { select } from 'd3-selection';
+import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
+import { drag } from 'd3-drag';
+
 import { Text, Graphics, Application, Container, Circle } from 'pixi.js';
 import { Group as TweenGroup, Tween as Tweened } from '@tweenjs/tween.js';
 import { simplifySlug, resolveRelative } from '../../../lib/quartz-path-utils';
+
+// 数据缓存 - 避免重复 fetch
+let cachedContentIndex: Record<string, ContentDetails> | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 分钟缓存
+
+// 最大节点数限制 - 防止大图谱卡顿
+const MAX_NODES = 200;
 
 // 工具函数
 function removeAllChildren(node: HTMLElement) {
@@ -32,7 +58,7 @@ type NodeData = {
   id: string;
   text: string;
   tags: string[];
-} & d3.SimulationNodeDatum;
+} & SimulationNodeDatum;
 
 type SimpleLinkData = {
   source: string;
@@ -42,7 +68,7 @@ type SimpleLinkData = {
 type LinkData = {
   source: NodeData;
   target: NodeData;
-} & d3.SimulationLinkDatum<NodeData>;
+} & SimulationLinkDatum<NodeData>;
 
 type LinkRenderData = GraphicsInfo & {
   simulationData: LinkData;
@@ -74,15 +100,24 @@ type TweenNode = {
 };
 
 /**
- * 从静态文件或 API 获取内容索引数据
+ * 从静态文件或 API 获取内容索引数据（带缓存）
  * 优先使用构建时生成的静态文件，回退到动态 API
  */
 async function fetchContentIndex(): Promise<Record<string, ContentDetails>> {
+  // 检查缓存是否有效
+  const now = Date.now();
+  if (cachedContentIndex && (now - cacheTimestamp) < CACHE_TTL) {
+    return cachedContentIndex;
+  }
+
   try {
     // 优先尝试静态文件（构建时生成）
     const staticResponse = await fetch('/content-index.json');
     if (staticResponse.ok) {
-      return await staticResponse.json();
+      const data = await staticResponse.json();
+      cachedContentIndex = data;
+      cacheTimestamp = now;
+      return data;
     }
     
     // 回退到动态 API
@@ -90,10 +125,13 @@ async function fetchContentIndex(): Promise<Record<string, ContentDetails>> {
     if (!response.ok) {
       throw new Error(`Failed to fetch content index: ${response.status}`);
     }
-    return await response.json();
+    const data = await response.json();
+    cachedContentIndex = data;
+    cacheTimestamp = now;
+    return data;
   } catch (error) {
     console.error('Error fetching content index:', error);
-    return {};
+    return cachedContentIndex || {};
   }
 }
 
@@ -286,18 +324,54 @@ export async function initGraph(
   const width = graph.offsetWidth || 800;
   const height = Math.max(graph.offsetHeight, 250);
 
-  // D3 力导向布局
-  const simulation = d3.forceSimulation<NodeData>(graphData.nodes)
-    .force('charge', d3.forceManyBody().strength(-100 * repelForce))
-    .force('center', d3.forceCenter().strength(centerForce))
-    .force('link', d3.forceLink(graphData.links).distance(linkDistance))
+  // 节点数量限制 - 防止大图谱卡顿
+  if (graphData.nodes.length > MAX_NODES) {
+    console.warn(`Graph has ${graphData.nodes.length} nodes, limiting to ${MAX_NODES}`);
+    // 保留当前节点和最相关的节点
+    const currentNode = graphData.nodes.find(n => n.id === slug);
+    const connectedNodeIds = new Set<string>();
+    graphData.links.forEach(l => {
+      if (l.source.id === slug || l.target.id === slug) {
+        connectedNodeIds.add(l.source.id);
+        connectedNodeIds.add(l.target.id);
+      }
+    });
+    
+    // 优先保留直接连接的节点
+    const priorityNodes = graphData.nodes.filter(n => 
+      n.id === slug || connectedNodeIds.has(n.id)
+    );
+    const otherNodes = graphData.nodes.filter(n => 
+      n.id !== slug && !connectedNodeIds.has(n.id)
+    ).slice(0, MAX_NODES - priorityNodes.length);
+    
+    graphData.nodes = [...priorityNodes, ...otherNodes];
+    
+    // 重新过滤链接
+    const nodeIds = new Set(graphData.nodes.map(n => n.id));
+    graphData.links = graphData.links.filter(l => 
+      nodeIds.has(l.source.id) && nodeIds.has(l.target.id)
+    );
+  }
+
+  // D3 力导向布局 - 使用按需导入的函数
+  const simulation = forceSimulation<NodeData>(graphData.nodes)
+    .force('charge', forceManyBody().strength(-100 * repelForce))
+    .force('center', forceCenter().strength(centerForce))
+    .force('link', forceLink(graphData.links).distance(linkDistance))
     // 进一步增强碰撞检测：增加50%的缓冲距离，并增加迭代次数以更好地避免重叠
-    .force('collide', d3.forceCollide<NodeData>((n) => nodeRadius(n) * 1.5).iterations(7));
+    .force('collide', forceCollide<NodeData>((n) => nodeRadius(n) * 1.5).iterations(7));
 
   const radius = (Math.min(width, height) / 2) * 0.8;
   if (enableRadial) {
-    simulation.force('radial', d3.forceRadial(radius).strength(0.2));
+    simulation.force('radial', forceRadial(radius).strength(0.2));
   }
+
+  // 动画优化：监听模拟结束事件
+  let isSimulationActive = true;
+  simulation.on('end', () => {
+    isSimulationActive = false;
+  });
 
   // 获取 CSS 变量
   const cssVars = [
@@ -606,7 +680,7 @@ export async function initGraph(
     linkRenderData.push(linkRenderDatum);
   }
 
-  let currentTransform = d3.zoomIdentity;
+  let currentTransform = zoomIdentity;
 
   // 节点点击处理函数
   const handleNodeClick = (nodeId: string) => {
@@ -659,15 +733,16 @@ export async function initGraph(
     });
   }
 
-  // 节点拖拽（仅拖拽，不处理点击）
+  // 节点拖拽（仅拖拽，不处理点击）- 使用按需导入的函数
   if (enableDrag) {
-    d3.select<HTMLCanvasElement, NodeData | undefined>(app.canvas).call(
-      d3.drag<HTMLCanvasElement, NodeData | undefined>()
+    select<HTMLCanvasElement, NodeData | undefined>(app.canvas).call(
+      drag<HTMLCanvasElement, NodeData | undefined>()
         .container(() => app.canvas)
         .subject(() => graphData.nodes.find((n) => n.id === hoveredNodeId))
         .on('start', function dragstarted(event) {
           if (!event.subject) return;
           if (!event.active) simulation.alphaTarget(1).restart();
+          isSimulationActive = true; // 拖拽时重新激活动画
           event.subject.fx = event.subject.x;
           event.subject.fy = event.subject.y;
           (event.subject as any).__initialDragPos = {
@@ -694,10 +769,10 @@ export async function initGraph(
     );
   }
 
-  // 缩放
+  // 缩放 - 使用按需导入的函数
   if (enableZoom) {
-    d3.select<HTMLCanvasElement, NodeData>(app.canvas).call(
-      d3.zoom<HTMLCanvasElement, NodeData>()
+    select<HTMLCanvasElement, NodeData>(app.canvas).call(
+      zoom<HTMLCanvasElement, NodeData>()
         .extent([
           [0, 0],
           [width, height],
@@ -733,10 +808,23 @@ export async function initGraph(
     (label as any).alpha = defaultOpacity;
   }
 
-  // 动画循环
+  // 动画循环 - 优化：静止时降低帧率
   let stopAnimation = false;
+  let lastRenderTime = 0;
+  const IDLE_FRAME_INTERVAL = 100; // 静止时每 100ms 渲染一次
+  
   function animate(time: number) {
     if (stopAnimation) return;
+    
+    // 静止时降低帧率以节省 CPU
+    if (!isSimulationActive && !dragging && !hoveredNodeId) {
+      if (time - lastRenderTime < IDLE_FRAME_INTERVAL) {
+        requestAnimationFrame(animate);
+        return;
+      }
+    }
+    lastRenderTime = time;
+    
     for (const n of nodeRenderData) {
       const { x, y } = n.simulationData;
       if (!x || !y) continue;
