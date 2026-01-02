@@ -7,6 +7,9 @@
  * 2. 运行时零数据库查询
  * 3. 页面部署到 Edge CDN，全球加速
  */
+// 强制静态预渲染（有 getStaticPaths 时自动启用，但显式声明更清晰）
+export const prerender = true;
+
 import { getArticleById } from '../../lib/articles';
 import { processMarkdown } from '../../lib/markdown-processor';
 import { getArticleTags, getForwardLinks, getBacklinks } from '../../lib/links-service';

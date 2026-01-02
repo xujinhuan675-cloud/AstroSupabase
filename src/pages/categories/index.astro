@@ -1,12 +1,19 @@
 ---
 /**
- * 学科分类导航页
+ * 学科分类导航页 - 静态生成版本
+ * 
+ * 优化策略：
+ * 1. 构建时获取分类文章数量
+ * 2. 运行时零数据库查询
  */
+// 强制静态预渲染
+export const prerender = true;
+
 import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
 import { db } from '../../db/client';
 import { articles } from '../../db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 // 预定义的学科分类
 const categories = [
@@ -54,13 +61,17 @@ const categories = [
   },
 ];
 
-// 获取每个分类的文章数量
+// 构建时获取每个分类的文章数量
 const categoryCounts = await Promise.all(
   categories.map(async (category) => {
     const count = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: sql<number>`count(*)::int` })
       .from(articles)
-      .where(eq(articles.status, 'published'))
+      .where(and(
+        eq(articles.category, category.id),
+        eq(articles.status, 'published'),
+        eq(articles.isDeleted, false)
+      ))
       .then(result => result[0]?.count || 0);
     
     return {

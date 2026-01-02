@@ -4,6 +4,9 @@
  * 参考 https://openeducation.vercel.app/
  * 功能：星空背景 + 知识图谱 + 点击跳转到博客
  */
+// 强制静态预渲染
+export const prerender = true;
+
 import { Image } from 'astro:assets';
 import '../styles/landing.css';
 import QuartzGraph from '../components/quartz/QuartzGraph';

@@ -6,6 +6,9 @@
  * 1. 所有数据在构建时通过 getStaticPaths() 获取
  * 2. 运行时零数据库查询
  */
+// 强制静态预渲染（有 getStaticPaths 时自动启用，但显式声明更清晰）
+export const prerender = true;
+
 import Layout from '../../layout/Layout.astro';
 import { db } from '../../db/client';
 import { articles, articleTags } from '../../db/schema';

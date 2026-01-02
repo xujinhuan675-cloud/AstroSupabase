@@ -20,11 +20,11 @@ export default defineConfig({
     sitemap(),
   ],
   
-  // 关键变更：使用 'hybrid' 模式
-  // - 默认静态预渲染（大部分页面）
+  // 关键变更：使用 'server' 模式 + 默认预渲染
+  // Astro 5.x 中 'hybrid' 已被移除，改用 server 模式配合默认预渲染
+  // - 大部分页面默认静态预渲染
   // - 动态页面（dashboard、auth、api）通过 prerender: false 保持 SSR
-  // 注意：'static' 模式不支持 SSR 页面，必须使用 'hybrid'
-  output: 'hybrid',
+  output: 'server',
   adapter: vercel({
     // 启用图片优化服务
     imageService: true,
@@ -35,6 +35,10 @@ export default defineConfig({
       expiration: 60 * 60,
     },
   }),
+  
+  // Astro 5.x: 默认预渲染所有页面（等效于旧版 hybrid 模式）
+  // 动态页面需要显式设置 prerender: false
+  prefetch: true,
   
   // 构建优化
   build: {

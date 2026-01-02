@@ -2,6 +2,9 @@
  * RSS Feed 生成器
  * 生成博客文章的 RSS 订阅源
  */
+// 强制静态预渲染
+export const prerender = true;
+
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
 import { getArticles } from '../lib/articles';
