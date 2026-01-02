@@ -1,0 +1,81 @@
+---
+/**
+ * 优化图片组件
+ * 
+ * 功能：
+ * 1. 自动 WebP/AVIF 格式转换
+ * 2. 响应式图片尺寸
+ * 3. 懒加载支持
+ * 4. 关键图片优先加载
+ * 5. 异步解码
+ */
+import { Image } from 'astro:assets';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  width?: number;
+  height?: number;
+  class?: string;
+  /** 是否为关键图片（首屏/LCP 图片） */
+  priority?: boolean;
+  /** 图片质量 (1-100) */
+  quality?: number;
+  /** 响应式尺寸 */
+  sizes?: string;
+  /** 图片格式 */
+  format?: 'webp' | 'avif' | 'png' | 'jpeg';
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  class: className = '',
+  priority = false,
+  quality = 80,
+  sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw',
+  format = 'webp',
+} = Astro.props;
+
+// 关键图片：立即加载，高优先级
+// 非关键图片：懒加载，低优先级
+const loading = priority ? 'eager' : 'lazy';
+const fetchpriority = priority ? 'high' : 'low';
+const decoding = priority ? 'sync' : 'async';
+---
+
+{typeof src === 'string' ? (
+  <!-- 外部图片 URL -->
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    class={className}
+    loading={loading}
+    fetchpriority={fetchpriority}
+    decoding={decoding}
+  />
+) : (
+  <!-- 本地图片 - 使用 Astro Image 优化 -->
+  <Image
+    src={src}
+    alt={alt}
+    width={width || src.width}
+    height={height || src.height}
+    class={className}
+    loading={loading}
+    decoding={decoding}
+    quality={quality}
+    format={format}
+  />
+)}
+
+<style>
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+</style>

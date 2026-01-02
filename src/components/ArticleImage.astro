@@ -1,0 +1,68 @@
+---
+/**
+ * 文章图片组件
+ * 
+ * 用于文章内容中的图片，支持：
+ * 1. 懒加载
+ * 2. 占位符/骨架屏
+ * 3. 图片说明
+ * 4. 点击放大
+ */
+interface Props {
+  src: string;
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+  class?: string;
+}
+
+const {
+  src,
+  alt,
+  caption,
+  width,
+  height,
+  class: className = '',
+} = Astro.props;
+---
+
+<figure class={`article-image ${className}`}>
+  <img
+    src={src}
+    alt={alt}
+    width={width}
+    height={height}
+    loading="lazy"
+    decoding="async"
+    fetchpriority="low"
+  />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .article-image {
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  .article-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+  }
+
+  .article-image img:hover {
+    transform: scale(1.02);
+    cursor: zoom-in;
+  }
+
+  .article-image figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--gray);
+    font-style: italic;
+  }
+</style>

@@ -41,9 +41,9 @@ const { title = 'Todo App' } = Astro.props;
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WSSXP26S"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-    <!-- Darkmode 按钮（固定在右上角） -->
+    <!-- Darkmode 按钮（固定在右上角）- 立即加载避免闪烁 -->
     <div class="darkmode-container">
-      <Darkmode client:only="react" />
+      <Darkmode client:load />
     </div>
     
     <main class="min-h-screen">

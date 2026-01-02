@@ -1,7 +1,38 @@
 /**
  * Darkmode 样式
  * 从 Quartz 迁移
+ * 
+ * 性能优化：
+ * - 使用 CSS 变量实现平滑过渡
+ * - 避免页面闪烁和重排
  */
+
+/* 主题过渡动画（仅在初始化后启用，避免首次加载闪烁） */
+:root.theme-transition-enabled {
+  transition: 
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+:root.theme-transition-enabled *,
+:root.theme-transition-enabled *::before,
+:root.theme-transition-enabled *::after {
+  transition: 
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    fill 0.3s ease,
+    stroke 0.3s ease;
+}
+
+/* 禁用某些元素的过渡（避免性能问题） */
+:root.theme-transition-enabled img,
+:root.theme-transition-enabled video,
+:root.theme-transition-enabled canvas,
+:root.theme-transition-enabled svg path,
+:root.theme-transition-enabled .no-transition {
+  transition: none !important;
+}
 
 .darkmode {
   cursor: pointer;
@@ -26,8 +57,13 @@
   top: 0;
   left: 0;
   fill: var(--darkgray);
-  transition: opacity 0.1s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
   display: block;
+}
+
+/* 悬停效果 */
+.darkmode:hover svg {
+  transform: scale(1.1);
 }
 
 /* 主题控制 */
@@ -41,20 +77,26 @@
 
 /* 暗色模式下的图标显示 */
 :root[saved-theme="dark"] .darkmode > .dayIcon {
-  display: none;
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.8);
 }
 
 :root[saved-theme="dark"] .darkmode > .nightIcon {
-  display: inline;
+  opacity: 1;
+  transform: rotate(0) scale(1);
 }
 
 /* 亮色模式下的图标显示 */
-:root .darkmode > .dayIcon {
-  display: inline;
+:root[saved-theme="light"] .darkmode > .dayIcon,
+:root:not([saved-theme]) .darkmode > .dayIcon {
+  opacity: 1;
+  transform: rotate(0) scale(1);
 }
 
-:root .darkmode > .nightIcon {
-  display: none;
+:root[saved-theme="light"] .darkmode > .nightIcon,
+:root:not([saved-theme]) .darkmode > .nightIcon {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.8);
 }
 
 /* 暗色模式颜色变量 */

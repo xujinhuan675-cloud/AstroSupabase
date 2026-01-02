@@ -7,7 +7,7 @@
 // 强制静态预渲染
 export const prerender = true;
 
-import { Image } from 'astro:assets';
+import OptimizedImage from '../components/OptimizedImage.astro';
 import '../styles/landing.css';
 import QuartzGraph from '../components/quartz/QuartzGraph';
 import logo from '../assets/logo.png';
@@ -45,10 +45,10 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
     <div class="twinkling"></div>
     <div class="clouds"></div>
 
-    <!-- 知识图谱 -->
+    <!-- 知识图谱 - 可见时才加载，减少首屏 JS -->
     <div class="graph-container">
       <QuartzGraph 
-        client:only="react"
+        client:visible
         isGlobal={true}
         height={600}
         showTitle={false}
@@ -56,13 +56,16 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
       />
     </div>
 
-    <!-- Logo -->
+    <!-- Logo - 关键图片，优先加载 -->
     <a href="/blog">
       <section class="logo-container">
-        <Image
+        <OptimizedImage
           src={logo}
           alt={title}
           class="logo"
+          priority={true}
+          format="webp"
+          quality={90}
         />
       </section>
     </a>

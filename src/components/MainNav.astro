@@ -58,9 +58,9 @@ const isActive = (path: string) => {
         标签
       </a>
       
-      <!-- 搜索组件 -->
+      <!-- 搜索组件 - 浏览器空闲时加载 -->
       <div class="nav-search">
-        <Search client:only="react" enablePreview={true} />
+        <Search client:idle enablePreview={true} />
       </div>
     </div>
 

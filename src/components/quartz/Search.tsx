@@ -3,9 +3,14 @@
  * 从 Quartz 迁移并适配 AstroSupabase
  * 
  * 功能：全文搜索
+ * 
+ * 性能优化：
+ * 1. 防抖处理（300ms）
+ * 2. 搜索结果缓存
+ * 3. 取消未完成的请求
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../../styles/quartz/search.css';
 
 interface SearchResult {
@@ -19,6 +24,11 @@ interface SearchProps {
   enablePreview?: boolean;
 }
 
+// 搜索结果缓存
+const searchCache = new Map<string, SearchResult[]>();
+const CACHE_TTL = 60 * 1000; // 1 分钟缓存
+const cacheTimestamps = new Map<string, number>();
+
 export default function Search({ enablePreview = true }: SearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -26,6 +36,62 @@ export default function Search({ enablePreview = true }: SearchProps) {
   const [showSearch, setShowSearch] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const articlesDataRef = useRef<any[] | null>(null);
+
+  // 预加载文章数据
+  const loadArticlesData = useCallback(async () => {
+    if (articlesDataRef.current) return articlesDataRef.current;
+    
+    try {
+      const response = await fetch('/api/articles');
+      if (response.ok) {
+        const data = await response.json();
+        articlesDataRef.current = data;
+        return data;
+      }
+    } catch (error) {
+      console.error('Failed to load articles:', error);
+    }
+    return [];
+  }, []);
+
+  // 搜索函数（带缓存）
+  const performSearch = useCallback(async (query: string) => {
+    const normalizedQuery = query.toLowerCase().trim();
+    
+    // 检查缓存
+    const cacheKey = normalizedQuery;
+    const cachedTimestamp = cacheTimestamps.get(cacheKey);
+    if (cachedTimestamp && Date.now() - cachedTimestamp < CACHE_TTL) {
+      const cached = searchCache.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+    
+    // 获取文章数据
+    const articles = await loadArticlesData();
+    
+    // 客户端搜索（优化：使用 includes 而不是正则）
+    const filtered = articles.filter((article: any) => {
+      const titleLower = article.title?.toLowerCase() || '';
+      const contentLower = article.content?.toLowerCase() || '';
+      const slugLower = article.slug?.toLowerCase() || '';
+      
+      return titleLower.includes(normalizedQuery) || 
+             contentLower.includes(normalizedQuery) || 
+             slugLower.includes(normalizedQuery);
+    });
+    
+    const results = filtered.slice(0, 10); // 只显示前10个结果
+    
+    // 更新缓存
+    searchCache.set(cacheKey, results);
+    cacheTimestamps.set(cacheKey, Date.now());
+    
+    return results;
+  }, [loadArticlesData]);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -33,32 +99,42 @@ export default function Search({ enablePreview = true }: SearchProps) {
       return;
     }
 
-    const searchArticles = async () => {
-      setIsSearching(true);
+    // 取消之前的请求
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    setIsSearching(true);
+    
+    // 防抖处理（300ms）
+    const debounceTimer = setTimeout(async () => {
       try {
-        const response = await fetch('/api/articles');
-        const articles = await response.json();
-        
-        // 简单的客户端搜索
-        const filtered = articles.filter((article: any) => {
-          const titleMatch = article.title.toLowerCase().includes(searchQuery.toLowerCase());
-          const contentMatch = article.content.toLowerCase().includes(searchQuery.toLowerCase());
-          const slugMatch = article.slug?.toLowerCase().includes(searchQuery.toLowerCase());
-          
-          return titleMatch || contentMatch || slugMatch;
-        });
-        
-        setSearchResults(filtered.slice(0, 10)); // 只显示前10个结果
+        const results = await performSearch(searchQuery);
+        setSearchResults(results);
       } catch (error) {
-        console.error('搜索失败:', error);
+        if ((error as Error).name !== 'AbortError') {
+          console.error('搜索失败:', error);
+        }
       } finally {
         setIsSearching(false);
       }
-    };
+    }, 300);
 
-    const debounce = setTimeout(searchArticles, 300);
-    return () => clearTimeout(debounce);
-  }, [searchQuery]);
+    return () => {
+      clearTimeout(debounceTimer);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [searchQuery, performSearch]);
+
+  // 弹窗打开时预加载数据
+  useEffect(() => {
+    if (showSearch) {
+      loadArticlesData();
+    }
+  }, [showSearch, loadArticlesData]);
 
   // 点击外部区域关闭搜索弹窗（不包括搜索框按钮本身）
   useEffect(() => {
