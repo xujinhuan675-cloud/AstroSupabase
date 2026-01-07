@@ -66,57 +66,58 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
       />
     </div>
 
-    <!-- 火箭图标 - SVG绘制 -->
-    <a href="/blog" class="logo-container">
-      <svg class="rocket-svg" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-        <!-- 火箭主体 - 蓝色渐变 -->
-        <defs>
-          <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#6b9dc4"/>
-            <stop offset="50%" style="stop-color:#5a8ab8"/>
-            <stop offset="100%" style="stop-color:#4a7aa8"/>
-          </linearGradient>
-          <linearGradient id="windowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#9b7ed9"/>
-            <stop offset="50%" style="stop-color:#8b5cf6"/>
-            <stop offset="100%" style="stop-color:#7c3aed"/>
-          </linearGradient>
-          <linearGradient id="flameGradient" y1="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#fbbf24"/>
-            <stop offset="50%" style="stop-color:#f97316"/>
-            <stop offset="100%" style="stop-color:#ef4444"/>
-          </linearGradient>
-        </defs>
-        
-        <!-- 火箭尖端 -->
-        <path d="M50 5 L65 35 L35 35 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
-        
-        <!-- 火箭主体 -->
-        <path d="M35 35 L35 95 Q35 105 50 105 Q65 105 65 95 L65 35 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
-        
-        <!-- 紫色宝石窗口 -->
-        <polygon points="50,40 62,55 50,70 38,55" fill="url(#windowGradient)" stroke="#6d28d9" stroke-width="2"/>
-        <polygon points="50,45 57,55 50,65 43,55" fill="#a78bfa" opacity="0.5"/>
-        
-        <!-- 左侧翼 -->
-        <path d="M35 70 L20 100 L35 95 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
-        
-        <!-- 右侧翼 -->
-        <path d="M65 70 L80 100 L65 95 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
-        
-        <!-- 火焰 -->
-        <ellipse cx="50" cy="120" rx="12" ry="18" fill="url(#flameGradient)" opacity="0.9">
-          <animate attributeName="ry" values="18;22;18" dur="0.3s" repeatCount="indefinite"/>
-          <animate attributeName="opacity" values="0.9;0.7;0.9" dur="0.3s" repeatCount="indefinite"/>
-        </ellipse>
-        <ellipse cx="50" cy="118" rx="8" ry="12" fill="#fde047" opacity="0.8">
-          <animate attributeName="ry" values="12;15;12" dur="0.25s" repeatCount="indefinite"/>
-        </ellipse>
-      </svg>
-    </a>
+    <!-- 内容区域 - 火箭和标题组合 -->
+    <a href="/blog" class="content-wrapper">
+      <!-- 火箭图标 - SVG绘制 -->
+      <div class="rocket-container">
+        <svg class="rocket-svg" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+          <!-- 火箭主体 - 蓝色渐变 -->
+          <defs>
+            <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#6b9dc4"/>
+              <stop offset="50%" style="stop-color:#5a8ab8"/>
+              <stop offset="100%" style="stop-color:#4a7aa8"/>
+            </linearGradient>
+            <linearGradient id="windowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#9b7ed9"/>
+              <stop offset="50%" style="stop-color:#8b5cf6"/>
+              <stop offset="100%" style="stop-color:#7c3aed"/>
+            </linearGradient>
+            <linearGradient id="flameGradient" y1="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#fbbf24"/>
+              <stop offset="50%" style="stop-color:#f97316"/>
+              <stop offset="100%" style="stop-color:#ef4444"/>
+            </linearGradient>
+          </defs>
+          
+          <!-- 火箭尖端 -->
+          <path d="M50 5 L65 35 L35 35 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
+          
+          <!-- 火箭主体 -->
+          <path d="M35 35 L35 95 Q35 105 50 105 Q65 105 65 95 L65 35 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
+          
+          <!-- 紫色宝石窗口 -->
+          <polygon points="50,40 62,55 50,70 38,55" fill="url(#windowGradient)" stroke="#6d28d9" stroke-width="2"/>
+          <polygon points="50,45 57,55 50,65 43,55" fill="#a78bfa" opacity="0.5"/>
+          
+          <!-- 左侧翼 -->
+          <path d="M35 70 L20 100 L35 95 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
+          
+          <!-- 右侧翼 -->
+          <path d="M65 70 L80 100 L65 95 Z" fill="url(#bodyGradient)" stroke="#4a7aa8" stroke-width="1"/>
+          
+          <!-- 火焰 -->
+          <ellipse cx="50" cy="120" rx="12" ry="18" fill="url(#flameGradient)" opacity="0.9">
+            <animate attributeName="ry" values="18;22;18" dur="0.3s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.9;0.7;0.9" dur="0.3s" repeatCount="indefinite"/>
+          </ellipse>
+          <ellipse cx="50" cy="118" rx="8" ry="12" fill="#fde047" opacity="0.8">
+            <animate attributeName="ry" values="12;15;12" dur="0.25s" repeatCount="indefinite"/>
+          </ellipse>
+        </svg>
+      </div>
 
-    <!-- 标题和副标题 -->
-    <a href="/blog" class="title-link">
+      <!-- 标题和副标题 -->
       <section class="title-section">
         <h1 class="main-title">{title}</h1>
         <p class="main-subtitle">{subtitle}</p>
@@ -142,19 +143,28 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
     position: relative;
   }
 
-  /* 火箭SVG样式 */
-  .logo-container {
+  /* 内容包装器 - 火箭和标题组合 */
+  .content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
     position: relative;
     z-index: 10;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     cursor: pointer;
     transition: transform 0.3s ease;
   }
 
-  .logo-container:hover {
-    transform: scale(1.05);
+  .content-wrapper:hover {
+    transform: scale(1.02);
+  }
+
+  /* 火箭容器 */
+  .rocket-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
   }
 
   .rocket-svg {
@@ -173,15 +183,9 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
     }
   }
 
-  .title-link {
-    text-decoration: none;
-    position: relative;
-    z-index: 10;
-  }
-
   .title-section {
     text-align: center;
-    padding: 1.5rem 2rem;
+    padding: 1rem 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -19,8 +19,17 @@ export default function TableOfContents() {
   const [activeId, setActiveId] = useState<string>('');
 
   useEffect(() => {
-    // 提取页面中的标题生成目录
-    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    // 只从文章正文内容中提取标题（排除侧边栏模块）
+    const contentArea = document.querySelector('article .popover-hint') || 
+                        document.querySelector('article .prose') ||
+                        document.querySelector('article');
+    
+    if (!contentArea) {
+      setTocItems([]);
+      return;
+    }
+    
+    const headings = contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6');
     const items: TocItem[] = [];
 
     headings.forEach((heading) => {
