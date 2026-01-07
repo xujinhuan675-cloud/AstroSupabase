@@ -802,14 +802,15 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   function generateToc() {
     if (!tocList) return;
     
-    // 查找文章中的标题
-    const article = document.querySelector('article');
-    if (!article) {
+    // 只查找文章正文内容中的标题（.popover-hint 或 .prose 内）
+    // 排除侧边栏模块（文章浏览、反向链接、知识图谱等）的标题
+    const contentArea = document.querySelector('article .popover-hint') || document.querySelector('article .prose');
+    if (!contentArea) {
       tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
       return;
     }
     
-    const headings = article.querySelectorAll('h1, h2, h3, h4');
+    const headings = contentArea.querySelectorAll('h1, h2, h3, h4');
     if (headings.length === 0) {
       tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
       return;
