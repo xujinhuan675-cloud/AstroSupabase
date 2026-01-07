@@ -2,9 +2,10 @@
 /**
  * 主导航栏组件 - 移动端优化版
  * 包含：首页、文章、学科分类、标签、搜索
- * 移动端特性：汉堡菜单、全屏导航、点击外部关闭
+ * 移动端特性：汉堡菜单、全屏导航、点击外部关闭、主题切换
  */
 import Search from './quartz/Search';
+import Darkmode from './quartz/Darkmode';
 
 const currentPath = Astro.url.pathname;
 
@@ -65,10 +66,40 @@ const isActive = (path: string) => {
       </div>
     </div>
 
-    <!-- 移动端菜单按钮 -->
-    <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
-      <span class="hamburger"></span>
-    </button>
+    <!-- 移动端右侧按钮组 -->
+    <div class="mobile-nav-actions">
+      <!-- 目录按钮 -->
+      <button class="mobile-toc-toggle" aria-label="目录" aria-expanded="false">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="15" y2="12"></line>
+          <line x1="3" y1="18" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      
+      <!-- 主题切换按钮 -->
+      <div class="mobile-darkmode">
+        <Darkmode client:load />
+      </div>
+      
+      <!-- 移动端菜单按钮 -->
+      <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+        <span class="hamburger"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 移动端目录下拉面板 -->
+  <div class="mobile-toc-panel" aria-hidden="true">
+    <div class="mobile-toc-header">
+      <span>目录</span>
+      <button class="mobile-toc-close" aria-label="关闭目录">✕</button>
+    </div>
+    <nav class="mobile-toc-nav">
+      <ul class="mobile-toc-list" id="mobile-toc-list">
+        <!-- 目录项将通过 JS 动态生成 -->
+      </ul>
+    </nav>
   </div>
 
   <!-- 移动端全屏菜单 -->
@@ -284,6 +315,172 @@ const isActive = (path: string) => {
     align-items: center;
   }
 
+  /* 移动端右侧按钮组 */
+  .mobile-nav-actions {
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  /* 移动端目录按钮 */
+  .mobile-toc-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--darkgray);
+    transition: color 0.2s ease;
+  }
+
+  .mobile-toc-toggle:hover,
+  .mobile-toc-toggle.active {
+    color: var(--secondary);
+  }
+
+  .mobile-toc-toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .mobile-darkmode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.5rem;
+  }
+
+  .mobile-darkmode :global(.darkmode) {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mobile-darkmode :global(.darkmode svg) {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* 移动端目录面板 */
+  .mobile-toc-panel {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background: var(--light);
+    border-bottom: 1px solid var(--lightgray);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 60vh;
+    overflow: hidden;
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 98;
+  }
+
+  .mobile-toc-panel.active {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-toc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--lightgray);
+    font-weight: 600;
+    color: var(--dark);
+  }
+
+  .mobile-toc-close {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: var(--gray);
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .mobile-toc-close:hover {
+    color: var(--dark);
+  }
+
+  .mobile-toc-nav {
+    max-height: calc(60vh - 50px);
+    overflow-y: auto;
+    padding: 0.5rem 0;
+  }
+
+  .mobile-toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mobile-toc-list li {
+    margin: 0;
+  }
+
+  .mobile-toc-list a {
+    display: block;
+    padding: 0.625rem 1rem;
+    color: var(--darkgray);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .mobile-toc-list a:hover,
+  .mobile-toc-list a:active {
+    background: var(--highlight);
+  }
+
+  .mobile-toc-list a.active {
+    color: var(--secondary);
+    background: var(--highlight);
+    font-weight: 500;
+  }
+
+  /* 目录层级缩进 */
+  .mobile-toc-list .toc-level-2 {
+    padding-left: 1rem;
+  }
+
+  .mobile-toc-list .toc-level-3 {
+    padding-left: 2rem;
+    font-size: 0.875rem;
+  }
+
+  .mobile-toc-list .toc-level-4 {
+    padding-left: 3rem;
+    font-size: 0.875rem;
+  }
+
+  /* 无目录时的提示 */
+  .mobile-toc-empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--gray);
+    font-size: 0.875rem;
+  }
+
   .hamburger {
     display: block;
     width: 24px;
@@ -458,11 +655,19 @@ const isActive = (path: string) => {
       display: none;
     }
 
+    .mobile-nav-actions {
+      display: flex;
+    }
+
     .mobile-menu-toggle {
       display: flex;
     }
 
     .mobile-menu-overlay {
+      display: block;
+    }
+
+    .mobile-toc-panel {
       display: block;
     }
   }
@@ -475,8 +680,17 @@ const isActive = (path: string) => {
   const mobileDropdowns = document.querySelectorAll('.mobile-dropdown');
   const mobileNavLinks = document.querySelectorAll('.mobile-nav-link:not(.mobile-dropdown-toggle)');
 
+  // 目录相关元素
+  const tocToggle = document.querySelector('.mobile-toc-toggle');
+  const tocPanel = document.querySelector('.mobile-toc-panel');
+  const tocClose = document.querySelector('.mobile-toc-close');
+  const tocList = document.getElementById('mobile-toc-list');
+
   // 切换菜单
   function toggleMenu() {
+    // 先关闭目录面板
+    closeToc();
+    
     const isOpen = menuToggle?.classList.toggle('active');
     menuOverlay?.classList.toggle('active');
     menuToggle?.setAttribute('aria-expanded', String(isOpen));
@@ -495,8 +709,112 @@ const isActive = (path: string) => {
     document.body.style.overflow = '';
   }
 
+  // 切换目录面板
+  function toggleToc() {
+    // 先关闭导航菜单
+    closeMenu();
+    
+    const isOpen = tocPanel?.classList.toggle('active');
+    tocToggle?.classList.toggle('active');
+    tocToggle?.setAttribute('aria-expanded', String(isOpen));
+    tocPanel?.setAttribute('aria-hidden', String(!isOpen));
+  }
+
+  // 关闭目录面板
+  function closeToc() {
+    tocPanel?.classList.remove('active');
+    tocToggle?.classList.remove('active');
+    tocToggle?.setAttribute('aria-expanded', 'false');
+    tocPanel?.setAttribute('aria-hidden', 'true');
+  }
+
+  // 生成目录
+  function generateToc() {
+    if (!tocList) return;
+    
+    // 查找文章中的标题
+    const article = document.querySelector('article');
+    if (!article) {
+      tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
+      return;
+    }
+    
+    const headings = article.querySelectorAll('h1, h2, h3, h4');
+    if (headings.length === 0) {
+      tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
+      return;
+    }
+    
+    let html = '';
+    headings.forEach((heading, index) => {
+      const level = parseInt(heading.tagName.charAt(1));
+      const id = heading.id || `heading-${index}`;
+      
+      // 如果标题没有 id，添加一个
+      if (!heading.id) {
+        heading.id = id;
+      }
+      
+      const text = heading.textContent?.trim() || '';
+      html += `<li><a href="#${id}" class="toc-level-${level}">${text}</a></li>`;
+    });
+    
+    tocList.innerHTML = html;
+    
+    // 为目录链接添加点击事件
+    tocList.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href')?.slice(1);
+        if (targetId) {
+          const target = document.getElementById(targetId);
+          if (target) {
+            closeToc();
+            // 平滑滚动到目标位置，考虑导航栏高度
+            const navHeight = 64;
+            const targetPosition = target.getBoundingClientRect().top + window.scrollY - navHeight - 16;
+            window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+          }
+        }
+      });
+    });
+  }
+
+  // 高亮当前章节
+  function updateActiveSection() {
+    if (!tocList) return;
+    
+    const links = tocList.querySelectorAll('a');
+    const headings = Array.from(links).map(link => {
+      const id = link.getAttribute('href')?.slice(1);
+      return id ? document.getElementById(id) : null;
+    }).filter(Boolean);
+    
+    if (headings.length === 0) return;
+    
+    const navHeight = 64;
+    const scrollY = window.scrollY + navHeight + 50;
+    
+    let activeIndex = 0;
+    headings.forEach((heading, index) => {
+      if (heading && heading.offsetTop <= scrollY) {
+        activeIndex = index;
+      }
+    });
+    
+    links.forEach((link, index) => {
+      link.classList.toggle('active', index === activeIndex);
+    });
+  }
+
   // 点击汉堡按钮
   menuToggle?.addEventListener('click', toggleMenu);
+
+  // 点击目录按钮
+  tocToggle?.addEventListener('click', toggleToc);
+
+  // 点击目录关闭按钮
+  tocClose?.addEventListener('click', closeToc);
 
   // 点击覆盖层关闭菜单
   menuOverlay?.addEventListener('click', (e) => {
@@ -525,17 +843,46 @@ const isActive = (path: string) => {
     });
   });
 
-  // ESC 键关闭菜单
+  // ESC 键关闭菜单和目录
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && menuOverlay?.classList.contains('active')) {
-      closeMenu();
+    if (e.key === 'Escape') {
+      if (menuOverlay?.classList.contains('active')) {
+        closeMenu();
+      }
+      if (tocPanel?.classList.contains('active')) {
+        closeToc();
+      }
     }
   });
 
-  // 窗口大小变化时关闭移动端菜单
+  // 窗口大小变化时关闭移动端菜单和目录
   window.addEventListener('resize', () => {
-    if (window.innerWidth > 767 && menuOverlay?.classList.contains('active')) {
-      closeMenu();
+    if (window.innerWidth > 767) {
+      if (menuOverlay?.classList.contains('active')) {
+        closeMenu();
+      }
+      if (tocPanel?.classList.contains('active')) {
+        closeToc();
+      }
     }
   });
+
+  // 滚动时更新当前章节高亮
+  let scrollTimeout: number;
+  window.addEventListener('scroll', () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = window.setTimeout(updateActiveSection, 50);
+  });
+
+  // 页面加载完成后生成目录
+  document.addEventListener('DOMContentLoaded', () => {
+    generateToc();
+    updateActiveSection();
+  });
+
+  // 如果 DOM 已经加载完成，立即生成目录
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    generateToc();
+    updateActiveSection();
+  }
 </script>
