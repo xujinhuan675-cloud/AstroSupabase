@@ -71,4 +71,11 @@ const { title = 'Todo App' } = Astro.props;
     right: 1rem;
     z-index: 9999;
   }
+  
+  /* 移动端隐藏固定的主题按钮，因为导航栏已有 */
+  @media (max-width: 767px) {
+    .darkmode-container {
+      display: none;
+    }
+  }
 </style>

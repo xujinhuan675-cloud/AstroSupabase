@@ -14,6 +14,10 @@ const isActive = (path: string) => {
   if (path !== '/' && currentPath.startsWith(path)) return true;
   return false;
 };
+
+// 判断是否为文章详情页（需要显示目录）
+// 文章页路径通常是 /blog/xxx 或 /articles/xxx 等
+const isArticlePage = currentPath.startsWith('/blog/') && currentPath !== '/blog/' && currentPath !== '/blog';
 ---
 
 <nav class="main-nav">
@@ -68,39 +72,47 @@ const isActive = (path: string) => {
 
     <!-- 移动端右侧按钮组 -->
     <div class="mobile-nav-actions">
-      <!-- 目录按钮 -->
-      <button class="mobile-toc-toggle" aria-label="目录" aria-expanded="false">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="12" x2="15" y2="12"></line>
-          <line x1="3" y1="18" x2="18" y2="18"></line>
-        </svg>
-      </button>
+      <!-- 目录按钮 - 仅在文章详情页显示 -->
+      {isArticlePage && (
+        <button class="mobile-toc-toggle" aria-label="目录" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="6" x2="14" y2="6"></line>
+            <line x1="4" y1="10" x2="20" y2="10"></line>
+            <line x1="4" y1="14" x2="17" y2="14"></line>
+            <line x1="4" y1="18" x2="11" y2="18"></line>
+          </svg>
+        </button>
+      )}
       
       <!-- 主题切换按钮 -->
       <div class="mobile-darkmode">
         <Darkmode client:load />
       </div>
       
-      <!-- 移动端菜单按钮 -->
+      <!-- 移动端菜单按钮 - 指南针图标 -->
       <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
-        <span class="hamburger"></span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" stroke="none"></polygon>
+        </svg>
       </button>
     </div>
   </div>
 
-  <!-- 移动端目录下拉面板 -->
-  <div class="mobile-toc-panel" aria-hidden="true">
-    <div class="mobile-toc-header">
-      <span>目录</span>
-      <button class="mobile-toc-close" aria-label="关闭目录">✕</button>
+  <!-- 移动端目录下拉面板 - 仅在文章详情页渲染 -->
+  {isArticlePage && (
+    <div class="mobile-toc-panel" aria-hidden="true">
+      <div class="mobile-toc-header">
+        <span>目录</span>
+        <button class="mobile-toc-close" aria-label="关闭目录">✕</button>
+      </div>
+      <nav class="mobile-toc-nav">
+        <ul class="mobile-toc-list" id="mobile-toc-list">
+          <!-- 目录项将通过 JS 动态生成 -->
+        </ul>
+      </nav>
     </div>
-    <nav class="mobile-toc-nav">
-      <ul class="mobile-toc-list" id="mobile-toc-list">
-        <!-- 目录项将通过 JS 动态生成 -->
-      </ul>
-    </nav>
-  </div>
+  )}
 
   <!-- 移动端全屏菜单 -->
   <div class="mobile-menu-overlay" aria-hidden="true">
@@ -302,17 +314,29 @@ const isActive = (path: string) => {
     border-radius: 0.5rem;
   }
 
-  /* 移动端菜单按钮 */
+  /* 移动端菜单按钮 - 指南针图标 */
   .mobile-menu-toggle {
     display: none;
     background: none;
     border: none;
-    padding: 0.75rem;
+    padding: 0.5rem;
     cursor: pointer;
     min-width: 44px;
     min-height: 44px;
     justify-content: center;
     align-items: center;
+    color: var(--darkgray);
+    transition: color 0.2s ease;
+  }
+
+  .mobile-menu-toggle:hover,
+  .mobile-menu-toggle.active {
+    color: var(--secondary);
+  }
+
+  .mobile-menu-toggle svg {
+    width: 22px;
+    height: 22px;
   }
 
   /* 移动端右侧按钮组 */
@@ -481,54 +505,11 @@ const isActive = (path: string) => {
     font-size: 0.875rem;
   }
 
-  .hamburger {
-    display: block;
-    width: 24px;
-    height: 2px;
-    background: var(--dark);
-    position: relative;
-    transition: all 0.3s ease;
-  }
-
-  .hamburger::before,
-  .hamburger::after {
-    content: '';
-    position: absolute;
-    width: 24px;
-    height: 2px;
-    background: var(--dark);
-    left: 0;
-    transition: all 0.3s ease;
-  }
-
-  .hamburger::before {
-    top: -8px;
-  }
-
-  .hamburger::after {
-    bottom: -8px;
-  }
-
-  /* 汉堡菜单动画 - 打开状态 */
-  .mobile-menu-toggle.active .hamburger {
-    background: transparent;
-  }
-
-  .mobile-menu-toggle.active .hamburger::before {
-    top: 0;
-    transform: rotate(45deg);
-  }
-
-  .mobile-menu-toggle.active .hamburger::after {
-    bottom: 0;
-    transform: rotate(-45deg);
-  }
-
   /* 移动端全屏菜单覆盖层 */
   .mobile-menu-overlay {
     display: none;
     position: fixed;
-    top: 64px;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
@@ -546,14 +527,22 @@ const isActive = (path: string) => {
 
   .mobile-menu {
     background: var(--light);
-    max-height: calc(100vh - 64px);
+    max-height: 100vh;
     overflow-y: auto;
-    transform: translateY(-100%);
+    padding-top: 64px; /* 导航栏高度 */
+    transform: translateX(100%);
     transition: transform 0.3s ease;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80%;
+    max-width: 320px;
+    height: 100%;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.1);
   }
 
   .mobile-menu-overlay.active .mobile-menu {
-    transform: translateY(0);
+    transform: translateX(0);
   }
 
   /* 移动端搜索框 */
