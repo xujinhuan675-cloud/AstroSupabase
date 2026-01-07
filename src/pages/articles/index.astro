@@ -2,7 +2,11 @@
 /**
  * 文章列表页 - /articles
  * 显示所有已发布的文章
+ * 
+ * 优化：启用静态预渲染，构建时获取数据，运行时零数据库查询
  */
+export const prerender = true;
+
 import Layout from '../../layout/Layout.astro';
 import { getArticles } from '../../lib/articles';
 import ArticleCard from '../../components/ArticleCard.astro';
