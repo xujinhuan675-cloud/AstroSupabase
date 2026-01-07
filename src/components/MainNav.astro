@@ -16,8 +16,8 @@ const isActive = (path: string) => {
 };
 
 // 判断是否为文章详情页（需要显示目录）
-// 文章页路径通常是 /blog/xxx 或 /articles/xxx 等
-const isArticlePage = currentPath.startsWith('/blog/') && currentPath !== '/blog/' && currentPath !== '/blog';
+// 文章详情页路径是 /articles/[id]
+const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/articles/' && currentPath !== '/articles';
 ---
 
 <nav class="main-nav">

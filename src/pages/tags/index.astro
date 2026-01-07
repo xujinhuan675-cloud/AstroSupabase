@@ -6,35 +6,36 @@
 import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
 import { db } from '../../db/client';
-import { sql } from 'drizzle-orm';
-import { getArticleTags } from '../../lib/links-service';
+import { articleTags, articles as articlesTable } from '../../db/schema';
+import { eq, sql } from 'drizzle-orm';
 
 interface TagCount {
   tag: string;
   count: number;
 }
 
-// 获取所有已发布文章
-const articles = await db.query.articles.findMany({
-  where: (articles, { eq }) => eq(articles.status, 'published'),
-});
+// 优化：使用单个 SQL 查询统计所有标签
+// 只统计已发布文章的标签
+const tagCountsResult = await db
+  .select({
+    tag: articleTags.tag,
+    count: sql<number>`count(distinct ${articleTags.articleId})`.as('count'),
+  })
+  .from(articleTags)
+  .innerJoin(articlesTable, eq(articleTags.articleId, articlesTable.id))
+  .where(eq(articlesTable.status, 'published'))
+  .groupBy(articleTags.tag);
 
-// 统计标签
-const tagMap = new Map<string, number>();
-
-// 为每篇文章获取标签并统计
-for (const article of articles) {
-  const tags = await getArticleTags(article.id);
-  
-  tags.forEach((tag) => {
-    tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
-  });
-}
-
-// 转换为数组并按文章数量排序
-const tagCounts: TagCount[] = Array.from(tagMap.entries())
-  .map(([tag, count]) => ({ tag, count }))
+const tagCounts: TagCount[] = tagCountsResult
+  .map(row => ({ tag: row.tag, count: Number(row.count) }))
   .sort((a, b) => b.count - a.count);
+
+// 获取文章总数（用于显示）
+const articlesCount = await db
+  .select({ count: sql<number>`count(*)` })
+  .from(articlesTable)
+  .where(eq(articlesTable.status, 'published'))
+  .then(result => Number(result[0]?.count || 0));
 
 // 按字母排序的标签
 const tagsByAlpha = [...tagCounts].sort((a, b) => 
@@ -57,7 +58,7 @@ const popularTags = tagCounts.slice(0, 10);
           标签
         </h1>
         <p class="text-xl" style="color: var(--gray);">
-          共 {tagCounts.length} 个标签，{articles.length} 篇文章
+          共 {tagCounts.length} 个标签，{articlesCount} 篇文章
         </p>
       </div>
 
