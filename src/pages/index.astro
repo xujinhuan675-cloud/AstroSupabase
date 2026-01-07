@@ -66,11 +66,9 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
       />
     </div>
 
-    <!-- 火箭图标 -->
-    <a href="/blog" class="rocket-link">
-      <div class="rocket-container">
-        <span class="rocket-emoji">🚀</span>
-      </div>
+    <!-- 火箭图标 - 使用原始图片 -->
+    <a href="/blog" class="logo-container">
+      <img src="/src/assets/logo.png" alt="火箭" class="logo" />
     </a>
 
     <!-- 标题和副标题 -->
@@ -90,26 +88,27 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
 </html>
 
 <style>
-  /* 火箭样式 */
-  .rocket-link {
-    text-decoration: none;
-    display: block;
+  /* 火箭图片样式 - 缩小比例 */
+  .logo-container {
     position: relative;
     z-index: 10;
-  }
-
-  .rocket-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
   }
 
-  .rocket-emoji {
-    font-size: 4rem;
+  .logo-container:hover {
+    transform: scale(1.05);
+  }
+
+  .logo {
+    height: 25vh;
+    max-height: 200px;
+    width: auto;
+    filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.4));
     animation: float 3s ease-in-out infinite;
-    display: inline-block;
-    filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.5));
   }
 
   @keyframes float {
@@ -130,25 +129,33 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
   .title-container {
     text-align: center;
     padding: 1rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .title {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 700;
-    color: #c084fc;
-    margin: 0 0 0.5rem 0;
-    text-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
+    background: linear-gradient(to right, #a855f7, #c084fc, #ec4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    text-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
   }
 
   .subtitle {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0;
+    font-size: 1.125rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0.5rem 0 0 0;
   }
 
   @media (max-width: 768px) {
-    .rocket-emoji {
-      font-size: 3rem;
+    .logo {
+      height: 18vh;
+      max-height: 150px;
     }
     
     .title {
@@ -156,7 +163,22 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
     }
     
     .subtitle {
-      font-size: 0.875rem;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .logo {
+      height: 15vh;
+      max-height: 120px;
+    }
+    
+    .title {
+      font-size: 1.75rem;
+    }
+    
+    .subtitle {
+      font-size: 0.8rem;
     }
   }
 </style>
