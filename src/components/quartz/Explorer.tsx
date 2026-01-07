@@ -37,11 +37,8 @@ export default function Explorer({
   initialData
 }: ExplorerProps) {
   const [explorerData, setExplorerData] = useState<ExplorerNode[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
-  // 默认展开所有文件夹（如果 folderDefaultState 是 'open'）
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    folderDefaultState === 'open' ? new Set(['all']) : new Set()
-  );
+  // 分类默认全部折叠
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // 构建树结构的核心函数（从文章列表构建文件夹树）
   const buildTreeFromArticles = (articles: ArticleItem[]): ExplorerNode[] => {
@@ -102,12 +99,8 @@ export default function Explorer({
       console.log('Explorer: 使用静态预加载数据（构建时生成）');
       const tree = buildTreeFromArticles(initialData);
       setExplorerData(tree);
-      
-      // 如果默认状态是 open，自动展开所有文件夹
-      if (folderDefaultState === 'open' && tree.length > 0) {
-        const allFolderPaths = new Set(tree.map(node => node.path));
-        setExpandedFolders(allFolderPaths);
-      }
+      // 分类默认全部折叠
+      setExpandedFolders(new Set());
       return;
     }
     
@@ -131,12 +124,8 @@ export default function Explorer({
         
         const tree = buildTreeFromArticles(articles);
         setExplorerData(tree);
-        
-        // 如果默认状态是 open，自动展开所有文件夹
-        if (folderDefaultState === 'open' && tree.length > 0) {
-          const allFolderPaths = new Set(tree.map(node => node.path));
-          setExpandedFolders(allFolderPaths);
-        }
+        // 分类默认全部折叠
+        setExpandedFolders(new Set());
       } catch (error) {
         console.error('加载 Explorer 数据失败:', error);
         setExplorerData([]);
@@ -209,33 +198,15 @@ export default function Explorer({
 
   return (
     <div 
-      className={`explorer ${collapsed ? 'collapsed' : ''}`}
+      className="explorer"
       data-behavior={folderClickBehavior}
       data-collapsed={folderDefaultState}
     >
-      <button
-        type="button"
-        className="title-button explorer-toggle desktop-explorer"
-        onClick={() => setCollapsed(!collapsed)}
-        aria-expanded={!collapsed}
-      >
-        <h2>{title}</h2>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="14"
-          height="14"
-          viewBox="5 8 14 8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="fold"
-        >
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-      </button>
-      <div className="explorer-content" aria-expanded={!collapsed}>
+      {/* 标题不可折叠，样式与目录统一 */}
+      <div className="explorer-title">
+        <h3>{title}</h3>
+      </div>
+      <div className="explorer-content">
         {explorerData.length === 0 ? (
           <div style={{ padding: '1rem', color: 'var(--gray)', fontSize: '0.875rem' }}>
             暂无文章

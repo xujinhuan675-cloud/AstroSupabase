@@ -9,6 +9,8 @@ export const prerender = true;
 
 import OptimizedImage from '../components/OptimizedImage.astro';
 import '../styles/landing.css';
+import '../styles/quartz/variables.css';
+import '../styles/quartz/darkmode.css';
 import QuartzGraph from '../components/quartz/QuartzGraph';
 import logo from '../assets/logo.png';
 
@@ -33,6 +35,16 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{title}</title>
   <meta name="description" content={subtitle}>
+  
+  <!-- 防止主题闪烁 -->
+  <script is:inline>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('saved-theme', theme);
+    })();
+  </script>
 </head>
 <body>
   <!-- Google Tag Manager (noscript) -->
@@ -78,5 +90,10 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
       </section>
     </a>
   </div>
+  
+  <!-- Darkmode 脚本 -->
+  <script>
+    import '../scripts/quartz/darkmode.ts';
+  </script>
 </body>
 </html>

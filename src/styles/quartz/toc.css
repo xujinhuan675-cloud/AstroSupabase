@@ -1,6 +1,6 @@
 /**
  * TableOfContents 组件样式
- * 从 Quartz 迁移
+ * 从 Quartz 迁移，与 Explorer 样式统一
  */
 
 .toc {
@@ -17,18 +17,15 @@
   background-color: transparent;
   border: none;
   text-align: left;
-  cursor: pointer;
+  cursor: default;
   padding: 0;
   color: var(--dark);
-}
-
-.toc > .toc-toggle:hover {
-  color: var(--tertiary);
 }
 
 .toc h3 {
   font-size: 1rem;
   margin: 0;
+  font-weight: 600;
 }
 
 .toc-content {
@@ -71,30 +68,38 @@
   font-weight: 600;
 }
 
-/* 不同层级的缩进 */
+/* 不同层级的缩进 - 与 Explorer 统一 */
 .toc ul li.depth-1 {
   padding-left: 0;
   font-weight: 600;
 }
 
 .toc ul li.depth-2 {
-  padding-left: 1rem;
+  padding-left: 0.8rem;
+  border-left: 1px solid var(--lightgray);
+  margin-left: 6px;
 }
 
 .toc ul li.depth-3 {
-  padding-left: 2rem;
-  font-size: 0.85rem;
+  padding-left: 1.6rem;
+  font-size: 0.9rem;
+  border-left: 1px solid var(--lightgray);
+  margin-left: 6px;
 }
 
 .toc ul li.depth-4 {
-  padding-left: 3rem;
-  font-size: 0.85rem;
+  padding-left: 2.4rem;
+  font-size: 0.9rem;
+  border-left: 1px solid var(--lightgray);
+  margin-left: 6px;
 }
 
 .toc ul li.depth-5,
 .toc ul li.depth-6 {
-  padding-left: 4rem;
-  font-size: 0.8rem;
+  padding-left: 3.2rem;
+  font-size: 0.85rem;
+  border-left: 1px solid var(--lightgray);
+  margin-left: 6px;
 }
 
 /* 移动端适配 */
