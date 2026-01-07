@@ -51,6 +51,39 @@ export const graphConfig = {
     focusOnHover: true,
     enableRadial: true,
   } as Partial<D3Config>,
+
+  // 移动端图谱配置 - 简化节点数量，优化触摸交互
+  mobileLocal: {
+    drag: true,
+    zoom: true,
+    depth: 1,
+    scale: 1.0,
+    repelForce: 2.0,
+    centerForce: 0.4,
+    linkDistance: 60,
+    fontSize: 0.85,
+    opacityScale: 1,
+    showTags: false, // 移动端隐藏标签减少复杂度
+    removeTags: [],
+    focusOnHover: false,
+    enableRadial: false,
+  } as Partial<D3Config>,
+
+  mobileGlobal: {
+    drag: true,
+    zoom: true,
+    depth: 2, // 限制深度减少节点数量
+    scale: 0.8,
+    repelForce: 1.5,
+    centerForce: 0.3,
+    linkDistance: 60,
+    fontSize: 0.8,
+    opacityScale: 1,
+    showTags: false,
+    removeTags: [],
+    focusOnHover: false, // 移动端禁用 hover
+    enableRadial: true,
+  } as Partial<D3Config>,
 } as const;
 
 /**

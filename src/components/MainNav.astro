@@ -1,7 +1,8 @@
 ---
 /**
- * 主导航栏组件
+ * 主导航栏组件 - 移动端优化版
  * 包含：首页、文章、学科分类、标签、搜索
+ * 移动端特性：汉堡菜单、全屏导航、点击外部关闭
  */
 import Search from './quartz/Search';
 
@@ -21,8 +22,8 @@ const isActive = (path: string) => {
       Openeducation
     </a>
 
-    <!-- 导航链接 -->
-    <div class="nav-links">
+    <!-- 桌面端导航链接 -->
+    <div class="nav-links desktop-nav">
       <a href="/" class:list={['nav-link', { active: isActive('/') && currentPath === '/' }]}>
         首页
       </a>
@@ -58,16 +59,61 @@ const isActive = (path: string) => {
         标签
       </a>
       
-      <!-- 搜索组件 - 浏览器空闲时加载 -->
+      <!-- 搜索组件 -->
       <div class="nav-search">
         <Search client:idle enablePreview={true} />
       </div>
     </div>
 
     <!-- 移动端菜单按钮 -->
-    <button class="mobile-menu-toggle" aria-label="切换菜单">
+    <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
       <span class="hamburger"></span>
     </button>
+  </div>
+
+  <!-- 移动端全屏菜单 -->
+  <div class="mobile-menu-overlay" aria-hidden="true">
+    <div class="mobile-menu">
+      <!-- 移动端搜索框 -->
+      <div class="mobile-search">
+        <Search client:idle enablePreview={true} />
+      </div>
+      
+      <!-- 移动端导航链接 -->
+      <div class="mobile-nav-links">
+        <a href="/" class:list={['mobile-nav-link', { active: isActive('/') && currentPath === '/' }]}>
+          首页
+        </a>
+
+        <a href="/blog" class:list={['mobile-nav-link', { active: currentPath.startsWith('/blog') }]}>
+          文章
+        </a>
+
+        <a href="/articles" class:list={['mobile-nav-link', { active: isActive('/articles') }]}>
+          所有文章
+        </a>
+
+        <!-- 移动端学科分类 -->
+        <div class="mobile-dropdown">
+          <button class:list={['mobile-nav-link', 'mobile-dropdown-toggle', { active: isActive('/categories') }]}>
+            学科分类 <span class="mobile-arrow">▼</span>
+          </button>
+          <div class="mobile-dropdown-menu">
+            <a href="/categories" class="mobile-dropdown-item">查看所有分类</a>
+            <a href="/categories/math" class="mobile-dropdown-item">📐 数学</a>
+            <a href="/categories/physics" class="mobile-dropdown-item">⚛️ 物理</a>
+            <a href="/categories/chemistry" class="mobile-dropdown-item">🧪 化学</a>
+            <a href="/categories/biology" class="mobile-dropdown-item">🧬 生物</a>
+            <a href="/categories/computer" class="mobile-dropdown-item">💻 计算机</a>
+            <a href="/categories/literature" class="mobile-dropdown-item">📚 文学</a>
+          </div>
+        </div>
+
+        <a href="/tags" class:list={['mobile-nav-link', { active: isActive('/tags') }]}>
+          标签
+        </a>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -98,14 +144,18 @@ const isActive = (path: string) => {
     text-decoration: none;
     white-space: nowrap;
     transition: color 0.2s ease;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .nav-logo:hover {
     color: var(--secondary);
   }
 
-  .nav-links {
-    display: flex !important;
+  /* 桌面端导航 */
+  .desktop-nav {
+    display: flex;
     align-items: center;
     gap: 0.5rem;
   }
@@ -123,6 +173,9 @@ const isActive = (path: string) => {
     cursor: pointer;
     font-size: 1rem;
     font-family: inherit;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .nav-link:hover {
@@ -183,6 +236,7 @@ const isActive = (path: string) => {
     color: var(--darkgray);
     text-decoration: none;
     transition: all 0.2s ease;
+    min-height: 44px;
   }
 
   .dropdown-item:hover {
@@ -207,12 +261,11 @@ const isActive = (path: string) => {
     flex-shrink: 0;
     min-width: 180px;
   }
-  
-  /* 导航栏中的搜索框样式调整 */
+
   .nav-search :global(.search) {
     width: 100%;
   }
-  
+
   .nav-search :global(.search-box-button) {
     width: 100%;
     border-radius: 0.5rem;
@@ -223,8 +276,12 @@ const isActive = (path: string) => {
     display: none;
     background: none;
     border: none;
-    padding: 0.5rem;
+    padding: 0.75rem;
     cursor: pointer;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    align-items: center;
   }
 
   .hamburger {
@@ -233,7 +290,7 @@ const isActive = (path: string) => {
     height: 2px;
     background: var(--dark);
     position: relative;
-    transition: background 0.2s ease;
+    transition: all 0.3s ease;
   }
 
   .hamburger::before,
@@ -244,7 +301,7 @@ const isActive = (path: string) => {
     height: 2px;
     background: var(--dark);
     left: 0;
-    transition: transform 0.2s ease;
+    transition: all 0.3s ease;
   }
 
   .hamburger::before {
@@ -255,86 +312,230 @@ const isActive = (path: string) => {
     bottom: -8px;
   }
 
-  /* 响应式 */
-  @media (max-width: 768px) {
+  /* 汉堡菜单动画 - 打开状态 */
+  .mobile-menu-toggle.active .hamburger {
+    background: transparent;
+  }
+
+  .mobile-menu-toggle.active .hamburger::before {
+    top: 0;
+    transform: rotate(45deg);
+  }
+
+  .mobile-menu-toggle.active .hamburger::after {
+    bottom: 0;
+    transform: rotate(-45deg);
+  }
+
+  /* 移动端全屏菜单覆盖层 */
+  .mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .mobile-menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .mobile-menu {
+    background: var(--light);
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .mobile-menu-overlay.active .mobile-menu {
+    transform: translateY(0);
+  }
+
+  /* 移动端搜索框 */
+  .mobile-search {
+    padding: 1rem;
+    border-bottom: 1px solid var(--lightgray);
+  }
+
+  .mobile-search :global(.search) {
+    width: 100%;
+  }
+
+  .mobile-search :global(.search-box-button) {
+    width: 100%;
+  }
+
+  /* 移动端导航链接 */
+  .mobile-nav-links {
+    padding: 0.5rem 0;
+  }
+
+  .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    color: var(--darkgray);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s ease;
+  }
+
+  .mobile-nav-link:hover,
+  .mobile-nav-link:active {
+    background: var(--highlight);
+  }
+
+  .mobile-nav-link.active {
+    color: var(--secondary);
+    background: var(--highlight);
+  }
+
+  /* 移动端下拉菜单 */
+  .mobile-dropdown {
+    width: 100%;
+  }
+
+  .mobile-dropdown-toggle {
+    text-align: left;
+  }
+
+  .mobile-arrow {
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
+  }
+
+  .mobile-dropdown.active .mobile-arrow {
+    transform: rotate(-180deg);
+  }
+
+  .mobile-dropdown-menu {
+    display: none;
+    background: var(--highlight);
+  }
+
+  .mobile-dropdown.active .mobile-dropdown-menu {
+    display: block;
+  }
+
+  .mobile-dropdown-item {
+    display: block;
+    padding: 0.875rem 2rem;
+    color: var(--darkgray);
+    text-decoration: none;
+    font-size: 0.9375rem;
+    min-height: 44px;
+    transition: background 0.2s ease;
+  }
+
+  .mobile-dropdown-item:hover,
+  .mobile-dropdown-item:active {
+    background: var(--lightgray);
+  }
+
+  /* 响应式 - 移动端 */
+  @media (max-width: 767px) {
     .nav-container {
       padding: 0 1rem;
     }
 
-    .nav-links {
-      display: none !important;
-      position: absolute;
-      top: 64px;
-      left: 0;
-      right: 0;
-      background: var(--light);
-      border-bottom: 1px solid var(--lightgray);
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0;
-      padding: 1rem 0;
-    }
-    
-    .nav-search {
-      margin-left: 0;
-      padding: 0.5rem 1.5rem;
-      width: 100%;
-    }
-
-    .nav-links.active {
-      display: flex;
-    }
-
-    .nav-link {
-      padding: 1rem 1.5rem;
-      border-radius: 0;
-    }
-
-    .nav-dropdown {
-      width: 100%;
-    }
-
-    .dropdown-menu {
-      position: static;
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-      box-shadow: none;
-      border: none;
-      border-top: 1px solid var(--lightgray);
-      border-radius: 0;
+    .desktop-nav {
       display: none;
     }
 
-    .nav-dropdown:hover .dropdown-menu,
-    .nav-dropdown.active .dropdown-menu {
-      display: block;
+    .mobile-menu-toggle {
+      display: flex;
     }
 
-    .mobile-menu-toggle {
+    .mobile-menu-overlay {
       display: block;
     }
   }
 </style>
 
 <script>
-  // 移动端菜单切换
+  // 移动端菜单交互
   const menuToggle = document.querySelector('.mobile-menu-toggle');
-  const navLinks = document.querySelector('.nav-links');
+  const menuOverlay = document.querySelector('.mobile-menu-overlay');
+  const mobileDropdowns = document.querySelectorAll('.mobile-dropdown');
+  const mobileNavLinks = document.querySelectorAll('.mobile-nav-link:not(.mobile-dropdown-toggle)');
 
-  menuToggle?.addEventListener('click', () => {
-    navLinks?.classList.toggle('active');
+  // 切换菜单
+  function toggleMenu() {
+    const isOpen = menuToggle?.classList.toggle('active');
+    menuOverlay?.classList.toggle('active');
+    menuToggle?.setAttribute('aria-expanded', String(isOpen));
+    menuOverlay?.setAttribute('aria-hidden', String(!isOpen));
+    
+    // 防止背景滚动
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
+
+  // 关闭菜单
+  function closeMenu() {
+    menuToggle?.classList.remove('active');
+    menuOverlay?.classList.remove('active');
+    menuToggle?.setAttribute('aria-expanded', 'false');
+    menuOverlay?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  // 点击汉堡按钮
+  menuToggle?.addEventListener('click', toggleMenu);
+
+  // 点击覆盖层关闭菜单
+  menuOverlay?.addEventListener('click', (e) => {
+    if (e.target === menuOverlay) {
+      closeMenu();
+    }
+  });
+
+  // 点击导航链接关闭菜单
+  mobileNavLinks.forEach(link => {
+    link.addEventListener('click', closeMenu);
   });
 
   // 移动端下拉菜单切换
-  const dropdownToggle = document.querySelector('.dropdown-toggle');
-  const dropdown = document.querySelector('.nav-dropdown');
-
-  dropdownToggle?.addEventListener('click', (e) => {
-    if (window.innerWidth <= 768) {
+  mobileDropdowns.forEach(dropdown => {
+    const toggle = dropdown.querySelector('.mobile-dropdown-toggle');
+    toggle?.addEventListener('click', (e) => {
       e.preventDefault();
-      dropdown?.classList.toggle('active');
+      dropdown.classList.toggle('active');
+    });
+
+    // 点击下拉菜单项关闭整个菜单
+    const items = dropdown.querySelectorAll('.mobile-dropdown-item');
+    items.forEach(item => {
+      item.addEventListener('click', closeMenu);
+    });
+  });
+
+  // ESC 键关闭菜单
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuOverlay?.classList.contains('active')) {
+      closeMenu();
+    }
+  });
+
+  // 窗口大小变化时关闭移动端菜单
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 767 && menuOverlay?.classList.contains('active')) {
+      closeMenu();
     }
   });
 </script>
-

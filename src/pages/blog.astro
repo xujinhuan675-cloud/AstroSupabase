@@ -1,13 +1,13 @@
 ---
 /**
- * 博客首页 - 静态生成版本
+ * 博客首页 - 静态生成版本（移动端优化）
  * 
  * 优化策略：
  * 1. 构建时获取文章数据
  * 2. 运行时零数据库查询
  * 3. 页面部署到 Edge CDN，全球加速
+ * 4. 响应式网格布局
  */
-// 强制静态预渲染（Astro 5.x server 模式下需要显式声明）
 export const prerender = true;
 
 import Layout from '../layout/Layout.astro';
@@ -15,36 +15,140 @@ import { getArticles } from '../lib/articles';
 import ArticleCard from '../components/ArticleCard.astro';
 import MainNav from '../components/MainNav.astro';
 
-// 构建时获取文章数据
 const articles = await getArticles(6);
 ---
 
 <Layout title="欢迎来到Openeducation">
-  <!-- 主导航栏 -->
   <MainNav />
   
-  <main class="min-h-screen py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col">
-      <div class="text-center mb-12">
-        <h1 class="text-4xl font-extrabold sm:text-5xl sm:tracking-tight lg:text-6xl mb-6" style="color: var(--dark);">
-          欢迎来到Openeducation
-        </h1>
-        <p class="text-xl max-w-3xl mx-auto" style="color: var(--gray);">
-          分享持续生长的知识网络
-        </p>
-      </div>
+  <main class="blog-main">
+    <div class="blog-container">
+      <!-- 页面标题 -->
+      <header class="blog-header">
+        <h1 class="blog-title">欢迎来到Openeducation</h1>
+        <p class="blog-subtitle">分享持续生长的知识网络</p>
+      </header>
 
-      <!-- Featured Articles -->
-      <div class="mb-16">
-        <h2 class="text-2xl font-bold mb-8" style="color: var(--dark);">最新文章</h2>
-        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <!-- 文章列表 -->
+      <section class="articles-section">
+        <h2 class="section-title">最新文章</h2>
+        <div class="articles-grid">
           {articles.map(article => (
             <ArticleCard article={article} />
           ))}
         </div>
-      </div>
-
-      <!-- 后台管理入口已隐藏，但仍可通过直接访问 /auth/login 进入 -->
+      </section>
     </div>
   </main>
 </Layout>
+
+<style>
+  .blog-main {
+    min-height: 100vh;
+    padding: 3rem 0;
+  }
+
+  @media (max-width: 639px) {
+    .blog-main {
+      padding: 1.5rem 0;
+    }
+  }
+
+  .blog-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  @media (max-width: 639px) {
+    .blog-container {
+      padding: 0 1rem;
+    }
+  }
+
+  .blog-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  @media (max-width: 639px) {
+    .blog-header {
+      margin-bottom: 2rem;
+    }
+  }
+
+  .blog-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 0 0 1rem 0;
+    line-height: 1.2;
+  }
+
+  @media (max-width: 1023px) {
+    .blog-title {
+      font-size: 2.5rem;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .blog-title {
+      font-size: 1.75rem;
+    }
+  }
+
+  .blog-subtitle {
+    font-size: 1.25rem;
+    color: var(--gray);
+    margin: 0;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 639px) {
+    .blog-subtitle {
+      font-size: 1rem;
+    }
+  }
+
+  .articles-section {
+    margin-bottom: 4rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0 0 2rem 0;
+  }
+
+  @media (max-width: 639px) {
+    .section-title {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  /* 响应式网格布局 */
+  .articles-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* 平板：双列 */
+  @media (max-width: 1023px) {
+    .articles-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+  }
+
+  /* 移动端：单列 */
+  @media (max-width: 639px) {
+    .articles-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+</style>

@@ -1,5 +1,5 @@
 /**
- * Landing Page 样式
+ * Landing Page 样式 - 移动端优化版
  * 参考 AstrOb/openeducation 的星空主题
  */
 
@@ -64,6 +64,26 @@
   animation: move-clouds-back 200s linear infinite;
 }
 
+/* 移动端减少动画复杂度 */
+@media (max-width: 767px) {
+  .twinkling {
+    animation-duration: 300s;
+  }
+  
+  .clouds {
+    animation-duration: 300s;
+    opacity: 0.3;
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  .twinkling,
+  .clouds {
+    animation: none;
+  }
+}
+
 .graph-container {
   position: absolute;
   width: 100%;
@@ -77,6 +97,13 @@
   display: block;
 }
 
+/* 移动端图谱容器优化 */
+@media (max-width: 767px) {
+  .graph-container {
+    opacity: 0.6;
+  }
+}
+
 .logo-container {
   position: absolute;
   left: 50%;
@@ -86,10 +113,27 @@
   perspective: 1000px;
   cursor: pointer;
   transition: all 0.3s ease;
+  /* 确保触摸目标足够大 */
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo-container:hover .logo {
   transform: rotateX(25deg);
+}
+
+/* 移动端禁用 hover 效果 */
+@media (hover: none) {
+  .logo-container:hover .logo {
+    transform: none;
+  }
+  
+  .logo-container:active .logo {
+    transform: scale(0.95);
+  }
 }
 
 .logo {
@@ -112,10 +156,26 @@
   z-index: 4;
   cursor: pointer;
   transition: all 0.3s ease;
+  width: 100%;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  /* 确保触摸目标足够大 */
+  min-height: 44px;
 }
 
 .title-container:hover {
   transform: translateX(-50%) rotateX(-25deg);
+}
+
+/* 移动端禁用 hover 效果 */
+@media (hover: none) {
+  .title-container:hover {
+    transform: translateX(-50%);
+  }
+  
+  .title-container:active {
+    opacity: 0.8;
+  }
 }
 
 .title {
@@ -139,30 +199,53 @@
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-/* 响应式 */
-@media (max-width: 768px) {
+/* ===== 响应式样式 ===== */
+
+/* 平板 (768px - 1023px) */
+@media (max-width: 1023px) {
+  .title {
+    font-size: 4rem;
+  }
+  
+  .subtitle {
+    font-size: 1.5rem;
+  }
+  
+  .logo {
+    height: 28vh;
+  }
+}
+
+/* 大手机 / 小平板 (640px - 767px) */
+@media (max-width: 767px) {
   .title-container {
-    bottom: 20px;
+    bottom: 60px;
     gap: 1rem;
   }
 
   .title {
-    font-size: 3rem;
+    font-size: 2.5rem;
   }
 
   .subtitle {
-    font-size: 1.25rem;
-    padding: 0 1rem;
+    font-size: 1.125rem;
+    padding: 0 0.5rem;
   }
 
   .logo {
-    height: 25vh;
+    height: 22vh;
   }
 }
 
-@media (max-width: 480px) {
+/* 手机 (480px - 639px) */
+@media (max-width: 639px) {
+  .title-container {
+    bottom: 40px;
+    gap: 0.75rem;
+  }
+
   .title {
-    font-size: 2rem;
+    font-size: 2rem; /* 32px - 符合设计要求 */
   }
 
   .subtitle {
@@ -170,7 +253,54 @@
   }
 
   .logo {
-    height: 20vh;
+    height: 20vh; /* 符合设计要求 */
   }
 }
 
+/* 小手机 (<480px) */
+@media (max-width: 479px) {
+  .title-container {
+    bottom: 30px;
+    gap: 0.5rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .subtitle {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .logo {
+    height: 18vh;
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .logo {
+    height: 30vh;
+  }
+  
+  .title-container {
+    bottom: 20px;
+    gap: 0.5rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+  
+  .subtitle {
+    font-size: 0.875rem;
+  }
+}
+
+/* 安全区域适配 (iPhone X+) */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .title-container {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
