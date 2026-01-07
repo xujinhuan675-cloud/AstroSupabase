@@ -2,7 +2,11 @@
 /**
  * 标签索引页 - /tags
  * 显示所有标签和每个标签的文章数量
+ * 
+ * 优化：启用静态预渲染，构建时获取数据，运行时零数据库查询
  */
+export const prerender = true;
+
 import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
 import { db } from '../../db/client';
