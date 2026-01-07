@@ -7,12 +7,10 @@
 // 强制静态预渲染
 export const prerender = true;
 
-import OptimizedImage from '../components/OptimizedImage.astro';
 import '../styles/landing.css';
 import '../styles/quartz/variables.css';
 import '../styles/quartz/darkmode.css';
 import QuartzGraph from '../components/quartz/QuartzGraph';
-import logo from '../assets/logo.png';
 
 const title = 'I want to learn';
 const subtitle = 'Ship your Second Brain into the Cyber-Space';
@@ -68,22 +66,26 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
       />
     </div>
 
-    <!-- Logo - 关键图片，优先加载 -->
-    <a href="/blog">
-      <section class="logo-container">
-        <OptimizedImage
-          src={logo}
-          alt={title}
-          class="logo"
-          priority={true}
-          format="webp"
-          quality={90}
-        />
-      </section>
+    <!-- CSS 火箭图标 -->
+    <a href="/blog" class="rocket-link">
+      <div class="rocket-container">
+        <div class="rocket">
+          <div class="rocket-body">
+            <div class="rocket-window"></div>
+          </div>
+          <div class="rocket-fin rocket-fin-left"></div>
+          <div class="rocket-fin rocket-fin-right"></div>
+          <div class="rocket-flame">
+            <div class="flame flame-1"></div>
+            <div class="flame flame-2"></div>
+            <div class="flame flame-3"></div>
+          </div>
+        </div>
+      </div>
     </a>
 
     <!-- 标题和副标题 -->
-    <a href="/blog">
+    <a href="/blog" class="title-link">
       <section class="title-container">
         <h1 class="title">{title}</h1>
         <p class="subtitle">{subtitle}</p>
@@ -97,3 +99,198 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
   </script>
 </body>
 </html>
+
+<style>
+  /* CSS 火箭样式 */
+  .rocket-link {
+    text-decoration: none;
+    display: block;
+    position: relative;
+    z-index: 10;
+  }
+
+  .rocket-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+  }
+
+  .rocket {
+    position: relative;
+    width: 60px;
+    height: 120px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .rocket-body {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 80px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+    border-radius: 50% 50% 30% 30% / 60% 60% 40% 40%;
+    box-shadow: 
+      inset -5px 0 15px rgba(0,0,0,0.2),
+      0 0 20px rgba(139, 92, 246, 0.5);
+  }
+
+  .rocket-body::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-bottom: 25px solid #6366f1;
+  }
+
+  .rocket-window {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    border-radius: 50%;
+    border: 2px solid #4f46e5;
+    box-shadow: inset 2px 2px 4px rgba(255,255,255,0.5);
+  }
+
+  .rocket-fin {
+    position: absolute;
+    bottom: 35px;
+    width: 0;
+    height: 0;
+  }
+
+  .rocket-fin-left {
+    left: 0;
+    border-top: 20px solid transparent;
+    border-right: 15px solid #8b5cf6;
+    border-bottom: 10px solid transparent;
+  }
+
+  .rocket-fin-right {
+    right: 0;
+    border-top: 20px solid transparent;
+    border-left: 15px solid #8b5cf6;
+    border-bottom: 10px solid transparent;
+  }
+
+  .rocket-flame {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 2px;
+  }
+
+  .flame {
+    width: 8px;
+    border-radius: 0 0 50% 50%;
+    animation: flicker 0.15s ease-in-out infinite alternate;
+  }
+
+  .flame-1 {
+    height: 25px;
+    background: linear-gradient(to bottom, #fbbf24, #f97316, #ef4444);
+    animation-delay: 0s;
+  }
+
+  .flame-2 {
+    height: 35px;
+    background: linear-gradient(to bottom, #fde047, #fbbf24, #f97316);
+    animation-delay: 0.05s;
+  }
+
+  .flame-3 {
+    height: 25px;
+    background: linear-gradient(to bottom, #fbbf24, #f97316, #ef4444);
+    animation-delay: 0.1s;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes flicker {
+    0% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    100% {
+      opacity: 0.8;
+      transform: scaleY(0.9);
+    }
+  }
+
+  .title-link {
+    text-decoration: none;
+    position: relative;
+    z-index: 10;
+  }
+
+  .title-container {
+    text-align: center;
+    padding: 1rem 2rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #c084fc;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .rocket {
+      width: 50px;
+      height: 100px;
+    }
+    
+    .rocket-body {
+      width: 32px;
+      height: 64px;
+    }
+    
+    .rocket-body::before {
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 20px solid #6366f1;
+    }
+    
+    .rocket-window {
+      width: 12px;
+      height: 12px;
+      top: 16px;
+    }
+    
+    .title {
+      font-size: 2rem;
+    }
+    
+    .subtitle {
+      font-size: 0.875rem;
+    }
+  }
+</style>

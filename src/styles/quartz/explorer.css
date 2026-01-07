@@ -98,18 +98,21 @@
   padding: 0.25rem 0;
 }
 
+/* 分类标题颜色 - 与右侧目录统一使用 var(--dark) */
 .folder-container div > a {
-  color: var(--secondary);
+  color: var(--dark);
   font-family: var(--headerFont);
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.5rem;
   display: inline-block;
   text-decoration: none;
+  opacity: 0.75;
 }
 
 .folder-container div > a:hover {
   color: var(--tertiary);
+  opacity: 1;
 }
 
 .folder-container div > button {
@@ -125,21 +128,30 @@
   font-family: var(--headerFont);
 }
 
+/* 分类按钮文字颜色 - 与右侧目录统一 */
 .folder-container div > button span {
   font-size: 0.9rem;
   display: inline-block;
-  color: var(--secondary);
+  color: var(--dark);
   font-weight: 600;
   margin: 0;
   line-height: 1.5rem;
   pointer-events: none;
+  opacity: 0.75;
 }
 
+.folder-container div > button:hover span {
+  color: var(--tertiary);
+  opacity: 1;
+}
+
+/* 折叠图标颜色 - 与文字统一 */
 .folder-icon {
   margin-right: 5px;
-  color: var(--secondary);
+  color: var(--dark);
+  opacity: 0.75;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, color 0.3s ease;
   backface-visibility: visible;
   flex-shrink: 0;
 }
@@ -150,6 +162,7 @@ li:has(> .folder-outer:not(.open)) > .folder-container > svg {
 
 .folder-icon:hover {
   color: var(--tertiary);
+  opacity: 1;
 }
 
 .file-item {
