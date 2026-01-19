@@ -141,7 +141,7 @@
   height: 33vh;
   width: auto;
   transition: all 0.3s ease;
-  filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.4));
+  filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.5));
 }
 
 .title-container {
@@ -181,13 +181,13 @@
 .title {
   font-size: 5rem;
   font-weight: 700;
-  background: linear-gradient(to right, #a855f7, #c084fc, #ec4899);
+  background: linear-gradient(90deg, #8B5CF6 0%, #7C3AED 50%, #6D28D9 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-align: center;
   line-height: 1.2;
-  text-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+  text-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
 }
 
 .subtitle {
@@ -196,7 +196,7 @@
   color: white;
   max-width: 800px;
   line-height: 1.5;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
 }
 
 /* ===== 响应式样式 ===== */

@@ -1,19 +1,44 @@
 /**
  * Quartz 样式变量
  * 适配到 AstroSupabase/Tailwind CSS
+ * 配色方案：紫色渐变主题 (参考输入框增强AI设计)
  */
 
 :root {
-  /* 颜色变量 - 浅色模式 */
-  --light: #faf8f8;
-  --lightgray: #e5e5e5;
-  --gray: #b8b8b8;
-  --darkgray: #4e4e4e;
-  --dark: #2b2b2b;
-  --secondary: #284b63;
-  --tertiary: #84a59d;
-  --highlight: rgba(143, 159, 169, 0.15);
-  --textHighlight: #fff23688;
+  /* 主色调 - 紫色渐变系列 */
+  --primary: #8B5CF6;           /* 主紫色 */
+  --primary-dark: #7C3AED;      /* 深紫色 */
+  --primary-deep: #6D28D9;      /* 更深紫色 */
+  --primary-light: #A78BFA;     /* 浅紫色 */
+  --primary-lighter: #C4B5FD;   /* 更浅紫色 */
+  
+  /* 功能色 */
+  --success: #10B981;           /* 绿色 - 成功 */
+  --warning: #F59E0B;           /* 黄色 - 警告 */
+  --error: #EF4444;             /* 红色 - 错误 */
+  --info: #0EA5E9;              /* 蓝色 - 信息 */
+  
+  /* 背景色系 - 浅色模式（温暖米白色调） */
+  --light: #faf8f8;             /* 主背景 - 温暖米白色 */
+  --lightgray: #e8e6e6;         /* 边框/分隔线 - 稍深的米灰 */
+  --gray: #9CA3AF;              /* 次要元素 */
+  --darkgray: #4B5563;          /* 段落文字 */
+  --dark: #1F2937;              /* 标题/主文字 */
+  
+  /* 语义化颜色 */
+  --secondary: var(--primary);  /* 链接/强调色 */
+  --tertiary: var(--primary-dark); /* 悬停色 */
+  --highlight: rgba(139, 92, 246, 0.1);  /* 高亮背景 */
+  --textHighlight: rgba(139, 92, 246, 0.2); /* 文字高亮 */
+  
+  /* 特色卡片背景（保持温暖色调） */
+  --card-purple: #f5f3ff;       /* 紫色卡片 */
+  --card-yellow: #fef3c7;       /* 黄色卡片 */
+  --card-green: #dcfce7;        /* 绿色卡片 */
+  --card-blue: #e0f2fe;         /* 蓝色卡片 */
+  
+  /* 纯白色（用于卡片、弹窗等需要突出的元素） */
+  --pure-white: #ffffff;        /* 纯白色 */
   
   /* 边框 */
   --border: var(--lightgray);
@@ -23,15 +48,27 @@
 /* 暗色模式 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --light: #161618;
-    --lightgray: #393639;
-    --gray: #646464;
-    --darkgray: #d4d4d4;
-    --dark: #ebebec;
-    --secondary: #7b97aa;
-    --tertiary: #84a59d;
-    --highlight: rgba(143, 159, 169, 0.15);
-    --textHighlight: #b3aa0288;
+    /* 背景色系 - 暗色模式 */
+    --light: #111827;           /* 主背景 */
+    --lightgray: #374151;       /* 边框/分隔线 */
+    --gray: #6B7280;            /* 次要元素 */
+    --darkgray: #D1D5DB;        /* 段落文字 */
+    --dark: #F9FAFB;            /* 标题/主文字 */
+    
+    /* 主色调保持不变，但调整透明度 */
+    --secondary: var(--primary-light);
+    --tertiary: var(--primary);
+    --highlight: rgba(139, 92, 246, 0.15);
+    --textHighlight: rgba(139, 92, 246, 0.25);
+    
+    /* 暗色模式下的特色卡片 */
+    --card-purple: rgba(139, 92, 246, 0.1);
+    --card-yellow: rgba(245, 158, 11, 0.1);
+    --card-green: rgba(16, 185, 129, 0.1);
+    --card-blue: rgba(14, 165, 233, 0.1);
+    
+    /* 暗色模式下的纯色 */
+    --pure-white: #1F2937;      /* 暗色模式下的"白色"实际是深灰 */
   }
 }
 
@@ -51,15 +88,16 @@ a.internal {
   line-height: 1.4rem;
   color: var(--secondary);
   font-weight: 600;
-  transition: color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 a.internal:hover {
   color: var(--tertiary);
+  background-color: var(--card-purple);
 }
 
 a.internal.broken {
-  color: var(--secondary);
+  color: var(--gray);
   opacity: 0.5;
   transition: opacity 0.2s ease;
 }
@@ -72,6 +110,11 @@ a.internal.broken:hover {
 a.external {
   color: var(--secondary);
   font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+a.external:hover {
+  color: var(--tertiary);
 }
 
 a.external .external-icon {
@@ -88,15 +131,84 @@ a.tag-link {
   font-size: 0.875rem;
   color: var(--secondary);
   text-decoration: none;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
 a.tag-link:hover {
-  background-color: var(--lightgray);
+  background-color: var(--card-purple);
+  border-color: var(--primary);
 }
 
 a.tag-link::before {
   content: "#";
   opacity: 0.7;
+}
+
+/* 按钮样式 */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-deep) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--dark);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--card-purple);
+  border-color: var(--primary);
+}
+
+/* 特色卡片样式 */
+.card-feature {
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  border-left: 4px solid;
+  transition: transform 0.3s ease;
+}
+
+.card-feature:hover {
+  transform: translateX(5px);
+}
+
+.card-feature.purple {
+  background: var(--card-purple);
+  border-color: var(--primary);
+}
+
+.card-feature.yellow {
+  background: var(--card-yellow);
+  border-color: var(--warning);
+}
+
+.card-feature.green {
+  background: var(--card-green);
+  border-color: var(--success);
+}
+
+.card-feature.blue {
+  background: var(--card-blue);
+  border-color: var(--info);
 }
 

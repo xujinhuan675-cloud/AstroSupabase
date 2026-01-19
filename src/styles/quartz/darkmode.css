@@ -101,27 +101,51 @@
 
 /* 暗色模式颜色变量 */
 :root[saved-theme="dark"] {
-  --light: #161618;
-  --lightgray: #393639;
-  --gray: #646464;
-  --darkgray: #d4d4d4;
-  --dark: #ebebec;
-  --secondary: #7b97aa;
-  --tertiary: #84a59d;
-  --highlight: rgba(143, 159, 169, 0.15);
-  --textHighlight: #b3aa0288;
+  /* 背景色系 */
+  --light: #111827;
+  --lightgray: #374151;
+  --gray: #6B7280;
+  --darkgray: #D1D5DB;
+  --dark: #F9FAFB;
+  
+  /* 主色调 - 暗色模式下稍微调亮 */
+  --secondary: var(--primary-light);
+  --tertiary: var(--primary);
+  --highlight: rgba(139, 92, 246, 0.15);
+  --textHighlight: rgba(139, 92, 246, 0.25);
+  
+  /* 暗色模式下的特色卡片 */
+  --card-purple: rgba(139, 92, 246, 0.1);
+  --card-yellow: rgba(245, 158, 11, 0.1);
+  --card-green: rgba(16, 185, 129, 0.1);
+  --card-blue: rgba(14, 165, 233, 0.1);
+  
+  /* 暗色模式下的纯色 */
+  --pure-white: #1F2937;
 }
 
-/* 亮色模式颜色变量（默认在 variables.css 中已定义） */
+/* 亮色模式颜色变量 */
 :root[saved-theme="light"] {
+  /* 背景色系 - 温暖米白色调 */
   --light: #faf8f8;
-  --lightgray: #e5e5e5;
-  --gray: #b8b8b8;
-  --darkgray: #4e4e4e;
-  --dark: #2b2b2b;
-  --secondary: #284b63;
-  --tertiary: #84a59d;
-  --highlight: rgba(143, 159, 169, 0.15);
-  --textHighlight: #fff23688;
+  --lightgray: #e8e6e6;
+  --gray: #9CA3AF;
+  --darkgray: #4B5563;
+  --dark: #1F2937;
+  
+  /* 主色调 */
+  --secondary: var(--primary);
+  --tertiary: var(--primary-dark);
+  --highlight: rgba(139, 92, 246, 0.1);
+  --textHighlight: rgba(139, 92, 246, 0.2);
+  
+  /* 特色卡片背景 */
+  --card-purple: #f5f3ff;
+  --card-yellow: #fef3c7;
+  --card-green: #dcfce7;
+  --card-blue: #e0f2fe;
+  
+  /* 纯白色 */
+  --pure-white: #ffffff;
 }
 
