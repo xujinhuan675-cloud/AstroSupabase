@@ -37,31 +37,14 @@ export default function Search({ enablePreview = true }: SearchProps) {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const articlesDataRef = useRef<any[] | null>(null);
-
-  // 预加载文章数据
-  const loadArticlesData = useCallback(async () => {
-    if (articlesDataRef.current) return articlesDataRef.current;
-    
-    try {
-      const response = await fetch('/api/articles');
-      if (response.ok) {
-        const data = await response.json();
-        articlesDataRef.current = data;
-        return data;
-      }
-    } catch (error) {
-      console.error('Failed to load articles:', error);
-    }
-    return [];
-  }, []);
 
   // 搜索函数（带缓存）
   const performSearch = useCallback(async (query: string) => {
-    const normalizedQuery = query.toLowerCase().trim();
-    
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) return [];
+
     // 检查缓存
-    const cacheKey = normalizedQuery;
+    const cacheKey = normalizedQuery.toLowerCase();
     const cachedTimestamp = cacheTimestamps.get(cacheKey);
     if (cachedTimestamp && Date.now() - cachedTimestamp < CACHE_TTL) {
       const cached = searchCache.get(cacheKey);
@@ -69,29 +52,21 @@ export default function Search({ enablePreview = true }: SearchProps) {
         return cached;
       }
     }
-    
-    // 获取文章数据
-    const articles = await loadArticlesData();
-    
-    // 客户端搜索（优化：使用 includes 而不是正则）
-    const filtered = articles.filter((article: any) => {
-      const titleLower = article.title?.toLowerCase() || '';
-      const contentLower = article.content?.toLowerCase() || '';
-      const slugLower = article.slug?.toLowerCase() || '';
-      
-      return titleLower.includes(normalizedQuery) || 
-             contentLower.includes(normalizedQuery) || 
-             slugLower.includes(normalizedQuery);
-    });
-    
-    const results = filtered.slice(0, 10); // 只显示前10个结果
-    
+
+    // 调用服务端搜索 API
+    const response = await fetch(`/api/search?q=${encodeURIComponent(normalizedQuery)}`);
+    if (!response.ok) {
+      throw new Error('Search failed');
+    }
+
+    const results = await response.json();
+
     // 更新缓存
     searchCache.set(cacheKey, results);
     cacheTimestamps.set(cacheKey, Date.now());
-    
+
     return results;
-  }, [loadArticlesData]);
+  }, []);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -106,7 +81,7 @@ export default function Search({ enablePreview = true }: SearchProps) {
     abortControllerRef.current = new AbortController();
 
     setIsSearching(true);
-    
+
     // 防抖处理（300ms）
     const debounceTimer = setTimeout(async () => {
       try {
@@ -129,30 +104,25 @@ export default function Search({ enablePreview = true }: SearchProps) {
     };
   }, [searchQuery, performSearch]);
 
-  // 弹窗打开时预加载数据
-  useEffect(() => {
-    if (showSearch) {
-      loadArticlesData();
-    }
-  }, [showSearch, loadArticlesData]);
+
 
   // 点击外部区域关闭搜索弹窗（不包括搜索框按钮本身）
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (!showSearch) return;
-      
+
       const target = event.target as Node;
-      
+
       // 如果点击的是搜索框按钮，不关闭弹窗
       if (searchButtonRef.current && searchButtonRef.current.contains(target)) {
         return;
       }
-      
+
       // 如果点击的是搜索弹窗内部，不关闭
       if (searchContainerRef.current && searchContainerRef.current.contains(target)) {
         return;
       }
-      
+
       // 点击外部区域，关闭弹窗
       setShowSearch(false);
     };
@@ -201,7 +171,7 @@ export default function Search({ enablePreview = true }: SearchProps) {
 
   return (
     <div className="search">
-      <button 
+      <button
         ref={searchButtonRef}
         className="search-button search-box-button"
         onClick={handleSearchButtonClick}
@@ -216,10 +186,10 @@ export default function Search({ enablePreview = true }: SearchProps) {
         </svg>
         <span className="search-text">搜索</span>
       </button>
-      
+
       {showSearch && (
-        <div 
-          className="search-container" 
+        <div
+          className="search-container"
           ref={searchContainerRef}
           onClick={handleOverlayClick}
         >
@@ -236,7 +206,7 @@ export default function Search({ enablePreview = true }: SearchProps) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
               />
-              <button 
+              <button
                 className="search-close-button"
                 onClick={handleCloseSearch}
                 aria-label="关闭搜索"
@@ -248,10 +218,10 @@ export default function Search({ enablePreview = true }: SearchProps) {
                 </svg>
               </button>
             </div>
-            
+
             <div className={`search-layout ${enablePreview ? 'preview-enabled' : ''}`}>
               {isSearching && <div className="search-loading">搜索中...</div>}
-              
+
               {!isSearching && searchResults.length > 0 && (
                 <div className="search-results">
                   {searchResults.map((result) => (
@@ -269,7 +239,7 @@ export default function Search({ enablePreview = true }: SearchProps) {
                   ))}
                 </div>
               )}
-              
+
               {!isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
                 <div className="search-no-results">未找到匹配的文章</div>
               )}

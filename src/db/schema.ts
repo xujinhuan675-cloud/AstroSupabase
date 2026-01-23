@@ -1,4 +1,10 @@
-import { boolean, pgTable, serial, integer, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, serial, integer, text, timestamp, customType } from 'drizzle-orm/pg-core';
+
+const tsvector = customType({
+  dataType() {
+    return 'tsvector';
+  },
+});
 
 // Example table - modify according to your needs
 export const users = pgTable('users', {
@@ -34,6 +40,7 @@ export const articles = pgTable('articles', {
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
   publishedAt: timestamp('published_at'),
   readingTime: text('reading_time'), // 缓存的阅读时间
+  searchVector: tsvector('search_vector'),
 });
 
 // 文章标签表 - 支持多标签系统
