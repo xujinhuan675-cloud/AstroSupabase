@@ -17,6 +17,7 @@ export const GET: APIRoute = async ({ url }) => {
             status: 200,
             headers: { 
                 'Content-Type': 'application/json',
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
                 'X-Search-Version': '5.0'
             }
         });
@@ -51,7 +52,9 @@ export const GET: APIRoute = async ({ url }) => {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+                'Expires': '0',
                 'X-Search-Version': '5.0',
                 'X-Total-Published': String(totalPublished),
                 'X-Results-Count': String(results.length)
