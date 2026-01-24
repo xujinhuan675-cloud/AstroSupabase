@@ -13,12 +13,23 @@ export const prerender = false;
 export const GET: APIRoute = async ({ url }) => {
     const query = url.searchParams.get('q');
 
+    // 测试：如果查询是 "test123"，返回特殊响应
+    if (query === 'test123') {
+        return new Response(JSON.stringify({ test: 'deployment-working', version: '4.0' }), {
+            status: 200,
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Search-Version': '4.0'
+            }
+        });
+    }
+
     if (!query || query.trim().length < 2) {
         return new Response(JSON.stringify([]), {
             status: 200,
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Search-Version': '2.0' // 版本标识
+                'X-Search-Version': '4.0'
             }
         });
     }
@@ -49,7 +60,7 @@ export const GET: APIRoute = async ({ url }) => {
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache',
-                'X-Search-Version': '3.0'
+                'X-Search-Version': '4.0'
             }
         });
 
