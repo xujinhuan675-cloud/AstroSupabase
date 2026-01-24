@@ -1,4 +1,5 @@
-import postgres from 'postgres';
+import { db } from '../../db/client';
+import { sql } from 'drizzle-orm';
 import type { APIRoute } from 'astro';
 
 export const prerender = false;
@@ -12,24 +13,18 @@ export const GET: APIRoute = async ({ url }) => {
         });
     }
 
-    // 每次请求创建新连接
-    const connectionString = process.env.DATABASE_URL || '';
-    const sql = postgres(connectionString, { 
-        prepare: false,
-        max: 1
-    });
-
     try {
-        const results = await sql`
+        const searchTerm = q.trim();
+        
+        // 使用原始 SQL 通过 Drizzle 的 db.execute
+        const results = await db.execute(sql`
             SELECT id, title, slug, excerpt
             FROM articles
             WHERE is_deleted = false
               AND status = 'published'
-              AND search_vector @@ plainto_tsquery('simple', ${q.trim()})
+              AND search_vector @@ plainto_tsquery('simple', ${searchTerm})
             LIMIT 10
-        `;
-
-        await sql.end();
+        `);
 
         return new Response(JSON.stringify(results), {
             headers: { 
@@ -38,8 +33,6 @@ export const GET: APIRoute = async ({ url }) => {
             }
         });
     } catch (error) {
-        await sql.end();
-        
         return new Response(JSON.stringify({ 
             error: 'Search failed',
             message: error instanceof Error ? error.message : String(error)
