@@ -19,7 +19,10 @@ export const GET: APIRoute = async ({ url }) => {
     if (!query || query.trim().length < 2) {
         return new Response(JSON.stringify([]), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Search-Version': '2.0' // 版本标识
+            }
         });
     }
 
@@ -53,7 +56,8 @@ export const GET: APIRoute = async ({ url }) => {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'public, max-age=60' // Cache search results for 1 minute
+                'Cache-Control': 'public, max-age=60', // Cache search results for 1 minute
+                'X-Search-Version': '2.0' // 版本标识
             }
         });
 
