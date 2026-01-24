@@ -3,9 +3,6 @@ import type { APIRoute } from 'astro';
 
 export const prerender = false;
 
-const connectionString = process.env.DATABASE_URL || '';
-const client = postgres(connectionString, { prepare: false });
-
 export const GET: APIRoute = async ({ url }) => {
     const q = url.searchParams.get('q');
     
@@ -15,8 +12,15 @@ export const GET: APIRoute = async ({ url }) => {
         });
     }
 
+    // 每次请求创建新连接
+    const connectionString = process.env.DATABASE_URL || '';
+    const sql = postgres(connectionString, { 
+        prepare: false,
+        max: 1
+    });
+
     try {
-        const results = await client`
+        const results = await sql`
             SELECT id, title, slug, excerpt
             FROM articles
             WHERE is_deleted = false
@@ -25,6 +29,8 @@ export const GET: APIRoute = async ({ url }) => {
             LIMIT 10
         `;
 
+        await sql.end();
+
         return new Response(JSON.stringify(results), {
             headers: { 
                 'Content-Type': 'application/json',
@@ -32,7 +38,12 @@ export const GET: APIRoute = async ({ url }) => {
             }
         });
     } catch (error) {
-        return new Response(JSON.stringify({ error: 'Search failed' }), {
+        await sql.end();
+        
+        return new Response(JSON.stringify({ 
+            error: 'Search failed',
+            message: error instanceof Error ? error.message : String(error)
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
