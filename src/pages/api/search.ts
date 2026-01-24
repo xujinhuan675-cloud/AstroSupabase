@@ -2,11 +2,8 @@ import { db } from '../../db/client';
 import { articles } from '../../db/schema';
 import { sql, and, eq } from 'drizzle-orm';
 import type { APIRoute } from 'astro';
-import { createModuleLogger } from '../../lib/logger';
 
 export const prerender = false;
-
-const logger = createModuleLogger('API.Search');
 
 /**
  * Server-side Full Text Search API
@@ -28,11 +25,8 @@ export const GET: APIRoute = async ({ url }) => {
 
     try {
         const searchTerm = query.trim();
-        logger.info(`Searching for: ${searchTerm}`);
 
         // Use Postgres full text search
-        // We use 'plainto_tsquery' which handles spaces as AND, and is generally safe for user input
-        // The migration used 'simple' configuration
         const results = await db
             .select({
                 id: articles.id,
@@ -50,20 +44,20 @@ export const GET: APIRoute = async ({ url }) => {
             )
             .limit(10);
 
-        logger.info(`Search results count: ${results.length}`);
-
         return new Response(JSON.stringify(results), {
             status: 200,
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'public, max-age=60', // Cache search results for 1 minute
-                'X-Search-Version': '2.0' // 版本标识
+                'Cache-Control': 'no-cache',
+                'X-Search-Version': '3.0'
             }
         });
 
     } catch (error) {
-        logger.error('Search failed:', error);
-        return new Response(JSON.stringify({ error: 'Search failed', message: error instanceof Error ? error.message : String(error) }), {
+        return new Response(JSON.stringify({ 
+            error: 'Search failed', 
+            message: error instanceof Error ? error.message : String(error) 
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
