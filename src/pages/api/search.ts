@@ -7,29 +7,17 @@ export const prerender = false;
 
 /**
  * Server-side Full Text Search API
- * 
  * GET /api/search?q=query
  */
 export const GET: APIRoute = async ({ url }) => {
     const query = url.searchParams.get('q');
-
-    // 测试：如果查询是 "test123"，返回特殊响应
-    if (query === 'test123') {
-        return new Response(JSON.stringify({ test: 'deployment-working', version: '4.0' }), {
-            status: 200,
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Search-Version': '4.0'
-            }
-        });
-    }
 
     if (!query || query.trim().length < 2) {
         return new Response(JSON.stringify([]), {
             status: 200,
             headers: { 
                 'Content-Type': 'application/json',
-                'X-Search-Version': '4.0'
+                'X-Search-Version': '5.0'
             }
         });
     }
@@ -37,7 +25,11 @@ export const GET: APIRoute = async ({ url }) => {
     try {
         const searchTerm = query.trim();
 
-        // Use Postgres full text search
+        // 先测试数据库连接
+        const testQuery = await db.execute(sql`SELECT COUNT(*) as count FROM articles WHERE is_deleted = false AND status = 'published'`);
+        const totalPublished = testQuery[0]?.count || 0;
+
+        // 执行搜索
         const results = await db
             .select({
                 id: articles.id,
@@ -60,14 +52,17 @@ export const GET: APIRoute = async ({ url }) => {
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-cache',
-                'X-Search-Version': '4.0'
+                'X-Search-Version': '5.0',
+                'X-Total-Published': String(totalPublished),
+                'X-Results-Count': String(results.length)
             }
         });
 
     } catch (error) {
         return new Response(JSON.stringify({ 
             error: 'Search failed', 
-            message: error instanceof Error ? error.message : String(error) 
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
         }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
