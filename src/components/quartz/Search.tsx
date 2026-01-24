@@ -24,11 +24,6 @@ interface SearchProps {
   enablePreview?: boolean;
 }
 
-// 搜索结果缓存
-const searchCache = new Map<string, SearchResult[]>();
-const CACHE_TTL = 60 * 1000; // 1 分钟缓存
-const cacheTimestamps = new Map<string, number>();
-
 export default function Search({ enablePreview = true }: SearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -38,34 +33,17 @@ export default function Search({ enablePreview = true }: SearchProps) {
   const searchButtonRef = useRef<HTMLButtonElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // 搜索函数（带缓存）
+  // 搜索函数（简化版）
   const performSearch = useCallback(async (query: string) => {
     const normalizedQuery = query.trim();
     if (!normalizedQuery) return [];
 
-    // 检查缓存
-    const cacheKey = normalizedQuery.toLowerCase();
-    const cachedTimestamp = cacheTimestamps.get(cacheKey);
-    if (cachedTimestamp && Date.now() - cachedTimestamp < CACHE_TTL) {
-      const cached = searchCache.get(cacheKey);
-      if (cached) {
-        return cached;
-      }
-    }
-
-    // 调用服务端搜索 API
     const response = await fetch(`/api/search?q=${encodeURIComponent(normalizedQuery)}`);
     if (!response.ok) {
       throw new Error('Search failed');
     }
 
-    const results = await response.json();
-
-    // 更新缓存
-    searchCache.set(cacheKey, results);
-    cacheTimestamps.set(cacheKey, Date.now());
-
-    return results;
+    return await response.json();
   }, []);
 
   useEffect(() => {
