@@ -41,10 +41,13 @@ export const GET: APIRoute = async ({ url }) => {
             .where(
                 and(
                     eq(articles.isDeleted, false),
+                    eq(articles.status, 'published'),
                     sql`${articles.searchVector} @@ plainto_tsquery('simple', ${searchTerm})`
                 )
             )
             .limit(10);
+
+        logger.info(`Search results count: ${results.length}`);
 
         return new Response(JSON.stringify(results), {
             status: 200,
@@ -56,7 +59,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     } catch (error) {
         logger.error('Search failed:', error);
-        return new Response(JSON.stringify({ error: 'Search failed' }), {
+        return new Response(JSON.stringify({ error: 'Search failed', message: error instanceof Error ? error.message : String(error) }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

@@ -16,6 +16,8 @@
     "sync": "tsx scripts/sync-articles.ts",
     "deploy": "npm run import:git && vercel --prod",
     "deploy:full": "npm run import:git && npm run pre-render && npm run generate-graph && vercel --prod",
+    "post-deploy": "tsx scripts/post-deploy-fix.ts",
+    "fix:prod": "tsx scripts/post-deploy-fix.ts",
     "pre-render": "tsx scripts/pre-render.ts",
     "generate-graph": "tsx scripts/generate-graph-data.ts",
     "db:push": "drizzle-kit push",
@@ -23,6 +25,8 @@
     "db:migrate": "tsx scripts/migrate-add-cache-fields.ts",
     "db:indexes": "tsx scripts/add-indexes.ts",
     "diagnose": "tsx scripts/diagnose-db.ts",
+    "diagnose:search": "tsx scripts/diagnose-search.ts",
+    "fix:search": "tsx scripts/rebuild-search-index.ts",
     "test:graph": "tsx scripts/test-graph.ts",
     "test:perf": "tsx scripts/test-performance.ts"
   },
