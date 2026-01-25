@@ -28,12 +28,8 @@ export default defineConfig({
   adapter: vercel({
     // 启用图片优化服务
     imageService: true,
-    // 启用 ISR（增量静态再生成）- 可选
-    // 允许在不重新部署的情况下更新静态页面
-    isr: {
-      // 页面缓存 1 小时后重新验证
-      expiration: 60 * 60,
-    },
+    // 禁用 ISR - API 路由不需要缓存
+    isr: false,
   }),
   
   // Astro 5.x: 默认预渲染所有页面（等效于旧版 hybrid 模式）
