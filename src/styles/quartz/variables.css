@@ -6,40 +6,67 @@
 
 :root {
   /* 主色调 - 紫色渐变系列 */
-  --primary: #8B5CF6;           /* 主紫色 */
-  --primary-dark: #7C3AED;      /* 深紫色 */
-  --primary-deep: #6D28D9;      /* 更深紫色 */
-  --primary-light: #A78BFA;     /* 浅紫色 */
-  --primary-lighter: #C4B5FD;   /* 更浅紫色 */
-  
+  --primary: #8B5CF6;
+  /* 主紫色 */
+  --primary-dark: #7C3AED;
+  /* 深紫色 */
+  --primary-deep: #6D28D9;
+  /* 更深紫色 */
+  --primary-light: #A78BFA;
+  /* 浅紫色 */
+  --primary-lighter: #C4B5FD;
+  /* 更浅紫色 */
+
   /* 功能色 */
-  --success: #10B981;           /* 绿色 - 成功 */
-  --warning: #F59E0B;           /* 黄色 - 警告 */
-  --error: #EF4444;             /* 红色 - 错误 */
-  --info: #0EA5E9;              /* 蓝色 - 信息 */
-  
+  --success: #10B981;
+  /* 绿色 - 成功 */
+  --warning: #F59E0B;
+  /* 黄色 - 警告 */
+  --error: #EF4444;
+  /* 红色 - 错误 */
+  --info: #0EA5E9;
+  /* 蓝色 - 信息 */
+
   /* 背景色系 - 浅色模式（温暖米白色调） */
-  --light: #faf8f8;             /* 主背景 - 温暖米白色 */
-  --lightgray: #e8e6e6;         /* 边框/分隔线 - 稍深的米灰 */
-  --gray: #9CA3AF;              /* 次要元素 */
-  --darkgray: #4B5563;          /* 段落文字 */
-  --dark: #1F2937;              /* 标题/主文字 */
-  
+  --light: #FDFCF8;
+  /* 主背景 - 统一改为纸张米色 */
+  --bg-sidebar: #F9F8F4;
+  /* 侧边栏背景 - 灰米色 */
+  --bg-content: #FDFCF8;
+  /* 内容区背景 - 纸张米色 */
+  --lightgray: #e8e6e6;
+  /* 边框/分隔线 - 稍深的米灰 */
+  --gray: #9CA3AF;
+  /* 次要元素 */
+  --darkgray: #4B5563;
+  /* 段落文字 */
+  --dark: #1F2937;
+  /* 标题/主文字 */
+
   /* 语义化颜色 */
-  --secondary: var(--primary);  /* 链接/强调色 */
-  --tertiary: var(--primary-dark); /* 悬停色 */
-  --highlight: rgba(139, 92, 246, 0.1);  /* 高亮背景 */
-  --textHighlight: rgba(139, 92, 246, 0.2); /* 文字高亮 */
-  
+  --secondary: var(--primary);
+  /* 链接/强调色 */
+  --tertiary: var(--primary-dark);
+  /* 悬停色 */
+  --highlight: rgba(139, 92, 246, 0.1);
+  /* 高亮背景 */
+  --textHighlight: rgba(139, 92, 246, 0.2);
+  /* 文字高亮 */
+
   /* 特色卡片背景（保持温暖色调） */
-  --card-purple: #f5f3ff;       /* 紫色卡片 */
-  --card-yellow: #fef3c7;       /* 黄色卡片 */
-  --card-green: #dcfce7;        /* 绿色卡片 */
-  --card-blue: #e0f2fe;         /* 蓝色卡片 */
-  
+  --card-purple: #f5f3ff;
+  /* 紫色卡片 */
+  --card-yellow: #fef3c7;
+  /* 黄色卡片 */
+  --card-green: #dcfce7;
+  /* 绿色卡片 */
+  --card-blue: #e0f2fe;
+  /* 蓝色卡片 */
+
   /* 纯白色（用于卡片、弹窗等需要突出的元素） */
-  --pure-white: #ffffff;        /* 纯白色 */
-  
+  --pure-white: #ffffff;
+  /* 纯白色 */
+
   /* 边框 */
   --border: var(--lightgray);
   --bg: var(--light);
@@ -49,26 +76,35 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* 背景色系 - 暗色模式 */
-    --light: #111827;           /* 主背景 */
-    --lightgray: #374151;       /* 边框/分隔线 */
-    --gray: #6B7280;            /* 次要元素 */
-    --darkgray: #D1D5DB;        /* 段落文字 */
-    --dark: #F9FAFB;            /* 标题/主文字 */
-    
+    --light: #111827;
+    /* 主背景 */
+    --bg-sidebar: #111827;
+    /* 暗色模式下保持主背景色或稍深 */
+    --bg-content: #111827;
+    --lightgray: #374151;
+    /* 边框/分隔线 */
+    --gray: #6B7280;
+    /* 次要元素 */
+    --darkgray: #D1D5DB;
+    /* 段落文字 */
+    --dark: #F9FAFB;
+    /* 标题/主文字 */
+
     /* 主色调保持不变，但调整透明度 */
     --secondary: var(--primary-light);
     --tertiary: var(--primary);
     --highlight: rgba(139, 92, 246, 0.15);
     --textHighlight: rgba(139, 92, 246, 0.25);
-    
+
     /* 暗色模式下的特色卡片 */
     --card-purple: rgba(139, 92, 246, 0.1);
     --card-yellow: rgba(245, 158, 11, 0.1);
     --card-green: rgba(16, 185, 129, 0.1);
     --card-blue: rgba(14, 165, 233, 0.1);
-    
+
     /* 暗色模式下的纯色 */
-    --pure-white: #1F2937;      /* 暗色模式下的"白色"实际是深灰 */
+    --pure-white: #1F2937;
+    /* 暗色模式下的"白色"实际是深灰 */
   }
 }
 
@@ -211,4 +247,3 @@ a.tag-link::before {
   background: var(--card-blue);
   border-color: var(--info);
 }
-

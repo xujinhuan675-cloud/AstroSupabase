@@ -8,7 +8,7 @@
   flex-shrink: 0;
 }
 
-.search > .search-button {
+.search>.search-button {
   background-color: transparent;
   border: none;
   display: flex;
@@ -20,7 +20,7 @@
 }
 
 /* 搜索框样式（包含icon和文字） */
-.search > .search-box-button {
+.search>.search-box-button {
   width: 184px;
   height: 32px;
   border: 1px solid var(--lightgray);
@@ -35,17 +35,17 @@
   box-sizing: border-box;
 }
 
-.search > .search-box-button:hover {
+.search>.search-box-button:hover {
   border-color: var(--secondary);
   background: var(--highlight);
 }
 
-.search > .search-box-button:focus {
+.search>.search-box-button:focus {
   outline: none;
   border-color: var(--secondary);
 }
 
-.search-box-button > svg {
+.search-box-button>svg {
   cursor: pointer;
   width: 18px;
   min-width: 18px;
@@ -53,11 +53,11 @@
   flex-shrink: 0;
 }
 
-.search-box-button:hover > svg .search-path {
+.search-box-button:hover>svg .search-path {
   stroke: var(--secondary);
 }
 
-.search-box-button > .search-text {
+.search-box-button>.search-text {
   margin: 0;
   font-size: 0.875rem;
   color: var(--darkgray);
@@ -80,9 +80,11 @@
   -webkit-backdrop-filter: blur(4px);
   background-color: rgba(0, 0, 0, 0.25);
   pointer-events: auto;
+  overscroll-behavior: contain;
+  /* Prevent scroll chaining */
 }
 
-.search-container > .search-space {
+.search-container>.search-space {
   width: 50%;
   margin-top: 12vh;
   margin-left: auto;
@@ -99,7 +101,7 @@
   width: 100%;
 }
 
-.search-space > .search-bar-wrapper > .search-bar {
+.search-space>.search-bar-wrapper>.search-bar {
   width: 100%;
   border-radius: 5px;
   padding: 0.5rem 1rem;
@@ -169,8 +171,11 @@
 }
 
 .search-result-item:hover {
-  background: var(--highlight);
+  background: var(--card-purple);
+  /* Stronger background color */
   border-color: var(--secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
 }
 
 .search-result-item h3 {
@@ -209,11 +214,11 @@
 
 /* 移动端适配 */
 @media (max-width: 800px) {
-  .search-container > .search-space {
+  .search-container>.search-space {
     width: 90%;
     margin-top: 5vh;
   }
-  
+
   .search {
     min-width: auto;
   }

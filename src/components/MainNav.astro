@@ -70,6 +70,11 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       <div class="nav-search">
         <Search client:idle enablePreview={true} />
       </div>
+
+      <!-- 暗色模式按钮 -->
+      <div class="nav-darkmode" style="display: flex; align-items: center; margin-left: 0.5rem;">
+        <Darkmode client:load />
+      </div>
       
       <!-- 微信登录按钮 -->
       <div class="nav-wechat-login">
@@ -90,11 +95,6 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
           </svg>
         </button>
       )}
-      
-      <!-- 主题切换按钮 -->
-      <div class="mobile-darkmode">
-        <Darkmode client:load />
-      </div>
       
       <!-- 移动端菜单按钮 - 指南针图标 -->
       <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
@@ -142,6 +142,12 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
         <WechatLoginButton client:load />
       </div>
       
+      <!-- 移动端主题切换 -->
+      <div class="mobile-menu-darkmode" style="padding: 1rem; border-bottom: 1px solid var(--lightgray); display: flex; align-items: center; justify-content: space-between;">
+        <span style="color: var(--darkgray); font-size: 0.9375rem;">主题模式</span>
+        <Darkmode client:load />
+      </div>
+      
       <!-- 移动端搜索框 -->
       <div class="mobile-search">
         <Search client:idle enablePreview={true} />
@@ -187,7 +193,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
 
 <style>
   .main-nav {
-    background: var(--light);
+    background: var(--bg-content);
     border-bottom: 1px solid var(--lightgray);
     position: sticky;
     top: 0;
@@ -196,8 +202,9 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   }
 
   .nav-container {
-    max-width: 1400px;
-    margin: 0 auto;
+    width: 100%; /* Full width */
+    max-width: none; /* Remove constraint */
+    margin: 0;
     padding: 0 2rem;
     display: flex;
     align-items: center;

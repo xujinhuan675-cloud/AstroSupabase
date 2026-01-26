@@ -9,7 +9,7 @@
 
 /* 主题过渡动画（仅在初始化后启用，避免首次加载闪烁） */
 :root.theme-transition-enabled {
-  transition: 
+  transition:
     background-color 0.3s ease,
     color 0.3s ease;
 }
@@ -17,7 +17,7 @@
 :root.theme-transition-enabled *,
 :root.theme-transition-enabled *::before,
 :root.theme-transition-enabled *::after {
-  transition: 
+  transition:
     background-color 0.3s ease,
     border-color 0.3s ease,
     color 0.3s ease,
@@ -76,25 +76,25 @@
 }
 
 /* 暗色模式下的图标显示 */
-:root[saved-theme="dark"] .darkmode > .dayIcon {
+:root[saved-theme="dark"] .darkmode>.dayIcon {
   opacity: 0;
   transform: rotate(-90deg) scale(0.8);
 }
 
-:root[saved-theme="dark"] .darkmode > .nightIcon {
+:root[saved-theme="dark"] .darkmode>.nightIcon {
   opacity: 1;
   transform: rotate(0) scale(1);
 }
 
 /* 亮色模式下的图标显示 */
-:root[saved-theme="light"] .darkmode > .dayIcon,
-:root:not([saved-theme]) .darkmode > .dayIcon {
+:root[saved-theme="light"] .darkmode>.dayIcon,
+:root:not([saved-theme]) .darkmode>.dayIcon {
   opacity: 1;
   transform: rotate(0) scale(1);
 }
 
-:root[saved-theme="light"] .darkmode > .nightIcon,
-:root:not([saved-theme]) .darkmode > .nightIcon {
+:root[saved-theme="light"] .darkmode>.nightIcon,
+:root:not([saved-theme]) .darkmode>.nightIcon {
   opacity: 0;
   transform: rotate(90deg) scale(0.8);
 }
@@ -103,23 +103,25 @@
 :root[saved-theme="dark"] {
   /* 背景色系 */
   --light: #111827;
+  --bg-sidebar: #111827;
+  --bg-content: #111827;
   --lightgray: #374151;
   --gray: #6B7280;
   --darkgray: #D1D5DB;
   --dark: #F9FAFB;
-  
+
   /* 主色调 - 暗色模式下稍微调亮 */
   --secondary: var(--primary-light);
   --tertiary: var(--primary);
   --highlight: rgba(139, 92, 246, 0.15);
   --textHighlight: rgba(139, 92, 246, 0.25);
-  
+
   /* 暗色模式下的特色卡片 */
   --card-purple: rgba(139, 92, 246, 0.1);
   --card-yellow: rgba(245, 158, 11, 0.1);
   --card-green: rgba(16, 185, 129, 0.1);
   --card-blue: rgba(14, 165, 233, 0.1);
-  
+
   /* 暗色模式下的纯色 */
   --pure-white: #1F2937;
 }
@@ -127,25 +129,26 @@
 /* 亮色模式颜色变量 */
 :root[saved-theme="light"] {
   /* 背景色系 - 温暖米白色调 */
-  --light: #faf8f8;
+  --light: #FDFCF8;
+  --bg-sidebar: #F9F8F4;
+  --bg-content: #FDFCF8;
   --lightgray: #e8e6e6;
   --gray: #9CA3AF;
   --darkgray: #4B5563;
   --dark: #1F2937;
-  
+
   /* 主色调 */
   --secondary: var(--primary);
   --tertiary: var(--primary-dark);
   --highlight: rgba(139, 92, 246, 0.1);
   --textHighlight: rgba(139, 92, 246, 0.2);
-  
+
   /* 特色卡片背景 */
   --card-purple: #f5f3ff;
   --card-yellow: #fef3c7;
   --card-green: #dcfce7;
   --card-blue: #e0f2fe;
-  
+
   /* 纯白色 */
   --pure-white: #ffffff;
 }
-

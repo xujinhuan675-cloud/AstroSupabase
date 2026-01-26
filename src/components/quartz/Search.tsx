@@ -110,14 +110,17 @@ export default function Search({ enablePreview = true }: SearchProps) {
       document.addEventListener('mousedown', handleClickOutside);
       // 阻止body滚动
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       if (showSearch) {
         document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
       }
     };
   }, [showSearch]);

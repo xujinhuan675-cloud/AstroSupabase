@@ -22,7 +22,7 @@
 .explorer-title h3 {
   font-size: 1rem;
   margin: 0;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .explorer svg {
@@ -30,7 +30,7 @@
   transition: transform 0.35s ease;
 }
 
-.explorer svg > polyline {
+.explorer svg>polyline {
   pointer-events: none;
 }
 
@@ -52,7 +52,7 @@
   overscroll-behavior: contain;
 }
 
-.explorer-content ul li > a {
+.explorer-content ul li>a {
   color: var(--dark);
   opacity: 0.75;
   pointer-events: all;
@@ -63,12 +63,12 @@
   transition: all 0.3s ease;
 }
 
-.explorer-content ul li > a:hover {
+.explorer-content ul li>a:hover {
   opacity: 1;
   color: var(--tertiary);
 }
 
-.explorer-content ul li > a.active {
+.explorer-content ul li>a.active {
   opacity: 1;
   color: var(--tertiary);
 }
@@ -83,7 +83,7 @@
   grid-template-rows: 1fr;
 }
 
-.folder-outer > ul {
+.folder-outer>ul {
   overflow: hidden;
   margin-left: 6px;
   padding-left: 0.8rem;
@@ -99,23 +99,23 @@
 }
 
 /* 分类标题颜色 - 与右侧目录统一使用 var(--dark) */
-.folder-container div > a {
+.folder-container div>a {
   color: var(--dark);
   font-family: var(--headerFont);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.5rem;
   display: inline-block;
   text-decoration: none;
   opacity: 0.75;
 }
 
-.folder-container div > a:hover {
+.folder-container div>a:hover {
   color: var(--tertiary);
   opacity: 1;
 }
 
-.folder-container div > button {
+.folder-container div>button {
   color: var(--dark);
   background-color: transparent;
   border: none;
@@ -129,18 +129,18 @@
 }
 
 /* 分类按钮文字颜色 - 与右侧目录统一 */
-.folder-container div > button span {
+.folder-container div>button span {
   font-size: 0.9rem;
   display: inline-block;
   color: var(--dark);
-  font-weight: 600;
+  font-weight: 500;
   margin: 0;
   line-height: 1.5rem;
   pointer-events: none;
   opacity: 0.75;
 }
 
-.folder-container div > button:hover span {
+.folder-container div>button:hover span {
   color: var(--tertiary);
   opacity: 1;
 }
@@ -156,7 +156,7 @@
   flex-shrink: 0;
 }
 
-li:has(> .folder-outer:not(.open)) > .folder-container > svg {
+li:has(> .folder-outer:not(.open))>.folder-container>svg {
   transform: rotate(-90deg);
 }
 
@@ -183,4 +183,3 @@ li:has(> .folder-outer:not(.open)) > .folder-container > svg {
     display: none;
   }
 }
-
