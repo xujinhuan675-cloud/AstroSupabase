@@ -1,0 +1,251 @@
+/* 微信登录按钮样式 */
+.wechat-login-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #07C160, #06AE56);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-height: 40px;
+  box-shadow: 0 2px 8px rgba(7, 193, 96, 0.2);
+}
+
+.wechat-login-button:hover {
+  background: linear-gradient(135deg, #06AE56, #059A4C);
+  box-shadow: 0 4px 12px rgba(7, 193, 96, 0.3);
+  transform: translateY(-1px);
+}
+
+.wechat-login-button:active {
+  transform: translateY(0);
+}
+
+.wechat-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.wechat-text {
+  font-size: 0.9375rem;
+}
+
+/* 加载骨架屏 */
+.wechat-login-skeleton {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.skeleton-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--lightgray) 25%, var(--light) 50%, var(--lightgray) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 用户菜单 */
+.user-menu {
+  position: relative;
+}
+
+.user-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--lightgray);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 40px;
+  color: var(--darkgray);
+}
+
+.user-button:hover {
+  background: var(--highlight);
+  border-color: var(--gray);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.user-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--secondary), var(--tertiary));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-weight: 500;
+  font-size: 0.9375rem;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 180px;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  padding: 0.5rem 0;
+  z-index: 1000;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  color: var(--darkgray);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  text-align: left;
+  min-height: 44px;
+}
+
+.dropdown-item:hover {
+  background: var(--highlight);
+  color: var(--dark);
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+  color: var(--gray);
+}
+
+.dropdown-item:hover svg {
+  color: var(--secondary);
+}
+
+.logout-button {
+  border-top: 1px solid var(--lightgray);
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+}
+
+.logout-button:hover {
+  color: #dc2626;
+}
+
+.logout-button:hover svg {
+  color: #dc2626;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .wechat-text {
+    display: none;
+  }
+
+  .wechat-login-button {
+    padding: 0.5rem;
+    min-width: 40px;
+    justify-content: center;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .user-button {
+    padding: 0.375rem;
+    min-width: 40px;
+  }
+
+  .user-dropdown {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+  }
+
+  .user-menu:hover .user-dropdown {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* 暗色模式适配 */
+@media (prefers-color-scheme: dark) {
+  .user-button {
+    border-color: var(--gray);
+    color: var(--lightgray);
+  }
+
+  .user-button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--lightgray);
+  }
+
+  .user-dropdown {
+    background: var(--dark);
+    border-color: var(--gray);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .dropdown-item {
+    color: var(--lightgray);
+  }
+
+  .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--light);
+  }
+
+  .logout-button {
+    border-top-color: var(--gray);
+  }
+}

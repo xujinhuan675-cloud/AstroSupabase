@@ -28,7 +28,8 @@
     "diagnose:search": "tsx scripts/diagnose-search.ts",
     "fix:search": "tsx scripts/rebuild-search-index.ts",
     "test:graph": "tsx scripts/test-graph.ts",
-    "test:perf": "tsx scripts/test-performance.ts"
+    "test:perf": "tsx scripts/test-performance.ts",
+    "test:wechat": "tsx scripts/test-wechat-config.ts"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",

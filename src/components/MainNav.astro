@@ -1,11 +1,13 @@
 ---
 /**
  * 主导航栏组件 - 移动端优化版
- * 包含：首页、文章、学科分类、标签、搜索
+ * 包含：首页、文章、学科分类、标签、搜索、微信登录
  * 移动端特性：汉堡菜单、全屏导航、点击外部关闭、主题切换
  */
 import Search from './quartz/Search';
 import Darkmode from './quartz/Darkmode';
+import WechatLoginButton from './auth/WechatLoginButton';
+import './auth/WechatLoginButton.css';
 
 const currentPath = Astro.url.pathname;
 
@@ -67,6 +69,11 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       <!-- 搜索组件 -->
       <div class="nav-search">
         <Search client:idle enablePreview={true} />
+      </div>
+      
+      <!-- 微信登录按钮 -->
+      <div class="nav-wechat-login">
+        <WechatLoginButton client:load />
       </div>
     </div>
 
@@ -130,6 +137,11 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   <!-- 移动端全屏菜单 -->
   <div class="mobile-menu-overlay" aria-hidden="true">
     <div class="mobile-menu">
+      <!-- 移动端微信登录 -->
+      <div class="mobile-wechat-login">
+        <WechatLoginButton client:load />
+      </div>
+      
       <!-- 移动端搜索框 -->
       <div class="mobile-search">
         <Search client:idle enablePreview={true} />
@@ -325,6 +337,12 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   .nav-search :global(.search-box-button) {
     width: 100%;
     border-radius: 0.5rem;
+  }
+
+  /* 微信登录按钮容器 */
+  .nav-wechat-login {
+    margin-left: 0.5rem;
+    flex-shrink: 0;
   }
 
   /* 移动端菜单按钮 - 指南针图标 */
@@ -624,6 +642,31 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
 
   .mobile-menu-overlay.active .mobile-menu {
     transform: translateX(0);
+  }
+
+  /* 移动端微信登录 */
+  .mobile-wechat-login {
+    padding: 1rem;
+    border-bottom: 1px solid var(--lightgray);
+  }
+
+  .mobile-wechat-login :global(.wechat-login-button) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobile-wechat-login :global(.wechat-text) {
+    display: inline;
+  }
+
+  .mobile-wechat-login :global(.user-button) {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobile-wechat-login :global(.user-name) {
+    display: inline;
+    max-width: 150px;
   }
 
   /* 移动端搜索框 */
