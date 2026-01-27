@@ -70,13 +70,14 @@
 .user-button {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.75rem;
+  justify-content: center;
+  padding: 0.25rem;
   background: transparent;
   border: 1px solid var(--lightgray);
-  border-radius: 0.5rem;
+  border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 40px;
   min-height: 40px;
   color: var(--darkgray);
 }
@@ -84,16 +85,11 @@
 .user-button:hover {
   background: var(--highlight);
   border-color: var(--gray);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .dropdown-arrow {
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
-  margin-left: 0.25rem;
-}
-
-.dropdown-arrow.open {
-  transform: rotate(180deg);
+  display: none;
 }
 
 .user-avatar {
@@ -119,12 +115,7 @@
 }
 
 .user-name {
-  font-weight: 500;
-  font-size: 0.9375rem;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
 }
 
 .user-dropdown {
@@ -210,27 +201,19 @@
     justify-content: center;
   }
 
-  .user-name {
-    display: none;
-  }
-
-  .dropdown-arrow {
-    display: none;
-  }
-
   .user-button {
-    padding: 0.375rem;
     min-width: 40px;
+    min-height: 40px;
   }
 
   .user-dropdown {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%) translateY(-10px);
+    right: 0;
+    left: auto;
+    transform: translateY(-10px);
   }
 
   .user-dropdown.open {
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
 }
 
