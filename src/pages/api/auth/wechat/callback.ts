@@ -23,20 +23,20 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
   // 用户取消授权
   if (error) {
     console.error("微信授权错误:", error);
-    return redirect(`/auth/login?error=${encodeURIComponent("用户取消授权")}`);
+    return redirect(`/?error=${encodeURIComponent("用户取消授权")}`);
   }
   
   // 缺少授权码
   if (!code) {
     console.error("缺少微信授权码");
-    return redirect("/auth/login?error=" + encodeURIComponent("授权失败，请重试"));
+    return redirect("/?error=" + encodeURIComponent("授权失败，请重试"));
   }
 
   // 验证 state（防 CSRF）
   const savedState = cookies.get("wechat_oauth_state")?.value;
   if (!savedState || savedState !== state) {
     console.error("State 验证失败");
-    return redirect("/auth/login?error=" + encodeURIComponent("安全验证失败"));
+    return redirect("/?error=" + encodeURIComponent("安全验证失败"));
   }
 
   try {
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
 
     if (!tokenData.openid || tokenData.errcode) {
       console.error("获取微信 token 失败:", tokenData);
-      return redirect("/auth/login?error=" + encodeURIComponent("微信授权失败"));
+      return redirect("/?error=" + encodeURIComponent("微信授权失败"));
     }
 
     // 2. 获取微信用户信息
@@ -62,7 +62,7 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
 
     if (userInfo.errcode) {
       console.error("获取微信用户信息失败:", userInfo);
-      return redirect("/auth/login?error=" + encodeURIComponent("获取用户信息失败"));
+      return redirect("/?error=" + encodeURIComponent("获取用户信息失败"));
     }
 
     // 3. 在 Supabase 中查找或创建用户
@@ -106,24 +106,38 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
 
       if (createError || !newUser.user) {
         console.error("创建用户失败:", createError);
-        return redirect("/auth/login?error=" + encodeURIComponent("创建用户失败"));
+        return redirect("/?error=" + encodeURIComponent("创建用户失败"));
       }
 
       userId = newUser.user.id;
     }
 
-    // 4. 生成访问令牌
-    // 使用 signInWithPassword 的替代方案：直接创建 session
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
-      userId: userId
+    // 4. 使用 signInWithPassword 的替代方案
+    // 为用户设置一个临时密码并立即登录
+    const tempPassword = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    
+    // 更新用户密码
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: tempPassword
     });
 
-    if (sessionError || !sessionData.session) {
-      console.error("生成会话失败:", sessionError);
-      return redirect("/auth/login?error=" + encodeURIComponent("登录失败"));
+    if (updateError) {
+      console.error("更新用户密码失败:", updateError);
+      return redirect("/?error=" + encodeURIComponent("登录失败"));
     }
 
-    const { access_token, refresh_token } = sessionData.session;
+    // 使用密码登录获取 session
+    const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+      email,
+      password: tempPassword
+    });
+
+    if (signInError || !signInData.session) {
+      console.error("登录失败:", signInError);
+      return redirect("/?error=" + encodeURIComponent("登录失败"));
+    }
+
+    const { access_token, refresh_token } = signInData.session;
 
     // 5. 清除 state cookie
     cookies.delete("wechat_oauth_state", { path: "/" });
@@ -150,6 +164,6 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
 
   } catch (err) {
     console.error("微信登录处理错误:", err);
-    return redirect("/auth/login?error=" + encodeURIComponent("系统错误，请稍后重试"));
+    return redirect("/?error=" + encodeURIComponent("系统错误，请稍后重试"));
   }
 };
