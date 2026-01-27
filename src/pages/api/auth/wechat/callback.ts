@@ -70,6 +70,12 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
     const uniqueId = userInfo.unionid || userInfo.openid;
     const email = `${uniqueId}@wechat.placeholder`;
 
+    // 管理员白名单
+    const ADMIN_USER_IDS = [
+      '372a716c-2c7d-44ca-a7fb-3dd221cedb60',
+      '851af13c-6923-47aa-b25a-95044d032b07'
+    ];
+
     // 先尝试查找用户
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users.find(
@@ -77,17 +83,25 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
     );
 
     let userId: string;
+    let userRole = 'user'; // 默认角色
 
     if (existingUser) {
       // 用户已存在，更新信息
       userId = existingUser.id;
+      
+      // 检查是否为管理员
+      if (ADMIN_USER_IDS.includes(userId)) {
+        userRole = 'admin';
+      }
+      
       await supabaseAdmin.auth.admin.updateUserById(userId, {
         user_metadata: {
           nickname: userInfo.nickname,
           avatar: userInfo.headimgurl,
           wechat_openid: userInfo.openid,
           wechat_unionid: userInfo.unionid,
-          provider: 'wechat'
+          provider: 'wechat',
+          role: userRole
         }
       });
     } else {
@@ -100,7 +114,8 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
           avatar: userInfo.headimgurl,
           wechat_openid: userInfo.openid,
           wechat_unionid: userInfo.unionid,
-          provider: 'wechat'
+          provider: 'wechat',
+          role: 'user' // 新用户默认为普通用户
         }
       });
 
@@ -110,6 +125,20 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
       }
 
       userId = newUser.user.id;
+      
+      // 如果新用户的 ID 在管理员白名单中，更新为管理员
+      if (ADMIN_USER_IDS.includes(userId)) {
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          user_metadata: {
+            nickname: userInfo.nickname,
+            avatar: userInfo.headimgurl,
+            wechat_openid: userInfo.openid,
+            wechat_unionid: userInfo.unionid,
+            provider: 'wechat',
+            role: 'admin'
+          }
+        });
+      }
     }
 
     // 4. 使用 signInWithPassword 的替代方案

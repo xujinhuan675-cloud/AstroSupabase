@@ -6,17 +6,32 @@ interface User {
   user_metadata?: {
     name?: string;
     avatar_url?: string;
+    avatar?: string;
     full_name?: string;
+    nickname?: string;
+    role?: string;
   };
 }
 
 export default function WechatLoginButton() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     // 检查用户登录状态
     checkUser();
+    
+    // 点击外部关闭下拉菜单
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.user-menu')) {
+        setDropdownOpen(false);
+      }
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   const checkUser = async () => {
@@ -70,6 +85,32 @@ export default function WechatLoginButton() {
     }
   };
 
+  const handleCopyUID = async () => {
+    if (!user?.id) return;
+    
+    try {
+      await navigator.clipboard.writeText(user.id);
+      // 可以添加一个提示，但这里简单处理
+      alert('UID 已复制到剪贴板');
+    } catch (error) {
+      console.error('复制失败:', error);
+      // 降级方案：使用传统方法
+      const textArea = document.createElement('textarea');
+      textArea.value = user.id;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        alert('UID 已复制到剪贴板');
+      } catch (err) {
+        alert('复制失败，请手动复制：' + user.id);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   if (loading) {
     return (
       <div className="wechat-login-skeleton">
@@ -80,12 +121,24 @@ export default function WechatLoginButton() {
 
   if (user) {
     // 已登录状态 - 显示用户信息
-    const userName = user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || '用户';
-    const avatarUrl = user.user_metadata?.avatar_url;
+    const userName = user.user_metadata?.nickname || user.user_metadata?.name || user.user_metadata?.full_name || user.email?.split('@')[0] || '用户';
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.avatar;
+    const userRole = user.user_metadata?.role || 'user';
+    const isAdmin = userRole === 'admin';
+    
+    // 显示 UID 前8位
+    const displayUID = user.id.substring(0, 8);
 
     return (
       <div className="user-menu">
-        <button className="user-button" aria-label="用户菜单">
+        <button 
+          className="user-button" 
+          aria-label="用户菜单"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDropdownOpen(!dropdownOpen);
+          }}
+        >
           {avatarUrl ? (
             <img src={avatarUrl} alt={userName} className="user-avatar" />
           ) : (
@@ -93,18 +146,38 @@ export default function WechatLoginButton() {
               {userName.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="user-name">{userName}</span>
+          <span className="user-name">{displayUID}</span>
+          <svg 
+            className={`dropdown-arrow ${dropdownOpen ? 'open' : ''}`}
+            width="12" 
+            height="12" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
         </button>
-        <div className="user-dropdown">
-          <a href="/dashboard" className="dropdown-item">
+        <div className={`user-dropdown ${dropdownOpen ? 'open' : ''}`}>
+          {isAdmin && (
+            <a href="/dashboard" className="dropdown-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+              控制台
+            </a>
+          )}
+          <button onClick={handleCopyUID} className="dropdown-item">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
-            控制台
-          </a>
+            复制 UID
+          </button>
           <button onClick={handleLogout} className="dropdown-item logout-button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
