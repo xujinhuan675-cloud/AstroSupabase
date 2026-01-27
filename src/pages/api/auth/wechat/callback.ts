@@ -113,34 +113,40 @@ export const GET: APIRoute = async ({ url, redirect, cookies }) => {
     }
 
     // 4. 生成访问令牌
-    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
-      options: {
-        redirectTo: `${url.origin}/dashboard`
-      }
+    // 使用 signInWithPassword 的替代方案：直接创建 session
+    const { data: sessionData, error: sessionError } = await supabaseAdmin.auth.admin.createSession({
+      userId: userId
     });
 
-    if (sessionError || !sessionData.properties?.action_link) {
+    if (sessionError || !sessionData.session) {
       console.error("生成会话失败:", sessionError);
       return redirect("/auth/login?error=" + encodeURIComponent("登录失败"));
     }
 
-    // 从 magic link 中提取 token
-    const actionLink = sessionData.properties.action_link;
-    const tokenMatch = actionLink.match(/[?&]token=([^&]+)/);
-    const accessToken = tokenMatch ? tokenMatch[1] : null;
-
-    if (!accessToken) {
-      console.error("无法提取访问令牌");
-      return redirect("/auth/login?error=" + encodeURIComponent("登录失败"));
-    }
+    const { access_token, refresh_token } = sessionData.session;
 
     // 5. 清除 state cookie
     cookies.delete("wechat_oauth_state", { path: "/" });
 
-    // 6. 重定向到回调页面，由前端设置 session
-    return redirect(`/auth/wechat/callback?access_token=${accessToken}&refresh_token=${accessToken}`);
+    // 6. 设置 session cookies
+    cookies.set("sb-access-token", access_token, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
+    cookies.set("sb-refresh-token", refresh_token, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30 // 30 days
+    });
+
+    // 7. 直接跳转到首页
+    return redirect("/");
 
   } catch (err) {
     console.error("微信登录处理错误:", err);

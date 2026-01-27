@@ -26,37 +26,50 @@ if (!accessToken) {
     </div>
   </main>
 
-  <script define:vars={{ accessToken, refreshToken }}>
+  <script>
     import { createClient } from '@supabase/supabase-js';
 
-    const supabase = createClient(
-      import.meta.env.PUBLIC_SUPABASE_URL,
-      import.meta.env.PUBLIC_SUPABASE_ANON_KEY
-    );
+    // 从 URL 获取参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
 
-    async function completeLogin() {
-      try {
-        // 设置 session
-        const { data, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
+    if (!accessToken || !refreshToken) {
+      window.location.href = '/auth/login?error=' + encodeURIComponent('登录失败');
+    } else {
+      const supabase = createClient(
+        import.meta.env.PUBLIC_SUPABASE_URL,
+        import.meta.env.PUBLIC_SUPABASE_ANON_KEY
+      );
 
-        if (error) {
-          console.error('设置会话失败:', error);
+      async function completeLogin() {
+        try {
+          console.log('开始设置会话...');
+          
+          // 设置 session
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+
+          if (error) {
+            console.error('设置会话失败:', error);
+            window.location.href = '/auth/login?error=' + encodeURIComponent('登录失败: ' + error.message);
+            return;
+          }
+
+          console.log('会话设置成功:', data);
+          
+          // 登录成功，跳转到首页
+          window.location.href = '/';
+        } catch (err) {
+          console.error('登录错误:', err);
           window.location.href = '/auth/login?error=' + encodeURIComponent('登录失败');
-          return;
         }
-
-        // 登录成功，跳转到仪表板
-        window.location.href = '/dashboard';
-      } catch (err) {
-        console.error('登录错误:', err);
-        window.location.href = '/auth/login?error=' + encodeURIComponent('登录失败');
       }
-    }
 
-    // 页面加载后立即执行
-    completeLogin();
+      // 页面加载后立即执行
+      completeLogin();
+    }
   </script>
 </Layout>
