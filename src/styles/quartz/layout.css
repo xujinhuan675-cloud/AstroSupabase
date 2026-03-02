@@ -19,6 +19,7 @@
   max-width: calc(1200px + 560px);
   margin: 0 auto;
   width: 100%;
+  overflow-x: clip;
 }
 
 /* Grid 布局 */
@@ -27,6 +28,7 @@
   column-gap: 0;
   row-gap: 0;
   width: 100%;
+  min-width: 0;
 }
 
 /* 桌面布局 (>=1200px) - 三栏 */
@@ -121,6 +123,7 @@
   background-color: var(--bg-content);
   min-height: calc(100vh - 64px);
   /* Ensure it fills at least the screen height */
+  min-width: 0;
 }
 
 .page-header {
@@ -246,6 +249,11 @@ header h1 {
 /* Article 内容样式 */
 article {
   width: 100%;
+}
+
+article :where(p, li, blockquote, figcaption) {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 article>h1 {
