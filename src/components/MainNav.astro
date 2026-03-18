@@ -800,6 +800,13 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   const mobileDropdowns = document.querySelectorAll('.mobile-dropdown');
   const mobileNavLinks = document.querySelectorAll('.mobile-nav-link:not(.mobile-dropdown-toggle)');
 
+  // 在部分移动端浏览器中，若祖先元素存在 backdrop-filter/filter/transform 等，
+  // position: fixed 的覆盖层可能会变成相对定位或被裁剪。
+  // QuartzLayout 的 header 使用了 backdrop-filter，因此将 overlay 移到 body 下以保证覆盖全屏。
+  if (menuOverlay && menuOverlay.parentElement !== document.body) {
+    document.body.appendChild(menuOverlay);
+  }
+
   // 目录相关元素
   const tocToggle = document.querySelector('.mobile-toc-toggle');
   const tocPanel = document.querySelector('.mobile-toc-panel');
@@ -852,15 +859,21 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   function generateToc() {
     if (!tocList) return;
     
-    // 只查找文章正文内容中的标题（.popover-hint 或 .prose 内）
-    // 排除侧边栏模块（文章浏览、反向链接、知识图谱等）的标题
-    const contentArea = document.querySelector('article .popover-hint') || document.querySelector('article .prose');
+    // 只从 Markdown 渲染后的正文内容中提取标题
+    // 注意：文章页顶部的页面标题不在 .prose 内，避免被误识别为目录项
+    const contentArea = document.querySelector('article .prose');
+    const pageTitle = (document.querySelector('article > .popover-hint header h1')?.textContent || '').trim();
     if (!contentArea) {
       tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
       return;
     }
     
-    const headings = contentArea.querySelectorAll('h1, h2, h3, h4');
+    const headings = Array.from(contentArea.querySelectorAll('h1, h2, h3, h4')).filter((heading) => {
+      const level = parseInt(heading.tagName.charAt(1));
+      if (level !== 1) return true;
+      const text = (heading.textContent || '').trim();
+      return !(pageTitle.length > 0 && text === pageTitle);
+    });
     if (headings.length === 0) {
       tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
       return;

@@ -14,17 +14,18 @@ export default function TableOfContents() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // 只从文章正文内容中提取标题（排除侧边栏模块）
-    const contentArea = document.querySelector('article .popover-hint') ||
-      document.querySelector('article .prose') ||
-      document.querySelector('article');
+    // 只从 Markdown 渲染后的正文内容中提取标题
+    // 注意：文章页顶部的页面标题不在 .prose 内，避免被误识别为目录项
+    const contentArea = document.querySelector('article .prose');
+
+    const pageTitle = (document.querySelector('article > .popover-hint header h1')?.textContent || '').trim();
 
     if (!contentArea) {
       setTocTree([]);
       return;
     }
 
-    const headings = contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    const headings = contentArea.querySelectorAll('h1, h2, h3, h4');
     const root: TocItem[] = [];
     const stack: TocItem[] = [];
 
@@ -34,11 +35,18 @@ export default function TableOfContents() {
       }
 
       const level = parseInt(heading.tagName.substring(1));
-      if (level > 3) return; // Limit depth to H3
+      if (level > 4) return;
+
+      const text = (heading.textContent || '').trim();
+
+      // 如果正文里写了与页面标题相同的 `# {title}`，则在目录中自动忽略这一项
+      if (level === 1 && pageTitle.length > 0 && text === pageTitle) {
+        return;
+      }
 
       const item: TocItem = {
         id: heading.id,
-        text: heading.textContent || '',
+        text,
         level: level,
         children: []
       };

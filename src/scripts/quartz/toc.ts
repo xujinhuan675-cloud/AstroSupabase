@@ -51,7 +51,19 @@ export function setupToc() {
   
   // 更新 TOC 高亮
   observer.disconnect();
-  const headers = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]');
+  const contentArea = document.querySelector('article .prose');
+  if (!contentArea) return;
+
+  const pageTitle = (document.querySelector('article > .popover-hint header h1')?.textContent || '').trim();
+
+  const headers = Array.from(contentArea.querySelectorAll('h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]'))
+    .filter((header) => {
+      const level = parseInt(header.tagName.substring(1));
+      if (level !== 1) return true;
+      const text = (header.textContent || '').trim();
+      return !(pageTitle.length > 0 && text === pageTitle);
+    });
+
   headers.forEach((header) => observer.observe(header));
 }
 

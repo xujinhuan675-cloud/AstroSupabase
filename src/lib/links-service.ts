@@ -175,6 +175,29 @@ export async function updateArticleLinks(articleId: number, content: string) {
   }
 }
 
+export async function getArticleTagsBatch(articleIds: number[]): Promise<Map<number, string[]>> {
+  const result = new Map<number, string[]>();
+  if (articleIds.length === 0) return result;
+
+  try {
+    const rows = await db
+      .select({ articleId: articleTags.articleId, tag: articleTags.tag })
+      .from(articleTags)
+      .where(inArray(articleTags.articleId, articleIds));
+
+    for (const row of rows) {
+      const list = result.get(row.articleId) ?? [];
+      list.push(row.tag);
+      result.set(row.articleId, list);
+    }
+
+    return result;
+  } catch (error) {
+    logger.error('Error fetching article tags batch:', error);
+    return result;
+  }
+}
+
 /**
  * 获取文章的反向链接（哪些文章链接到当前文章）
  * 

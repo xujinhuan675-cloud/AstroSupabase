@@ -33,6 +33,18 @@ export async function getArticles(limit?: number, category?: Category | null): P
   return await query;
 }
 
+export async function getLatestUpdatedArticles(limit: number): Promise<Article[]> {
+  return await db
+    .select()
+    .from(articles)
+    .where(and(
+      eq(articles.status, 'published'),
+      eq(articles.isDeleted, false)
+    ))
+    .orderBy(desc(articles.updatedAt))
+    .limit(limit);
+}
+
 /**
  * Fetches a single article by its ID.
  * @param {number} id - The ID of the article to fetch.

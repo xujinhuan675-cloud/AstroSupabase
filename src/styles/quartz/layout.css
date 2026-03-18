@@ -14,6 +14,25 @@
   --mobile-padding: 1rem;
 }
 
+/* 桌面/平板：仅中间内容区滚动（侧边栏与顶部导航固定） */
+@media (min-width: 768px) {
+  html,
+  body {
+    height: 100%;
+    overflow-y: hidden;
+  }
+
+  #quartz-root.page,
+  #quartz-body {
+    height: 100vh;
+  }
+
+  .center {
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+  }
+}
+
 /* 主容器 */
 .page {
   max-width: calc(1200px + 560px);

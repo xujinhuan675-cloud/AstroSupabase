@@ -3,7 +3,7 @@
  * 将 AstroSupabase 的数据格式转换为 Quartz 图谱所需的格式
  */
 
-import { getGraphData, getArticleTags } from './links-service';
+import { getGraphData, getArticleTagsBatch } from './links-service';
 import type { GraphNode, GraphLink } from './links-service';
 import { createModuleLogger } from './logger';
 
@@ -69,6 +69,8 @@ export async function convertToQuartzFormat(): Promise<QuartzContentIndex> {
     
     // 创建内容索引
     const contentIndex: QuartzContentIndex = {};
+
+    const tagsByArticleId = await getArticleTagsBatch(graphData.nodes.map((n) => n.id));
     
     // 为每个节点创建 ContentDetails
     for (const node of graphData.nodes) {
@@ -78,14 +80,7 @@ export async function convertToQuartzFormat(): Promise<QuartzContentIndex> {
         .map(link => idToSlug.get(link.target))
         .filter((slug): slug is string => Boolean(slug));
       
-      // 获取标签（异步，但这里简化处理）
-      // 注意：如果需要同步所有标签，可能需要批量查询优化
-      let tags: string[] = [];
-      try {
-        tags = await getArticleTags(node.id);
-      } catch (error) {
-        logger.warn(`Failed to fetch tags for article ${node.id}:`, error);
-      }
+      const tags = tagsByArticleId.get(node.id) ?? [];
       
       // 构建 ContentDetails
       contentIndex[node.slug] = {
@@ -137,16 +132,12 @@ export async function convertToQuartzFormatOptimized(): Promise<QuartzContentInd
     // 暂时使用简化版本，每个节点单独查询
     const contentIndex: QuartzContentIndex = {};
     
-    // 并发获取所有节点的标签
-    const tagPromises = graphData.nodes.map(node => 
-      getArticleTags(node.id).catch(() => [] as string[])
-    );
-    const allTags = await Promise.all(tagPromises);
+    const tagsByArticleId = await getArticleTagsBatch(graphData.nodes.map((n) => n.id));
     
     // 构建内容索引
     for (let i = 0; i < graphData.nodes.length; i++) {
       const node = graphData.nodes[i];
-      const tags = allTags[i];
+      const tags = tagsByArticleId.get(node.id) ?? [];
       
       // 获取出链
       const outLinks = graphData.links

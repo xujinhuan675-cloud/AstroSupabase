@@ -256,8 +256,12 @@ export async function processMarkdown(
   const stats = readingTime(markdownContent);
 
   // 生成摘要
-  let excerpt = frontmatter.excerpt || '';
-  if (!excerpt) {
+  let excerpt = '';
+  if (Object.prototype.hasOwnProperty.call(frontmatter, 'excerpt')) {
+    excerpt = typeof (frontmatter as any).excerpt === 'string'
+      ? ((frontmatter as any).excerpt as string)
+      : String((frontmatter as any).excerpt ?? '');
+  } else {
     const plainText = markdownContent
       .replace(/^---[\s\S]*?---/, '')
       .replace(/#{1,6}\s/g, '')

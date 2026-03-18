@@ -6,10 +6,14 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { db } from '../src/db/client';
-import { articles, articleTags, articleLinks } from '../src/db/schema';
+import { config as dotenvConfig } from 'dotenv';
 import { eq, sql } from 'drizzle-orm';
 import { generateSlug } from '../src/lib/markdown-processor';
+
+dotenvConfig();
+
+const { db } = await import('../src/db/client');
+const { articles, articleTags, articleLinks } = await import('../src/db/schema');
 
 interface ImportConfig {
   sourceDir: string;
@@ -82,7 +86,12 @@ function parseMarkdownFile(filePath: string): ParsedArticle | null {
     const slug = frontmatter.slug || generateSlug(title);
     
     // 提取摘要
-    const excerpt = frontmatter.excerpt || content.substring(0, 150).trim() + '...';
+    let excerpt = '';
+    if (Object.prototype.hasOwnProperty.call(frontmatter, 'excerpt')) {
+      excerpt = typeof frontmatter.excerpt === 'string' ? frontmatter.excerpt : String(frontmatter.excerpt ?? '');
+    } else {
+      excerpt = content.substring(0, 150).trim() + '...';
+    }
     
     // 提取标签
     const tags: string[] = [];

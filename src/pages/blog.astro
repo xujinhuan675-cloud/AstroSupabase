@@ -11,11 +11,11 @@
 export const prerender = true;
 
 import Layout from '../layout/Layout.astro';
-import { getArticles } from '../lib/articles';
+import { getLatestUpdatedArticles } from '../lib/articles';
 import ArticleCard from '../components/ArticleCard.astro';
 import MainNav from '../components/MainNav.astro';
 
-const articles = await getArticles(6);
+const articles = await getLatestUpdatedArticles(6);
 ---
 
 <Layout title="欢迎来到Openeducation">

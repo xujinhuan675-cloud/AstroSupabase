@@ -9,7 +9,7 @@ import path from 'path';
 import matter from 'gray-matter';
 import { db } from '../src/db/client';
 import { articles, articleTags, articleLinks } from '../src/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { generateSlug } from '../src/lib/markdown-processor';
 
 interface ImportConfig {
@@ -19,6 +19,41 @@ interface ImportConfig {
   duplicateStrategy: 'skip' | 'update';
   importLinks: boolean;
   importTags: boolean;
+}
+
+async function hardDeleteMissingArticles(contentSlugs: Set<string>): Promise<void> {
+  const existingPublished = await db
+    .select({
+      id: articles.id,
+      slug: articles.slug,
+    })
+    .from(articles)
+    .where(
+      and(
+        eq(articles.status, 'published'),
+        eq(articles.isDeleted, false)
+      )
+    );
+
+  const idsToDelete = existingPublished
+    .filter((a) => !contentSlugs.has(a.slug))
+    .map((a) => a.id);
+
+  if (idsToDelete.length === 0) {
+    console.log('\n🧹 同步删除: 没有发现需要删除的文章（数据库与 content/ 一致）');
+    return;
+  }
+
+  console.log(`\n🧹 同步删除: 发现 ${idsToDelete.length} 篇文章在 content/ 中已不存在，执行硬删除...`);
+
+  await db.delete(articleTags).where(inArray(articleTags.articleId, idsToDelete));
+
+  await db.delete(articleLinks).where(inArray(articleLinks.sourceId, idsToDelete));
+  await db.delete(articleLinks).where(inArray(articleLinks.targetId, idsToDelete));
+
+  await db.delete(articles).where(inArray(articles.id, idsToDelete));
+
+  console.log('✅ 同步删除完成');
 }
 
 interface ParsedArticle {
@@ -120,8 +155,13 @@ function parseMarkdownFile(filePath: string): ParsedArticle | null {
     const wikiLinks = extractWikiLinks(markdownContent);
     
     // 生成摘要
-    const excerpt = frontmatter.excerpt || frontmatter.description || 
-      markdownContent
+    let excerpt = '';
+    if (Object.prototype.hasOwnProperty.call(frontmatter, 'excerpt')) {
+      excerpt = typeof frontmatter.excerpt === 'string' ? frontmatter.excerpt : String(frontmatter.excerpt ?? '');
+    } else if (frontmatter.description) {
+      excerpt = typeof frontmatter.description === 'string' ? frontmatter.description : String(frontmatter.description);
+    } else {
+      excerpt = markdownContent
         .replace(/^---[\s\S]*?---/, '')
         .replace(/#{1,6}\s/g, '')
         .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
@@ -129,6 +169,7 @@ function parseMarkdownFile(filePath: string): ParsedArticle | null {
         .replace(/[*_`]/g, '')
         .trim()
         .substring(0, 150);
+    }
     
     return {
       filename: path.basename(filePath),
@@ -322,6 +363,9 @@ async function main() {
   if (linkMap.size > 0) {
     await processLinks(articleMap, linkMap);
   }
+
+  // 同步删除：硬删除数据库中存在但 content/ 中已不存在的文章
+  await hardDeleteMissingArticles(new Set(parsedArticles.map((a) => a.slug)));
   
   // 生成报告
   console.log('\n' + '='.repeat(50));
