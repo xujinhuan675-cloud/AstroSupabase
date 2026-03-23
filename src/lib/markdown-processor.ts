@@ -7,7 +7,9 @@
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
 import remarkRehype from 'remark-rehype';
+import rehypeKatex from 'rehype-katex';
 import rehypeStringify from 'rehype-stringify';
 import matter from 'gray-matter';
 import readingTime from 'reading-time';
@@ -182,7 +184,8 @@ export async function processMarkdown(
   // 创建 unified 处理器
   const processor = unified()
     .use(remarkParse)
-    .use(remarkGfm);
+    .use(remarkGfm)
+    .use(remarkMath);
 
   // 添加 OFM Markdown 插件
   for (const plugin of markdownPlugins) {
@@ -198,6 +201,9 @@ export async function processMarkdown(
   for (const plugin of htmlPlugins) {
     processor.use(plugin as any); // Type compatibility workaround
   }
+
+  // 数学公式渲染（KaTeX）
+  processor.use(rehypeKatex as any);
 
   // 添加 HTML 字符串化
   processor.use(rehypeStringify, { allowDangerousHtml: true });

@@ -40,6 +40,31 @@
   background-color: var(--lightgray);
 }
 
+.graph > .global-graph-icon-floating {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .graph > .global-graph-icon-floating {
+    position: fixed;
+    top: calc(env(safe-area-inset-top) + 64px);
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    padding: 0.35rem;
+    margin: 0;
+    border-radius: 9999px;
+    background-color: var(--light);
+    border: 1px solid var(--lightgray);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    opacity: 0.95;
+    z-index: 9000;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .graph > .global-graph-outer {
   position: fixed;
   z-index: 9999;

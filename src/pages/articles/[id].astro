@@ -151,7 +151,10 @@ export async function getStaticPaths() {
     let processedHtml: string;
     let readingTime: string;
     
-    if (article.htmlContent && article.readingTime) {
+    const hasMath = /\$\$[\s\S]*?\$\$/.test(article.content);
+    const cachedHasKatex = typeof article.htmlContent === 'string' && article.htmlContent.includes('class="katex"');
+
+    if (article.htmlContent && article.readingTime && (!hasMath || cachedHasKatex)) {
       // 使用预渲染缓存
       processedHtml = article.htmlContent;
       readingTime = article.readingTime;
