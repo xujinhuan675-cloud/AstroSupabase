@@ -126,8 +126,19 @@ export async function processMarkdown(
   
   logger.debug('Markdown cache miss, processing...');
   
-  // 解析 frontmatter
-  const { data: frontmatter, content: markdownContent } = matter(content);
+  // 解析 frontmatter（容错：遇到非法 YAML 不阻断构建）
+  let frontmatter: Record<string, any> = {};
+  let markdownContent = content;
+  try {
+    const parsed = matter(content);
+    frontmatter = (parsed.data ?? {}) as Record<string, any>;
+    markdownContent = parsed.content ?? '';
+  } catch (err) {
+    logger.warn('Failed to parse frontmatter, falling back to plain markdown');
+    logger.warn(err);
+    frontmatter = {};
+    markdownContent = content;
+  }
 
   // 默认选项
   const ofmOptions: Partial<OFMOptions> = {
