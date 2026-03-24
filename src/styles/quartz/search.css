@@ -197,6 +197,19 @@
   overflow: hidden;
 }
 
+.search-highlight {
+  display: inline;
+  padding: 0.05em 0.2em;
+  border-radius: 0.25em;
+  background: color-mix(in srgb, var(--secondary) 20%, transparent);
+  color: var(--dark);
+  font-weight: 600;
+}
+
+.search-result-item:hover .search-highlight {
+  background: color-mix(in srgb, var(--secondary) 28%, transparent);
+}
+
 .search-loading,
 .search-no-results {
   text-align: center;

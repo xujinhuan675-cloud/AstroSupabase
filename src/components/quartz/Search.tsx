@@ -33,6 +33,37 @@ export default function Search({ enablePreview = true }: SearchProps) {
   const searchButtonRef = useRef<HTMLButtonElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const highlightText = useCallback((text: string, query: string): React.ReactNode => {
+    const q = query.trim();
+    if (!q) return text;
+
+    const lowerText = text.toLowerCase();
+    const lowerQ = q.toLowerCase();
+
+    const parts: React.ReactNode[] = [];
+    let startIndex = 0;
+    while (startIndex < text.length) {
+      const index = lowerText.indexOf(lowerQ, startIndex);
+      if (index === -1) {
+        parts.push(text.slice(startIndex));
+        break;
+      }
+
+      if (index > startIndex) {
+        parts.push(text.slice(startIndex, index));
+      }
+
+      const match = text.slice(index, index + q.length);
+      parts.push(
+        <span className="search-highlight" key={`${index}-${q.length}`}>{match}</span>
+      );
+
+      startIndex = index + q.length;
+    }
+
+    return parts;
+  }, []);
+
   // 搜索函数（简化版）
   const performSearch = useCallback(async (query: string) => {
     const normalizedQuery = query.trim();
@@ -212,10 +243,10 @@ export default function Search({ enablePreview = true }: SearchProps) {
                       className="search-result-item"
                       onClick={() => setShowSearch(false)}
                     >
-                      <h3>{result.title}</h3>
-                      {enablePreview && result.excerpt && (
-                        <p className="search-excerpt">{result.excerpt}</p>
-                      )}
+                      <h3>{highlightText(result.title, searchQuery)}</h3>
+                      {enablePreview && result.excerpt ? (
+                        <p className="search-excerpt">{highlightText(result.excerpt, searchQuery)}</p>
+                      ) : null}
                     </a>
                   ))}
                 </div>
