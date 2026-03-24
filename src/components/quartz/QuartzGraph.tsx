@@ -3,7 +3,7 @@
  * 适配 AstroSupabase 的 React 组件版本
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { D3Config } from '../../types/graph-quartz';
 import { initGraph } from './scripts/graph-inline';
 import { graphConfig } from '../../config';
@@ -47,6 +47,42 @@ export default function QuartzGraph({
   const listenersCleanupRef = useRef<Array<() => void>>([]);
   const hideGlobalGraphRef = useRef<(() => void) | null>(null);
 
+  const openGlobalGraph = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const slug = currentSlug || '';
+    if (!slug) return;
+    if (!globalOuterRef.current) return;
+    if (!globalContainerRef.current) return;
+
+    globalOuterRef.current.classList.add('active');
+    const sidebar = globalOuterRef.current.closest('.sidebar') as HTMLElement | null;
+    if (sidebar) sidebar.style.zIndex = '1';
+
+    const globalConfig = { ...defaultGlobalGraph, ...globalGraph };
+    globalContainerRef.current.setAttribute('data-cfg', JSON.stringify(globalConfig));
+
+    globalCleanupRef.current?.();
+    globalCleanupRef.current = null;
+
+    initGraph(globalContainerRef.current, slug)
+      .then((cleanup) => {
+        if (cleanup) globalCleanupRef.current = cleanup;
+      })
+      .catch((err) => {
+        console.error('Failed to initialize global graph:', err);
+      });
+  }, [currentSlug, globalGraph]);
+
+  const closeGlobalGraph = useCallback(() => {
+    if (!globalOuterRef.current) return;
+    globalOuterRef.current.classList.remove('active');
+    const sidebar = globalOuterRef.current.closest('.sidebar') as HTMLElement | null;
+    if (sidebar) sidebar.style.zIndex = '';
+    globalCleanupRef.current?.();
+    globalCleanupRef.current = null;
+  }, []);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -82,61 +118,14 @@ export default function QuartzGraph({
       globalContainerRef.current.setAttribute('data-cfg', JSON.stringify(globalConfig));
     }
 
-    // 设置全局图谱按钮事件
-    const globalIconButtons = document.querySelectorAll('.global-graph-icon');
-    globalIconButtons.forEach(icon => {
-      const handleClick = () => {
-        if (globalOuterRef.current) {
-          globalOuterRef.current.classList.add('active');
-          const sidebar = globalOuterRef.current.closest('.sidebar') as HTMLElement;
-          if (sidebar) {
-            sidebar.style.zIndex = '1';
-          }
-
-          // 初始化全局图谱
-          if (globalContainerRef.current && slug) {
-            const globalConfig = { ...defaultGlobalGraph, ...globalGraph };
-            globalContainerRef.current.setAttribute('data-cfg', JSON.stringify(globalConfig));
-
-            // 每次打开前先清理上一次全局图谱实例，避免重复绑定和状态错乱
-            globalCleanupRef.current?.();
-            globalCleanupRef.current = null;
-            
-            initGraph(globalContainerRef.current, slug)
-              .then(cleanup => {
-                if (cleanup) globalCleanupRef.current = cleanup;
-              })
-              .catch(err => {
-                console.error('Failed to initialize global graph:', err);
-              });
-          }
-        }
-      };
-
-      icon.addEventListener('click', handleClick);
-      listenersCleanupRef.current.push(() => icon.removeEventListener('click', handleClick));
-    });
-
     // 隐藏全局图谱的处理
-    const hideGlobalGraph = () => {
-      if (globalOuterRef.current) {
-        globalOuterRef.current.classList.remove('active');
-        const sidebar = globalOuterRef.current.closest('.sidebar') as HTMLElement;
-        if (sidebar) {
-          sidebar.style.zIndex = '';
-        }
-        // 只清理“全局图谱实例”（不要动本地图谱/事件监听）
-        globalCleanupRef.current?.();
-        globalCleanupRef.current = null;
-      }
-    };
-    hideGlobalGraphRef.current = hideGlobalGraph;
+    hideGlobalGraphRef.current = closeGlobalGraph;
 
     // 点击背景关闭全局图谱
     if (globalOuterRef.current) {
       const handleBackgroundClick = (e: MouseEvent) => {
         if (e.target === globalOuterRef.current) {
-          hideGlobalGraph();
+          closeGlobalGraph();
         }
       };
       globalOuterRef.current.addEventListener('click', handleBackgroundClick);
@@ -148,7 +137,7 @@ export default function QuartzGraph({
     // ESC 键关闭全局图谱
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && globalOuterRef.current?.classList.contains('active')) {
-        hideGlobalGraph();
+        closeGlobalGraph();
       }
     };
 
@@ -162,9 +151,9 @@ export default function QuartzGraph({
         if (globalOuterRef.current) {
           const isActive = globalOuterRef.current.classList.contains('active');
           if (isActive) {
-            hideGlobalGraph();
+            closeGlobalGraph();
           } else {
-            globalIconButtons[0]?.dispatchEvent(new Event('click'));
+            openGlobalGraph();
           }
         }
       }
@@ -181,7 +170,7 @@ export default function QuartzGraph({
       listenersCleanupRef.current.forEach(cleanup => cleanup());
       listenersCleanupRef.current = [];
     };
-  }, [currentSlug, localGraph, globalGraph, isGlobal]);
+  }, [currentSlug, localGraph, globalGraph, isGlobal, openGlobalGraph, closeGlobalGraph]);
 
   // 主题变化时重新渲染
   useEffect(() => {
@@ -232,7 +221,12 @@ export default function QuartzGraph({
   return (
     <div className="graph">
       {showTitle && <h3>{title}</h3>}
-      <button className="global-graph-icon global-graph-icon-floating" aria-label="Global Graph">
+      <button
+        className="global-graph-icon global-graph-icon-floating"
+        aria-label="Global Graph"
+        onClick={openGlobalGraph}
+        type="button"
+      >
         <svg
           version="1.1"
           xmlns="http://www.w3.org/2000/svg"
@@ -260,7 +254,12 @@ export default function QuartzGraph({
       </button>
       <div className="graph-outer" style={height ? { height: `${height}px` } : undefined}>
         <div className="graph-container" ref={localContainerRef} />
-        <button className="global-graph-icon" aria-label="Global Graph">
+        <button
+          className="global-graph-icon"
+          aria-label="Global Graph"
+          onClick={openGlobalGraph}
+          type="button"
+        >
           <svg
             version="1.1"
             xmlns="http://www.w3.org/2000/svg"

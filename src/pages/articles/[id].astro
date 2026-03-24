@@ -230,10 +230,11 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   <div slot="right-sidebar">
     <!-- 局部知识图谱 - 可见时才加载 -->
     <QuartzGraph 
-      client:visible
+      client:load
       currentSlug={article.slug}
       height={250}
       localGraph={{ depth: 1 }}
+      globalGraph={{ depth: 3, showTags: false }}
     />
     
     <!-- 目录 - 浏览器空闲时加载 -->
