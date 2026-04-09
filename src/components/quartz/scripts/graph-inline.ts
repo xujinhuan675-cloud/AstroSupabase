@@ -25,7 +25,7 @@ import {
   type SimulationLinkDatum 
 } from 'd3-force';
 import { select } from 'd3-selection';
-import { zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
+import { zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
 import { drag } from 'd3-drag';
 
 import { Text, Graphics, Application, Container, Circle } from 'pixi.js';
@@ -36,6 +36,7 @@ import { simplifySlug, resolveRelative } from '../../../lib/quartz-path-utils';
 let cachedContentIndex: Record<string, ContentDetails> | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 分钟缓存
+let shouldTryStaticContentIndex = !import.meta.env.DEV;
 
 // 最大节点数限制 - 防止大图谱卡顿
 const MAX_NODES = 200;
@@ -111,15 +112,20 @@ async function fetchContentIndex(): Promise<Record<string, ContentDetails>> {
   }
 
   try {
-    // 优先尝试静态文件（构建时生成）
-    const staticResponse = await fetch('/content-index.json');
-    if (staticResponse.ok) {
-      const data = await staticResponse.json();
-      cachedContentIndex = data;
-      cacheTimestamp = now;
-      return data;
+    // 生产环境优先尝试静态文件；若 404，后续会记忆并直接走 API，避免反复红色请求
+    if (shouldTryStaticContentIndex) {
+      const staticResponse = await fetch('/content-index.json');
+      if (staticResponse.ok) {
+        const data = await staticResponse.json();
+        cachedContentIndex = data;
+        cacheTimestamp = now;
+        return data;
+      }
+
+      if (staticResponse.status === 404) {
+        shouldTryStaticContentIndex = false;
+      }
     }
-    
     // 回退到动态 API
     const response = await fetch('/api/content-index.json');
     if (!response.ok) {
@@ -369,8 +375,10 @@ export async function initGraph(
 
   // 动画优化：监听模拟结束事件
   let isSimulationActive = true;
+  let shouldCenterOnSimulationEnd = false;
   simulation.on('end', () => {
     isSimulationActive = false;
+    shouldCenterOnSimulationEnd = true;
   });
 
   // 获取 CSS 变量
@@ -681,6 +689,44 @@ export async function initGraph(
   }
 
   let currentTransform = zoomIdentity;
+  let hasUserInteracted = false;
+  let hasCenteredCurrentNode = false;
+  let zoomBehavior: ZoomBehavior<HTMLCanvasElement, NodeData> | null = null;
+
+  const applyViewportTransform = (transform: ZoomTransform) => {
+    currentTransform = transform;
+    stage.scale.set(transform.k, transform.k);
+    stage.position.set(transform.x, transform.y);
+  };
+
+  const buildCenterTransformForCurrentNode = (k: number): ZoomTransform | null => {
+    const currentNode = graphData.nodes.find((n) => n.id === slug);
+    if (!currentNode) return null;
+    if (currentNode.x == null || currentNode.y == null) return null;
+
+    const nodeX = currentNode.x + width / 2;
+    const nodeY = currentNode.y + height / 2;
+
+    return zoomIdentity
+      .translate(width / 2 - nodeX * k, height / 2 - nodeY * k)
+      .scale(k);
+  };
+
+  const centerCurrentNodeInView = (): boolean => {
+    const targetScale = currentTransform.k || 1;
+    const targetTransform = buildCenterTransformForCurrentNode(targetScale);
+    if (!targetTransform) return false;
+
+    if (enableZoom && zoomBehavior) {
+      select<HTMLCanvasElement, NodeData>(app.canvas).call(
+        zoomBehavior.transform,
+        targetTransform
+      );
+    } else {
+      applyViewportTransform(targetTransform);
+    }
+    return true;
+  };
 
   // 节点点击处理函数
   const handleNodeClick = (nodeId: string) => {
@@ -741,6 +787,7 @@ export async function initGraph(
         .subject(() => graphData.nodes.find((n) => n.id === hoveredNodeId))
         .on('start', function dragstarted(event) {
           if (!event.subject) return;
+          hasUserInteracted = true;
           if (!event.active) simulation.alphaTarget(1).restart();
           isSimulationActive = true; // 拖拽时重新激活动画
           event.subject.fx = event.subject.x;
@@ -771,31 +818,38 @@ export async function initGraph(
 
   // 缩放 - 使用按需导入的函数
   if (enableZoom) {
-    select<HTMLCanvasElement, NodeData>(app.canvas).call(
-      zoom<HTMLCanvasElement, NodeData>()
-        .extent([
-          [0, 0],
-          [width, height],
-        ])
-        .scaleExtent([0.25, 4])
-        .on('zoom', ({ transform }) => {
-          currentTransform = transform;
-          stage.scale.set(transform.k, transform.k);
-          stage.position.set(transform.x, transform.y);
+    zoomBehavior = zoom<HTMLCanvasElement, NodeData>()
+      .extent([
+        [0, 0],
+        [width, height],
+      ])
+      .scaleExtent([0.25, 4])
+      .on('zoom', (event) => {
+        if (event.sourceEvent) {
+          hasUserInteracted = true;
+        }
 
-          const scale = transform.k * opacityScale;
-          // 修改透明度计算：在默认缩放级别（1.0）时也显示标签，最小透明度为 0.8
-          // 放大时透明度逐渐增加到 1.0，缩小到 0.5 以下时才开始淡出
-          let scaleOpacity = Math.min(Math.max((scale - 0.5) / 2.5, 0.8), 1.0);
-          const activeNodes = nodeRenderData.filter((n) => n.active).flatMap((n) => n.label);
+        const { transform } = event;
+        applyViewportTransform(transform);
 
-          for (const label of labelsContainer.children) {
-            if (!activeNodes.includes(label as any)) {
-              (label as any).alpha = scaleOpacity;
-            }
+        const zoomLevel = transform.k * opacityScale;
+        // 修改透明度计算：在默认缩放级别（1.0）时也显示标签，最小透明度为 0.8
+        // 放大时透明度逐渐增加到 1.0，缩小到 0.5 以下时才开始淡出
+        const scaleOpacity = Math.min(Math.max((zoomLevel - 0.5) / 2.5, 0.8), 1.0);
+        const activeNodes = nodeRenderData.filter((n) => n.active).flatMap((n) => n.label);
+
+        for (const label of labelsContainer.children) {
+          if (!activeNodes.includes(label as any)) {
+            (label as any).alpha = scaleOpacity;
           }
-        })
-    );
+        }
+      });
+
+    select<HTMLCanvasElement, NodeData>(app.canvas).call(zoomBehavior);
+  }
+
+  if (!hasCenteredCurrentNode) {
+    hasCenteredCurrentNode = centerCurrentNodeInView();
   }
 
   // 初始化标签透明度（确保默认缩放级别下标签可见）
@@ -815,6 +869,15 @@ export async function initGraph(
   
   function animate(time: number) {
     if (stopAnimation) return;
+
+    if (!hasUserInteracted && !hasCenteredCurrentNode) {
+      hasCenteredCurrentNode = centerCurrentNodeInView();
+    }
+
+    if (!hasUserInteracted && shouldCenterOnSimulationEnd) {
+      shouldCenterOnSimulationEnd = false;
+      hasCenteredCurrentNode = centerCurrentNodeInView() || hasCenteredCurrentNode;
+    }
     
     // 静止时降低帧率以节省 CPU
     if (!isSimulationActive && !dragging && !hoveredNodeId) {
@@ -827,7 +890,7 @@ export async function initGraph(
     
     for (const n of nodeRenderData) {
       const { x, y } = n.simulationData;
-      if (!x || !y) continue;
+      if (x == null || y == null) continue;
       n.gfx.position.set(x + width / 2, y + height / 2);
       if (n.label) {
         n.label.position.set(x + width / 2, y + height / 2);

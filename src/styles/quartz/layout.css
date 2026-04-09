@@ -204,6 +204,12 @@
     padding: 0;
   }
 
+  .page-header {
+    background: var(--bg-content);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .page-footer {
     padding: 0 var(--mobile-padding);
   }

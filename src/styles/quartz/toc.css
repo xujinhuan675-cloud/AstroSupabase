@@ -1,6 +1,6 @@
 /**
  * TableOfContents 组件样式
- * 从 Quartz 迁移，与 Explorer 样式统一
+ * 与移动端目录视觉统一：分级缩进 + 引导线 + 当前章节高亮
  */
 
 .toc {
@@ -13,7 +13,7 @@
     visibility 0s linear 0s;
 }
 
-.toc>.toc-toggle {
+.toc > .toc-toggle {
   background-color: transparent;
   border: none;
   text-align: left;
@@ -32,85 +32,171 @@
   overflow-y: auto;
   overflow-x: hidden;
   max-height: 400px;
-  border-left: 1px solid var(--lightgray);
-  margin-left: 0.5rem;
-  padding-left: 0.5rem;
   margin-top: 0.5rem;
+  padding: 0.25rem 0 0.75rem;
 }
 
-.toc ul {
+.toc-list {
   list-style: none;
+  margin: 0;
+  padding: 0 0.5rem;
+}
+
+.toc-item {
+  margin: 0;
+  position: relative;
+}
+
+.toc-item > .toc-list {
   margin: 0;
   padding: 0;
 }
 
-.toc ul li {
-  margin: 0.25rem 0;
+.toc-item-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.125rem;
 }
 
-.toc ul li a {
-  color: var(--dark);
-  text-decoration: none;
-  opacity: 0.75;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
+.toc-link {
   display: block;
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  color: var(--darkgray);
+  text-decoration: none;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  min-height: 36px;
+  border-left: 2px solid transparent;
+  border-radius: 0.5rem;
+  white-space: normal;
+  word-break: break-word;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.toc ul li a:hover {
-  opacity: 1;
-  color: var(--tertiary);
+.toc-link:hover {
+  background: var(--highlight);
+  color: var(--dark);
 }
 
-.toc ul li.active>a {
-  opacity: 1;
-  color: var(--tertiary);
-  font-weight: 500;
+.toc-item.active > .toc-item-container > .toc-link {
+  color: var(--secondary);
+  background: var(--highlight);
+  border-left-color: var(--secondary);
+  font-weight: 600;
 }
 
-/* 不同层级的缩进 - 与 Explorer 统一 */
-.toc ul li.depth-1 {
+/* 层级缩进（与移动端一致） */
+.toc-item.depth-1 {
   padding-left: 0;
-  font-weight: 500;
 }
 
-.toc ul li.depth-2 {
-  padding-left: 0.8rem;
-  border-left: 1px solid var(--lightgray);
-  margin-left: 6px;
-  font-weight: 400;
-  /* Thinner for H2 */
+.toc-item.depth-2 {
+  padding-left: 0.9rem;
 }
 
-.toc ul li.depth-3 {
-  padding-left: 1.6rem;
+.toc-item.depth-3 {
+  padding-left: 1.8rem;
+}
+
+.toc-item.depth-4 {
+  padding-left: 2.7rem;
+}
+
+/* 子层级引导线 */
+.toc-item.depth-2::before,
+.toc-item.depth-3::before,
+.toc-item.depth-4::before {
+  content: "";
+  position: absolute;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 1px;
+  background: var(--lightgray);
+}
+
+.toc-item.depth-2::before {
+  left: 0.45rem;
+}
+
+.toc-item.depth-3::before {
+  left: 1.35rem;
+}
+
+.toc-item.depth-4::before {
+  left: 2.25rem;
+}
+
+.toc-item.depth-1 > .toc-item-container > .toc-link {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.toc-item.depth-2 > .toc-item-container > .toc-link {
   font-size: 0.9rem;
-  border-left: 1px solid var(--lightgray);
-  margin-left: 6px;
-  font-weight: 400;
-  /* Thinner for H3 */
 }
 
-.toc ul li.depth-4 {
-  padding-left: 2.4rem;
+.toc-item.depth-3 > .toc-item-container > .toc-link {
+  font-size: 0.86rem;
+}
+
+.toc-item.depth-4 > .toc-item-container > .toc-link {
+  font-size: 0.82rem;
+  color: var(--gray);
+}
+
+.toc-collapse-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0.35rem 0.2rem;
+  margin-top: 0.45rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--gray);
+  border-radius: 0.25rem;
+  transition: transform 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  flex: 0 0 auto;
+}
+
+.toc-collapse-btn:hover {
+  color: var(--dark);
+  background: var(--highlight);
+}
+
+.toc-collapse-btn.collapsed {
+  transform: rotate(-90deg);
+}
+.toc.toc-mobile {
+  display: none;
+}
+
+.toc.toc-empty > .toc-content {
+  max-height: none;
+  margin-top: 0;
+  padding: 0.75rem 1rem;
+}
+
+.mobile-toc-empty {
+  margin: 0;
+  color: var(--gray);
   font-size: 0.9rem;
-  border-left: 1px solid var(--lightgray);
-  margin-left: 6px;
-  font-weight: 400;
-}
-
-.toc ul li.depth-5,
-.toc ul li.depth-6 {
-  padding-left: 3.2rem;
-  font-size: 0.85rem;
-  border-left: 1px solid var(--lightgray);
-  margin-left: 6px;
-  font-weight: 400;
 }
 
 /* 移动端适配 */
-@media (max-width: 800px) {
-  .toc {
+@media (max-width: 767px) {
+  .toc.toc-desktop {
     display: none;
+  }
+
+  .toc.toc-mobile {
+    display: flex;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .toc.toc-mobile > .toc-content {
+    max-height: none;
+    margin-top: 0;
   }
 }

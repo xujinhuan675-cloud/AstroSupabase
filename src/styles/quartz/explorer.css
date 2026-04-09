@@ -1,19 +1,18 @@
 /**
  * Explorer 组件样式
- * 从 Quartz 迁移，与 TOC 样式统一
+ * 与 TOC 视觉统一：分级缩进 + 引导线 + 当前项高亮
  */
 
 .explorer {
   display: flex;
   flex-direction: column;
-  overflow-y: hidden;
+  min-width: 14rem;
+  overflow: hidden;
   min-height: 1.2rem;
   flex: 0 1 auto;
-  /* 与上方搜索区域保持更舒适的间距 */
   margin-top: 0.75rem;
 }
 
-/* 标题样式 - 与 TOC 统一 */
 .explorer-title {
   padding: 0;
   color: var(--dark);
@@ -25,160 +24,205 @@
   font-weight: 500;
 }
 
-.explorer svg {
-  pointer-events: all;
-  transition: transform 0.35s ease;
-}
-
-.explorer svg>polyline {
-  pointer-events: none;
-}
-
 .explorer-content {
-  list-style: none;
-  overflow: hidden;
   overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 400px;
   margin-top: 0.5rem;
-  max-height: 600px;
-  border-left: 1px solid var(--lightgray);
-  margin-left: 0.5rem;
-  padding-left: 0.5rem;
+  padding: 0.25rem 0 0.75rem;
 }
 
+.explorer-ul,
 .explorer-content ul {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0.5rem;
   overscroll-behavior: contain;
 }
 
-.explorer-content ul li>a {
-  color: var(--dark);
-  opacity: 0.75;
-  pointer-events: all;
-  text-decoration: none;
+.folder-item,
+.file-item {
+  margin: 0;
+  position: relative;
+}
+
+.folder-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.125rem;
+  user-select: none;
+}
+
+.folder-title-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.folder-link,
+.folder-button,
+.explorer-link {
   display: block;
-  padding: 0.25rem 0;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  color: var(--darkgray);
+  text-decoration: none;
   font-size: 0.9rem;
-  transition: all 0.3s ease;
+  line-height: 1.45;
+  min-height: 36px;
+  border-left: 2px solid transparent;
+  border-radius: 0.5rem;
+  white-space: normal;
+  word-break: break-word;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.explorer-content ul li>a:hover {
-  opacity: 1;
-  color: var(--tertiary);
+.folder-button {
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-.explorer-content ul li>a.active {
+.folder-title {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  pointer-events: none;
+}
+
+.folder-link:hover,
+.folder-button:hover,
+.explorer-link:hover {
+  background: var(--highlight);
+  color: var(--dark);
+}
+
+.folder-link.active,
+.folder-button.active,
+.explorer-link.active {
+  color: var(--secondary);
+  background: var(--highlight);
+  border-left-color: var(--secondary);
+  font-weight: 600;
+}
+
+.folder-button.active .folder-title {
+  font-weight: 600;
+}
+
+.folder-icon {
+  margin-top: 0.9rem;
+  color: var(--gray);
+  opacity: 0.9;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  flex: 0 0 auto;
+  transform: rotate(-90deg);
+}
+
+.folder-icon.open {
+  transform: rotate(0deg);
+}
+
+.folder-icon:hover {
+  color: var(--dark);
   opacity: 1;
-  color: var(--tertiary);
 }
 
 .folder-outer {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s ease-in-out;
+  transition: grid-template-rows 0.25s ease-in-out;
 }
 
 .folder-outer.open {
   grid-template-rows: 1fr;
 }
 
-.folder-outer>ul {
+.folder-outer > ul {
   overflow: hidden;
-  margin-left: 6px;
-  padding-left: 0.8rem;
-  border-left: 1px solid var(--lightgray);
-}
-
-.folder-container {
-  flex-direction: row;
-  display: flex;
-  align-items: center;
-  user-select: none;
-  padding: 0.25rem 0;
-}
-
-/* 分类标题颜色 - 与右侧目录统一使用 var(--dark) */
-.folder-container div>a {
-  color: var(--dark);
-  font-family: var(--headerFont);
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 1.5rem;
-  display: inline-block;
-  text-decoration: none;
-  opacity: 0.75;
-}
-
-.folder-container div>a:hover {
-  color: var(--tertiary);
-  opacity: 1;
-}
-
-.folder-container div>button {
-  color: var(--dark);
-  background-color: transparent;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  padding-left: 0;
-  padding-right: 0;
-  display: flex;
-  align-items: center;
-  font-family: var(--headerFont);
-}
-
-/* 分类按钮文字颜色 - 与右侧目录统一 */
-.folder-container div>button span {
-  font-size: 0.9rem;
-  display: inline-block;
-  color: var(--dark);
-  font-weight: 500;
   margin: 0;
-  line-height: 1.5rem;
-  pointer-events: none;
-  opacity: 0.75;
+  padding: 0;
 }
 
-.folder-container div>button:hover span {
-  color: var(--tertiary);
-  opacity: 1;
-}
-
-/* 折叠图标颜色 - 与文字统一 */
-.folder-icon {
-  margin-right: 5px;
-  color: var(--dark);
-  opacity: 0.75;
-  cursor: pointer;
-  transition: transform 0.3s ease, color 0.3s ease;
-  backface-visibility: visible;
-  flex-shrink: 0;
-}
-
-li:has(> .folder-outer:not(.open))>.folder-container>svg {
-  transform: rotate(-90deg);
-}
-
-.folder-icon:hover {
-  color: var(--tertiary);
-  opacity: 1;
-}
-
-.file-item {
-  list-style: none;
-}
-
-.folder-item {
-  list-style: none;
-}
-
-.explorer-ul {
+.folder-item.depth-1,
+.file-item.depth-1 {
   padding-left: 0;
 }
 
-/* 移动端适配 */
-@media (max-width: 800px) {
+.folder-item.depth-2,
+.file-item.depth-2 {
+  padding-left: 0.9rem;
+}
+
+.folder-item.depth-3,
+.file-item.depth-3 {
+  padding-left: 1.8rem;
+}
+
+.folder-item.depth-4,
+.file-item.depth-4 {
+  padding-left: 2.7rem;
+}
+
+.folder-item.depth-2::before,
+.folder-item.depth-3::before,
+.folder-item.depth-4::before,
+.file-item.depth-2::before,
+.file-item.depth-3::before,
+.file-item.depth-4::before {
+  content: "";
+  position: absolute;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 1px;
+  background: var(--lightgray);
+}
+
+.folder-item.depth-2::before,
+.file-item.depth-2::before {
+  left: 0.45rem;
+}
+
+.folder-item.depth-3::before,
+.file-item.depth-3::before {
+  left: 1.35rem;
+}
+
+.folder-item.depth-4::before,
+.file-item.depth-4::before {
+  left: 2.25rem;
+}
+
+.folder-item.depth-1 > .folder-container > .folder-title-wrap > .folder-link,
+.folder-item.depth-1 > .folder-container > .folder-title-wrap > .folder-button,
+.file-item.depth-1 > .explorer-link {
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.folder-item.depth-3 > .folder-container > .folder-title-wrap > .folder-link,
+.folder-item.depth-3 > .folder-container > .folder-title-wrap > .folder-button,
+.file-item.depth-3 > .explorer-link {
+  font-size: 0.86rem;
+}
+
+.folder-item.depth-4 > .folder-container > .folder-title-wrap > .folder-link,
+.folder-item.depth-4 > .folder-container > .folder-title-wrap > .folder-button,
+.file-item.depth-4 > .explorer-link {
+  font-size: 0.82rem;
+  color: var(--gray);
+}
+
+.explorer-empty {
+  padding: 0.75rem 1rem;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 767px) {
   .explorer {
     display: none;
   }

@@ -28,6 +28,7 @@ import Search from '../../components/quartz/Search';
 import Explorer from '../../components/quartz/Explorer';
 import QuartzGraph from '../../components/quartz/QuartzGraph';
 import MainNav from '../../components/MainNav.astro';
+import ScrollTopButton from '../../components/ScrollTopButton.astro';
 import type { Article } from '../../db/schema';
 
 // 定义 props 类型
@@ -203,7 +204,7 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
 <QuartzLayout title={article.title} currentSlug={`articles/${id}`}>
   <!-- 主导航栏 -->
   <div slot="header">
-    <MainNav />
+    <MainNav explorerData={allArticlesForExplorer} />
   </div>
   
   <!-- Left Sidebar -->
@@ -324,6 +325,7 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
     {/* 反向链接组件 - 数据已在构建时获取 */}
     <Backlinks articleId={article.id} backlinks={backlinks} client:idle />
   </article>
+  <ScrollTopButton />
 </QuartzLayout>
 
 

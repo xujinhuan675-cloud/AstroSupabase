@@ -4,162 +4,238 @@ import '../../styles/quartz/toc.css';
 interface TocItem {
   id: string;
   text: string;
-  level: number;
-  children: TocItem[];
+  depth: number;
 }
 
-export default function TableOfContents() {
-  const [tocTree, setTocTree] = useState<TocItem[]>([]);
+type ScrollTarget = Window | HTMLElement;
+
+interface TableOfContentsProps {
+  variant?: 'desktop' | 'mobile';
+  showHeader?: boolean;
+  closeOnNavigate?: boolean;
+}
+
+function closeMobileTocPanel() {
+  const panel = document.querySelector('.mobile-toc-panel');
+  const toggle = document.querySelector('.mobile-toc-toggle');
+
+  panel?.classList.remove('active');
+  panel?.setAttribute('aria-hidden', 'true');
+  toggle?.classList.remove('active');
+  toggle?.setAttribute('aria-expanded', 'false');
+}
+
+export default function TableOfContents({
+  variant = 'desktop',
+  showHeader = variant === 'desktop',
+  closeOnNavigate = variant === 'mobile',
+}: TableOfContentsProps) {
+  const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>('');
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [hasResolved, setHasResolved] = useState(false);
 
   useEffect(() => {
     // 只从 Markdown 渲染后的正文内容中提取标题
     // 注意：文章页顶部的页面标题不在 .prose 内，避免被误识别为目录项
     const contentArea = document.querySelector('article .prose');
-
     const pageTitle = (document.querySelector('article > .popover-hint header h1')?.textContent || '').trim();
 
     if (!contentArea) {
-      setTocTree([]);
+      setTocItems([]);
+      setHasResolved(true);
       return;
     }
 
-    const headings = contentArea.querySelectorAll('h1, h2, h3, h4');
-    const root: TocItem[] = [];
-    const stack: TocItem[] = [];
+    const headings = Array.from(contentArea.querySelectorAll('h1, h2, h3, h4')) as HTMLElement[];
+    const tocHeadings = headings.filter((heading) => {
+      const level = parseInt(heading.tagName.substring(1), 10);
+      if (Number.isNaN(level) || level > 4) return false;
 
-    headings.forEach((heading) => {
+      const text = (heading.textContent || '').trim();
+      if (level === 1 && pageTitle.length > 0 && text === pageTitle) {
+        return false;
+      }
+      return true;
+    });
+
+    if (tocHeadings.length === 0) {
+      setTocItems([]);
+      setHasResolved(true);
+      return;
+    }
+
+    const minLevel = tocHeadings.reduce((min, heading) => {
+      const level = parseInt(heading.tagName.substring(1), 10);
+      return Math.min(min, level);
+    }, 6);
+
+    const items = tocHeadings.map((heading) => {
       if (!heading.id) {
         heading.id = heading.textContent?.toLowerCase().replace(/\s+/g, '-') || '';
       }
 
-      const level = parseInt(heading.tagName.substring(1));
-      if (level > 4) return;
-
+      const level = parseInt(heading.tagName.substring(1), 10);
       const text = (heading.textContent || '').trim();
+      const depth = Math.min(Math.max(level - minLevel + 1, 1), 4);
 
-      // 如果正文里写了与页面标题相同的 `# {title}`，则在目录中自动忽略这一项
-      if (level === 1 && pageTitle.length > 0 && text === pageTitle) {
-        return;
-      }
-
-      const item: TocItem = {
+      return {
         id: heading.id,
         text,
-        level: level,
-        children: []
+        depth,
       };
-
-      while (stack.length > 0 && stack[stack.length - 1].level >= level) {
-        stack.pop();
-      }
-
-      if (stack.length === 0) {
-        root.push(item);
-      } else {
-        stack[stack.length - 1].children.push(item);
-      }
-      stack.push(item);
     });
 
-    setTocTree(root);
+    setTocItems(items);
+    setHasResolved(true);
 
-    // 默认展开所有（或者可以设置为只展开一级）
+    let activeScrollTarget: ScrollTarget;
 
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 100;
-      const allHeadings = Array.from(headings);
+    const getScrollTarget = (): ScrollTarget => {
+      const center = document.querySelector<HTMLElement>('.center');
+      if (!center) return window;
 
-      for (let i = allHeadings.length - 1; i >= 0; i--) {
-        const element = allHeadings[i] as HTMLElement;
-        if (element.offsetTop <= scrollPosition) {
-          setActiveId(element.id);
+      const style = window.getComputedStyle(center);
+      const canCenterScroll =
+        (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+        center.scrollHeight > center.clientHeight + 1;
+
+      return canCenterScroll ? center : window;
+    };
+
+    const getScrollTop = (target: ScrollTarget): number => {
+      if (target === window) {
+        return window.scrollY || document.documentElement.scrollTop || 0;
+      }
+      return target.scrollTop;
+    };
+
+    const getElementTop = (target: ScrollTarget, element: HTMLElement): number => {
+      if (target === window) {
+        return element.getBoundingClientRect().top + window.scrollY;
+      }
+
+      const targetRect = target.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      return elementRect.top - targetRect.top + target.scrollTop;
+    };
+
+    const updateActiveSection = () => {
+      const scrollTop = getScrollTop(activeScrollTarget);
+      const indicatorOffset = activeScrollTarget === window ? 100 : 70;
+      const position = scrollTop + indicatorOffset;
+
+      let nextActiveId = '';
+      for (let i = tocHeadings.length - 1; i >= 0; i--) {
+        const element = tocHeadings[i];
+        if (getElementTop(activeScrollTarget, element) <= position) {
+          nextActiveId = element.id;
           break;
         }
       }
+
+      if (!nextActiveId && tocHeadings.length > 0) {
+        nextActiveId = tocHeadings[0].id;
+      }
+
+      setActiveId(nextActiveId);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => {
+      updateActiveSection();
+    };
+
+    const bindScrollTarget = () => {
+      const next = getScrollTarget();
+      if (activeScrollTarget === next) return;
+
+      if (activeScrollTarget) {
+        activeScrollTarget.removeEventListener('scroll', onScroll);
+      }
+
+      activeScrollTarget = next;
+      activeScrollTarget.addEventListener('scroll', onScroll, { passive: true });
+      updateActiveSection();
+    };
+
+    activeScrollTarget = getScrollTarget();
+    activeScrollTarget.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', bindScrollTarget, { passive: true });
+    updateActiveSection();
+
+    return () => {
+      activeScrollTarget.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', bindScrollTarget);
+    };
   }, []);
 
   const handleClick = (id: string) => {
     const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+    if (!element) return;
 
-  const toggleCollapse = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newCollapsed = new Set(collapsed);
-    if (newCollapsed.has(id)) {
-      newCollapsed.delete(id);
+    const center = document.querySelector<HTMLElement>('.center');
+    const style = center ? window.getComputedStyle(center) : null;
+    const canCenterScroll = !!center && !!style &&
+      (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+      center.scrollHeight > center.clientHeight + 1;
+
+    if (canCenterScroll && center) {
+      const top = element.getBoundingClientRect().top - center.getBoundingClientRect().top + center.scrollTop - 16;
+      center.scrollTo({ top, behavior: 'smooth' });
     } else {
-      newCollapsed.add(id);
+      const navOffset = 80;
+      const top = element.getBoundingClientRect().top + window.scrollY - navOffset;
+      window.scrollTo({ top, behavior: 'smooth' });
     }
-    setCollapsed(newCollapsed);
+
+    if (closeOnNavigate) {
+      closeMobileTocPanel();
+    }
   };
 
-  const renderTree = (items: TocItem[]) => {
-    return (
-      <ul className="toc-list">
-        {items.map((item) => (
-          <li key={item.id} className={`depth-${item.level} ${activeId === item.id ? 'active' : ''}`}>
-            <div className="toc-item-container" style={{ display: 'flex', alignItems: 'center' }}>
-              {item.children.length > 0 && (
-                <button
-                  className={`toc-collapse-btn ${collapsed.has(item.id) ? 'collapsed' : ''}`}
-                  onClick={(e) => toggleCollapse(item.id, e)}
-                  style={{
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    padding: '0 4px',
-                    fontSize: '0.8rem',
-                    color: 'var(--gray)',
-                    transform: collapsed.has(item.id) ? 'rotate(-90deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s'
-                  }}
-                >
-                  ▼
-                </button>
-              )}
-              <a
-                href={`#${item.id}`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleClick(item.id);
-                }}
-                style={{ flex: 1, paddingLeft: item.children.length > 0 ? '0' : '1.2rem' }}
-              >
-                {item.text}
-              </a>
-            </div>
+  if (!hasResolved) {
+    return null;
+  }
 
-            {item.children.length > 0 && !collapsed.has(item.id) && (
-              renderTree(item.children)
-            )}
-          </li>
-        ))}
-      </ul>
-    );
-  };
-
-  if (tocTree.length === 0) {
+  if (tocItems.length === 0) {
+    if (variant === 'mobile') {
+      return (
+        <div className={`toc toc-${variant} toc-empty`}>
+          <div className="toc-content">
+            <p className="mobile-toc-empty">暂无目录</p>
+          </div>
+        </div>
+      );
+    }
     return null;
   }
 
   return (
-    <div className="toc">
-      <button className="toc-toggle">
-        <h3>目录</h3>
-      </button>
+    <div className={`toc toc-${variant}`}>
+      {showHeader && (
+        <button className="toc-toggle">
+          <h3>目录</h3>
+        </button>
+      )}
       <div className="toc-content">
-        {renderTree(tocTree)}
+        <ul className="toc-list">
+          {tocItems.map((item) => (
+            <li key={item.id} className={`toc-item depth-${item.depth} ${activeId === item.id ? 'active' : ''}`}>
+              <div className="toc-item-container">
+                <a
+                  className="toc-link"
+                  href={`#${item.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleClick(item.id);
+                  }}
+                >
+                  {item.text}
+                </a>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
 }
-

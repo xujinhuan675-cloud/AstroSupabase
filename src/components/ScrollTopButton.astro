@@ -1,0 +1,123 @@
+<button
+  id="scroll-top-fab"
+  class="scroll-top-fab"
+  type="button"
+  aria-label="回到顶部"
+  title="回到顶部"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 5l7 7-1.4 1.4L13 8.8V20h-2V8.8l-4.6 4.6L5 12z" />
+  </svg>
+</button>
+
+<script>
+  type ScrollTarget = Window | HTMLElement;
+  const button = document.getElementById('scroll-top-fab');
+
+  if (button) {
+    const SHOW_THRESHOLD = 280;
+    let activeScrollTarget: ScrollTarget | null = null;
+    const isWindowTarget = (target: ScrollTarget): target is Window => target === window;
+
+    const getScrollTop = (target: ScrollTarget): number => {
+      if (isWindowTarget(target)) {
+        return window.scrollY || document.documentElement.scrollTop || 0;
+      }
+      return target.scrollTop || 0;
+    };
+
+    const getScrollTarget = (): ScrollTarget => {
+      const center = document.querySelector<HTMLElement>('.center');
+      if (!center) return window;
+
+      const style = window.getComputedStyle(center);
+      const canCenterScroll =
+        (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+        center.scrollHeight > center.clientHeight + 1;
+
+      return canCenterScroll ? center : window;
+    };
+
+    const updateVisibility = (): void => {
+      const currentTop = getScrollTop(activeScrollTarget || window);
+      button.classList.toggle('visible', currentTop > SHOW_THRESHOLD);
+    };
+
+    const onScroll = (): void => {
+      updateVisibility();
+    };
+
+    const bindScrollTarget = (): void => {
+      const nextTarget = getScrollTarget();
+      if (nextTarget === activeScrollTarget) return;
+
+      if (activeScrollTarget) {
+        activeScrollTarget.removeEventListener('scroll', onScroll);
+      }
+
+      activeScrollTarget = nextTarget;
+      activeScrollTarget.addEventListener('scroll', onScroll, { passive: true });
+      updateVisibility();
+    };
+
+    button.addEventListener('click', () => {
+      const target = activeScrollTarget || getScrollTarget();
+
+      if (target === window) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        target.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    window.addEventListener('resize', bindScrollTarget, { passive: true });
+    bindScrollTarget();
+  }
+</script>
+
+<style>
+  .scroll-top-fab {
+    position: fixed;
+    right: 1.25rem;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 9999px;
+    background: var(--light);
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    z-index: 900;
+    opacity: 0;
+    transform: translateY(0.5rem);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .scroll-top-fab.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .scroll-top-fab:hover {
+    border-color: var(--secondary);
+  }
+
+  .scroll-top-fab svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: currentColor;
+  }
+
+  @media (max-width: 767px) {
+    .scroll-top-fab {
+      right: 1rem;
+      bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+</style>

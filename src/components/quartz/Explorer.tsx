@@ -37,6 +37,7 @@ export default function Explorer({
   initialData
 }: ExplorerProps) {
   const [explorerData, setExplorerData] = useState<ExplorerNode[]>([]);
+  const [currentPath, setCurrentPath] = useState('');
   // 分类默认全部折叠
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
@@ -134,6 +135,11 @@ export default function Explorer({
     
     loadExplorerData();
   }, [folderDefaultState, initialData]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentPath(window.location.pathname);
+    }
+  }, []);
 
   const toggleFolder = (path: string) => {
     const newExpanded = new Set(expandedFolders);
@@ -146,11 +152,13 @@ export default function Explorer({
   };
 
   const renderNode = (node: ExplorerNode, level = 0): JSX.Element => {
+    const depth = Math.min(level + 1, 4);
+    const isActive = currentPath === node.path;
     if (node.isFolder) {
       const isExpanded = expandedFolders.has(node.path);
       
       return (
-        <li key={node.path} className="folder-item">
+        <li key={node.path} className={`folder-item depth-${depth}`}>
           <div className="folder-container">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -167,12 +175,14 @@ export default function Explorer({
             >
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
-            <div>
+            <div className="folder-title-wrap">
               {folderClickBehavior === 'link' ? (
-                <a href={node.path} className="folder-title">{node.name}</a>
+                <a href={node.path} className={`folder-link ${isActive ? 'active' : ''}`}>
+                  {node.name}
+                </a>
               ) : (
                 <button 
-                  className="folder-button"
+                  className={`folder-button ${isActive ? 'active' : ''}`}
                   onClick={() => toggleFolder(node.path)}
                 >
                   <span className="folder-title">{node.name}</span>
@@ -189,8 +199,10 @@ export default function Explorer({
       );
     } else {
       return (
-        <li key={node.path} className="file-item">
-          <a href={node.path}>{node.name}</a>
+        <li key={node.path} className={`file-item depth-${depth}`}>
+          <a href={node.path} className={`explorer-link ${isActive ? 'active' : ''}`}>
+            {node.name}
+          </a>
         </li>
       );
     }
@@ -208,7 +220,7 @@ export default function Explorer({
       </div>
       <div className="explorer-content">
         {explorerData.length === 0 ? (
-          <div style={{ padding: '1rem', color: 'var(--gray)', fontSize: '0.875rem' }}>
+          <div className="explorer-empty">
             暂无文章
           </div>
         ) : (

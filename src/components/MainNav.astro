@@ -6,8 +6,22 @@
  */
 import Search from './quartz/Search';
 import Darkmode from './quartz/Darkmode';
+import TableOfContents from './quartz/TableOfContents';
+import Explorer from './quartz/Explorer';
 import WechatLoginButton from './auth/WechatLoginButton';
 import './auth/WechatLoginButton.css';
+
+interface ExplorerArticleItem {
+  id: number;
+  title: string;
+  tags?: string[];
+}
+
+interface MainNavProps {
+  explorerData?: ExplorerArticleItem[];
+}
+
+const { explorerData } = Astro.props as MainNavProps;
 
 const currentPath = Astro.url.pathname;
 
@@ -127,9 +141,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
         </button>
       </div>
       <nav class="mobile-toc-nav">
-        <ul class="mobile-toc-list" id="mobile-toc-list">
-          <!-- 目录项将通过 JS 动态生成 -->
-        </ul>
+        <TableOfContents variant="mobile" showHeader={false} closeOnNavigate={true} client:load />
       </nav>
     </div>
   )}
@@ -152,6 +164,23 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       <div class="mobile-search">
         <Search client:idle enablePreview={true} />
       </div>
+
+      <!-- 移动端文章浏览（仅文章详情页展示） -->
+      {isArticlePage && (
+        <div class="mobile-dropdown mobile-menu-explorer">
+          <button class="mobile-nav-link mobile-dropdown-toggle mobile-explorer-toggle">
+            文章浏览 <span class="mobile-arrow">▼</span>
+          </button>
+          <div class="mobile-dropdown-menu mobile-explorer-menu">
+            <Explorer
+              client:idle
+              title="文章浏览"
+              folderDefaultState="collapsed"
+              initialData={explorerData}
+            />
+          </div>
+        </div>
+      )}
       
       <!-- 移动端导航链接 -->
       <div class="mobile-nav-links">
@@ -190,6 +219,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     </div>
   </div>
 </nav>
+<div class="main-nav-spacer" aria-hidden="true"></div>
 
 <style>
   .main-nav {
@@ -499,116 +529,18 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   .mobile-toc-nav {
     max-height: calc(70vh - 56px);
     overflow-y: auto;
-    padding: 0.5rem 0;
+    padding: 0.25rem 0;
   }
 
-  .mobile-toc-list {
-    list-style: none;
-    margin: 0;
+  .mobile-toc-nav :global(.toc.toc-mobile) {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .mobile-toc-nav :global(.toc.toc-mobile > .toc-content) {
+    max-height: none;
+    margin-top: 0;
     padding: 0;
-  }
-
-  .mobile-toc-list li {
-    margin: 0;
-    position: relative;
-  }
-
-  /* 目录项基础样式 */
-  .mobile-toc-list a {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.625rem 1rem;
-    color: var(--darkgray);
-    text-decoration: none;
-    font-size: 0.9375rem;
-    line-height: 1.4;
-    min-height: 40px;
-    transition: all 0.2s ease;
-    border-left: 3px solid transparent;
-  }
-
-  .mobile-toc-list a:hover {
-    background: var(--highlight);
-    color: var(--dark);
-  }
-
-  .mobile-toc-list a.active {
-    color: var(--secondary);
-    background: linear-gradient(90deg, rgba(var(--secondary-rgb, 132, 94, 194), 0.1), transparent);
-    border-left-color: var(--secondary);
-    font-weight: 500;
-  }
-
-  /* 目录层级样式 - 带图标 */
-  .mobile-toc-list .toc-level-1 {
-    padding-left: 1rem;
-    font-weight: 600;
-    font-size: 0.9375rem;
-    color: var(--dark);
-  }
-
-  .mobile-toc-list .toc-level-1::before {
-    content: "▸";
-    color: var(--secondary);
-    font-size: 0.75rem;
-    margin-right: 0.375rem;
-    flex-shrink: 0;
-  }
-
-  .mobile-toc-list .toc-level-2 {
-    padding-left: 1.5rem;
-    font-size: 0.9375rem;
-  }
-
-  .mobile-toc-list .toc-level-2::before {
-    content: "├";
-    color: var(--gray);
-    font-size: 0.75rem;
-    margin-right: 0.375rem;
-    flex-shrink: 0;
-  }
-
-  .mobile-toc-list .toc-level-3 {
-    padding-left: 2.25rem;
-    font-size: 0.875rem;
-  }
-
-  .mobile-toc-list .toc-level-3::before {
-    content: "•";
-    color: var(--gray);
-    font-size: 0.625rem;
-    margin-right: 0.375rem;
-    flex-shrink: 0;
-  }
-
-  .mobile-toc-list .toc-level-4 {
-    padding-left: 3rem;
-    font-size: 0.8125rem;
-    color: var(--gray);
-  }
-
-  .mobile-toc-list .toc-level-4::before {
-    content: "◦";
-    color: var(--lightgray);
-    font-size: 0.5rem;
-    margin-right: 0.375rem;
-    flex-shrink: 0;
-  }
-
-  /* 无目录时的提示 */
-  .mobile-toc-empty {
-    padding: 2rem 1rem;
-    text-align: center;
-    color: var(--gray);
-    font-size: 0.875rem;
-  }
-
-  .mobile-toc-empty::before {
-    content: "📄";
-    display: block;
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
   }
 
   /* 移动端全屏菜单覆盖层 */
@@ -690,6 +622,17 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     width: 100%;
   }
 
+  /* 移动端文章浏览区域 */
+  .mobile-menu-explorer {
+    border-bottom: 1px solid var(--lightgray);
+  }
+
+  .mobile-explorer-menu {
+    padding: 0.5rem 1rem 1rem;
+    background: var(--light);
+    border-top: 1px solid var(--lightgray);
+  }
+
   /* 移动端导航链接 */
   .mobile-nav-links {
     padding: 0.5rem 0;
@@ -765,8 +708,26 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     background: var(--lightgray);
   }
 
+  .main-nav-spacer {
+    display: none;
+  }
+
   /* 响应式 - 移动端 */
   @media (max-width: 767px) {
+    .main-nav {
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      z-index: 1200;
+    }
+
+    .main-nav-spacer {
+      display: block;
+      height: 64px;
+      width: 100%;
+    }
     .nav-container {
       padding: 0 1rem;
     }
@@ -790,6 +751,24 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     .mobile-toc-panel {
       display: block;
     }
+
+    .mobile-menu-explorer :global(.explorer) {
+      display: flex !important;
+      min-height: 0;
+      margin-top: 0;
+    }
+
+    .mobile-menu-explorer :global(.explorer-title) {
+      display: none;
+    }
+
+    .mobile-menu-explorer :global(.explorer-content) {
+      max-height: 45vh;
+      margin-top: 0;
+      border-left: none;
+      margin-left: 0;
+      padding-left: 0;
+    }
   }
 </style>
 
@@ -797,6 +776,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   // 移动端菜单交互
   const menuToggle = document.querySelector('.mobile-menu-toggle');
   const menuOverlay = document.querySelector('.mobile-menu-overlay');
+  const mobileMenu = document.querySelector('.mobile-menu');
   const mobileDropdowns = document.querySelectorAll('.mobile-dropdown');
   const mobileNavLinks = document.querySelectorAll('.mobile-nav-link:not(.mobile-dropdown-toggle)');
 
@@ -811,7 +791,6 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   const tocToggle = document.querySelector('.mobile-toc-toggle');
   const tocPanel = document.querySelector('.mobile-toc-panel');
   const tocClose = document.querySelector('.mobile-toc-close');
-  const tocList = document.getElementById('mobile-toc-list');
 
   // 切换菜单
   function toggleMenu() {
@@ -855,91 +834,6 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     tocPanel?.setAttribute('aria-hidden', 'true');
   }
 
-  // 生成目录
-  function generateToc() {
-    if (!tocList) return;
-    
-    // 只从 Markdown 渲染后的正文内容中提取标题
-    // 注意：文章页顶部的页面标题不在 .prose 内，避免被误识别为目录项
-    const contentArea = document.querySelector('article .prose');
-    const pageTitle = (document.querySelector('article > .popover-hint header h1')?.textContent || '').trim();
-    if (!contentArea) {
-      tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
-      return;
-    }
-    
-    const headings = Array.from(contentArea.querySelectorAll('h1, h2, h3, h4')).filter((heading) => {
-      const level = parseInt(heading.tagName.charAt(1));
-      if (level !== 1) return true;
-      const text = (heading.textContent || '').trim();
-      return !(pageTitle.length > 0 && text === pageTitle);
-    });
-    if (headings.length === 0) {
-      tocList.innerHTML = '<li class="mobile-toc-empty">当前页面无目录</li>';
-      return;
-    }
-    
-    let html = '';
-    headings.forEach((heading, index) => {
-      const level = parseInt(heading.tagName.charAt(1));
-      const id = heading.id || `heading-${index}`;
-      
-      // 如果标题没有 id，添加一个
-      if (!heading.id) {
-        heading.id = id;
-      }
-      
-      const text = heading.textContent?.trim() || '';
-      html += `<li><a href="#${id}" class="toc-level-${level}">${text}</a></li>`;
-    });
-    
-    tocList.innerHTML = html;
-    
-    // 为目录链接添加点击事件
-    tocList.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = link.getAttribute('href')?.slice(1);
-        if (targetId) {
-          const target = document.getElementById(targetId);
-          if (target) {
-            closeToc();
-            // 平滑滚动到目标位置，考虑导航栏高度
-            const navHeight = 64;
-            const targetPosition = target.getBoundingClientRect().top + window.scrollY - navHeight - 16;
-            window.scrollTo({ top: targetPosition, behavior: 'smooth' });
-          }
-        }
-      });
-    });
-  }
-
-  // 高亮当前章节
-  function updateActiveSection() {
-    if (!tocList) return;
-    
-    const links = tocList.querySelectorAll('a');
-    const headings = Array.from(links).map(link => {
-      const id = link.getAttribute('href')?.slice(1);
-      return id ? document.getElementById(id) : null;
-    }).filter(Boolean);
-    
-    if (headings.length === 0) return;
-    
-    const navHeight = 64;
-    const scrollY = window.scrollY + navHeight + 50;
-    
-    let activeIndex = 0;
-    headings.forEach((heading, index) => {
-      if (heading && heading.offsetTop <= scrollY) {
-        activeIndex = index;
-      }
-    });
-    
-    links.forEach((link, index) => {
-      link.classList.toggle('active', index === activeIndex);
-    });
-  }
 
   // 点击汉堡按钮
   menuToggle?.addEventListener('click', toggleMenu);
@@ -957,9 +851,35 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     }
   });
 
+  // 点击目录面板外区域时关闭目录（等同再次点击目录按钮）
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth > 767) return;
+    if (!tocPanel?.classList.contains('active')) return;
+
+    const target = e.target;
+    if (!(target instanceof Node)) return;
+
+    const clickedInsidePanel = tocPanel.contains(target);
+    const clickedToggle = !!tocToggle?.contains(target);
+    if (!clickedInsidePanel && !clickedToggle) {
+      closeToc();
+    }
+  });
+
   // 点击导航链接关闭菜单
   mobileNavLinks.forEach(link => {
     link.addEventListener('click', closeMenu);
+  });
+
+  // 点击文章浏览中的文章链接后关闭菜单
+  mobileMenu?.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!(target instanceof Element)) return;
+
+    const explorerLink = target.closest('.mobile-menu-explorer a');
+    if (explorerLink) {
+      closeMenu();
+    }
   });
 
   // 移动端下拉菜单切换
@@ -1001,22 +921,4 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     }
   });
 
-  // 滚动时更新当前章节高亮
-  let scrollTimeout: number;
-  window.addEventListener('scroll', () => {
-    clearTimeout(scrollTimeout);
-    scrollTimeout = window.setTimeout(updateActiveSection, 50);
-  });
-
-  // 页面加载完成后生成目录
-  document.addEventListener('DOMContentLoaded', () => {
-    generateToc();
-    updateActiveSection();
-  });
-
-  // 如果 DOM 已经加载完成，立即生成目录
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    generateToc();
-    updateActiveSection();
-  }
 </script>
