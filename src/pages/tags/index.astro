@@ -2,239 +2,251 @@
 /**
  * 标签索引页 - /tags
  * 显示所有标签和每个标签的文章数量
- * 
- * 优化：启用静态预渲染，构建时获取数据，运行时零数据库查询
+ *
+ * 优化：
+ * 1. 启用静态预渲染，构建时获取数据，运行时零数据库查询
+ * 2. 只统计已发布且未删除文章
+ * 3. 接入 CollectionPageShell 统一视觉节奏
  */
 export const prerender = true;
 
 import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
+import CollectionPageShell from '../../components/CollectionPageShell.astro';
+import CollectionEmptyState from '../../components/CollectionEmptyState.astro';
 import { db } from '../../db/client';
 import { articleTags, articles as articlesTable } from '../../db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 interface TagCount {
   tag: string;
   count: number;
 }
 
-// 优化：使用单个 SQL 查询统计所有标签
-// 只统计已发布文章的标签
 const tagCountsResult = await db
   .select({
     tag: articleTags.tag,
-    count: sql<number>`count(distinct ${articleTags.articleId})`.as('count'),
+    count: sql<number>`count(distinct ${articleTags.articleId})::int`.as('count'),
   })
   .from(articleTags)
   .innerJoin(articlesTable, eq(articleTags.articleId, articlesTable.id))
-  .where(eq(articlesTable.status, 'published'))
+  .where(and(
+    eq(articlesTable.status, 'published'),
+    eq(articlesTable.isDeleted, false)
+  ))
   .groupBy(articleTags.tag);
 
 const tagCounts: TagCount[] = tagCountsResult
-  .map(row => ({ tag: row.tag, count: Number(row.count) }))
+  .map((row) => ({ tag: row.tag, count: Number(row.count) }))
   .sort((a, b) => b.count - a.count);
 
-// 获取文章总数（用于显示）
 const articlesCount = await db
-  .select({ count: sql<number>`count(*)` })
+  .select({ count: sql<number>`count(*)::int` })
   .from(articlesTable)
-  .where(eq(articlesTable.status, 'published'))
-  .then(result => Number(result[0]?.count || 0));
+  .where(and(
+    eq(articlesTable.status, 'published'),
+    eq(articlesTable.isDeleted, false)
+  ))
+  .then((result) => Number(result[0]?.count || 0));
 
-// 按字母排序的标签
-const tagsByAlpha = [...tagCounts].sort((a, b) => 
-  a.tag.localeCompare(b.tag, 'zh-CN')
-);
-
-// 热门标签（前10）
+const tagsByAlpha = [...tagCounts].sort((a, b) => a.tag.localeCompare(b.tag, 'zh-CN'));
 const popularTags = tagCounts.slice(0, 10);
+const maxPopularCount = popularTags[0]?.count ?? 1;
 ---
 
-<Layout title="标签 - Openeducation">
-  <!-- 主导航栏 -->
+<Layout
+  title="标签 - Openeducation"
+  description="按标签浏览 Openeducation 的已发布文章与知识文档"
+>
   <MainNav />
-  
-  <main class="min-h-screen py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- 页面标题 -->
-      <div class="mb-12">
-        <h1 class="text-4xl font-extrabold mb-4" style="color: var(--dark);">
-          标签
-        </h1>
-        <p class="text-xl" style="color: var(--gray);">
-          共 {tagCounts.length} 个标签，{articlesCount} 篇文章
-        </p>
-      </div>
 
-      <!-- 热门标签 -->
-      {popularTags.length > 0 && (
-        <section class="mb-12">
-          <h2 class="text-2xl font-bold mb-6" style="color: var(--dark);">
-            🔥 热门标签
-          </h2>
-          <div class="tag-cloud popular">
-            {popularTags.map(({ tag, count }) => (
-              <a 
-                href={`/tags/${encodeURIComponent(tag)}`} 
-                class="tag-item popular"
-                style={`--tag-size: ${Math.min(2, 1 + count / 10)}em`}
+  <CollectionPageShell
+    icon="🏷️"
+    title="标签"
+    subtitle="按主题关键词聚合的知识入口"
+    meta={`共 ${tagCounts.length} 个标签，${articlesCount} 篇文章`}
+    quickLinks={[
+      { href: '/articles', label: '全部文章' },
+      { href: '/categories', label: '学科分类' },
+      { href: '/blog', label: '最近更新' },
+    ]}
+  >
+    {tagCounts.length > 0 ? (
+      <>
+        {popularTags.length > 0 && (
+          <section class="taxonomy-section" aria-label="热门标签">
+            <h2 class="taxonomy-section-title">热门标签</h2>
+            <div class="tag-cloud">
+              {popularTags.map(({ tag, count }) => (
+                <a
+                  href={`/tags/${encodeURIComponent(tag)}`}
+                  class="tag-pill"
+                  style={`--tag-ratio: ${Math.max(0.55, count / maxPopularCount)}`}
+                  aria-label={`查看标签 ${tag}，共 ${count} 篇文章`}
+                >
+                  <span class="tag-pill-name">{tag}</span>
+                  <span class="tag-pill-count">{count}</span>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section class="taxonomy-section" aria-label="所有标签">
+          <h2 class="taxonomy-section-title">所有标签</h2>
+          <div class="taxonomy-grid">
+            {tagsByAlpha.map(({ tag, count }) => (
+              <a
+                href={`/tags/${encodeURIComponent(tag)}`}
+                class="taxonomy-card"
+                aria-label={`查看标签 ${tag}，共 ${count} 篇文章`}
               >
-                <span class="tag-name">{tag}</span>
-                <span class="tag-count">{count}</span>
+                <h3 class="taxonomy-name">{tag}</h3>
+                <p class="tag-description">{count} 篇文章</p>
               </a>
             ))}
           </div>
         </section>
-      )}
-
-      <!-- 所有标签（按字母排序） -->
-      <section>
-        <h2 class="text-2xl font-bold mb-6" style="color: var(--dark);">
-          📑 所有标签
-        </h2>
-        <div class="tag-grid">
-          {tagsByAlpha.map(({ tag, count }) => (
-            <a 
-              href={`/tags/${encodeURIComponent(tag)}`} 
-              class="tag-card"
-            >
-              <div class="tag-card-name">{tag}</div>
-              <div class="tag-card-count">{count} 篇文章</div>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <!-- 空状态 -->
-      {tagCounts.length === 0 && (
-        <div class="empty-state">
-          <p>暂无标签</p>
-          <a href="/blog" class="btn-primary">浏览文章</a>
-        </div>
-      )}
-    </div>
-  </main>
+      </>
+    ) : (
+      <CollectionEmptyState
+        message="暂无标签"
+        actionHref="/blog"
+        actionLabel="浏览文章"
+      />
+    )}
+  </CollectionPageShell>
 </Layout>
 
 <style>
-  /* 热门标签云 */
+  .taxonomy-section {
+    margin-bottom: 1.75rem;
+  }
+
+  .taxonomy-section-title {
+    margin: 0 0 0.875rem;
+    color: var(--dark);
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
+
   .tag-cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
+    gap: 0.75rem;
   }
 
-  .tag-item {
+  .tag-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--light);
-    border: 2px solid var(--lightgray);
-    border-radius: 2rem;
+    gap: 0.45rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 9999px;
     text-decoration: none;
-    transition: all 0.2s ease;
-    font-size: var(--tag-size, 1rem);
+    background: var(--light);
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .tag-item.popular {
+  .tag-pill:hover {
     border-color: var(--secondary);
-    background: linear-gradient(135deg, var(--light), var(--highlight));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   }
 
-  .tag-item:hover {
-    border-color: var(--secondary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  .tag-pill:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+    outline-offset: 2px;
   }
 
-  .tag-name {
+  .tag-pill-name {
     color: var(--dark);
-    font-weight: 500;
+    font-size: calc(0.82rem + (var(--tag-ratio) - 0.55) * 0.35rem);
+    font-weight: 600;
+    line-height: 1;
   }
 
-  .tag-count {
+  .tag-pill-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    height: 1.1rem;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
     background: var(--secondary);
     color: white;
-    padding: 0.125rem 0.5rem;
-    border-radius: 1rem;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
   }
 
-  /* 标签网格 */
-  .tag-grid {
+  .taxonomy-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .tag-card {
+  .taxonomy-card {
     display: flex;
     flex-direction: column;
-    padding: 1.5rem;
+    gap: 0.5rem;
+    padding: 1rem;
     background: var(--light);
     border: 1px solid var(--lightgray);
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   }
 
-  .tag-card:hover {
+  .taxonomy-card:hover {
     border-color: var(--secondary);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
   }
 
-  .tag-card-name {
-    font-size: 1.125rem;
-    font-weight: 600;
+  .taxonomy-card:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  .taxonomy-name {
+    margin: 0;
     color: var(--dark);
-    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
   }
 
-  .tag-card-count {
-    font-size: 0.875rem;
+  .tag-description {
+    margin: 0;
     color: var(--gray);
+    font-size: 0.85rem;
   }
 
-  /* 空状态 */
-  .empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
+  @media (max-width: 1199px) {
+    .taxonomy-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
-  .empty-state p {
-    font-size: 1.25rem;
-    color: var(--gray);
-    margin-bottom: 2rem;
+  @media (max-width: 1023px) {
+    .taxonomy-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
-  .btn-primary {
-    display: inline-block;
-    padding: 0.75rem 2rem;
-    background: var(--secondary);
-    color: white;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    font-weight: 500;
-    transition: opacity 0.2s ease;
-  }
-
-  .btn-primary:hover {
-    opacity: 0.9;
-  }
-
-  /* 响应式 */
-  @media (max-width: 768px) {
-    .tag-grid {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  @media (max-width: 767px) {
+    .taxonomy-section-title {
+      font-size: 1rem;
     }
 
-    .tag-item {
-      font-size: 0.875rem;
+    .taxonomy-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tag-pill {
+      padding: 0.4rem 0.65rem;
     }
   }
 </style>
-

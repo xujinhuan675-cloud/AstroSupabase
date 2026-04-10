@@ -22,13 +22,10 @@ import TableOfContents from '../../components/quartz/TableOfContents';
 import Breadcrumbs from '../../components/quartz/Breadcrumbs';
 import ContentMeta from '../../components/quartz/ContentMeta';
 import TagList from '../../components/quartz/TagList';
-import Darkmode from '../../components/quartz/Darkmode';
-import ReaderMode from '../../components/quartz/ReaderMode';
-import Search from '../../components/quartz/Search';
 import Explorer from '../../components/quartz/Explorer';
 import QuartzGraph from '../../components/quartz/QuartzGraph';
 import MainNav from '../../components/MainNav.astro';
-import ScrollTopButton from '../../components/ScrollTopButton.astro';
+import SpeedDial from '../../components/SpeedDial.astro';
 import type { Article } from '../../db/schema';
 
 // 定义 props 类型
@@ -209,15 +206,6 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
   
   <!-- Left Sidebar -->
   <div slot="left-sidebar">
-    <!-- Search, Darkmode & ReaderMode 同一行 -->
-    <div class="search-controls-row">
-      <Search client:idle enablePreview={true} />
-      <div class="control-icons">
-        <Darkmode client:load />
-        <ReaderMode client:idle />
-      </div>
-    </div>
-    
     <!-- Explorer 文件浏览器 - 使用构建时静态数据 -->
     <Explorer 
       client:idle 
@@ -234,8 +222,8 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
       client:load
       currentSlug={article.slug}
       height={250}
-      localGraph={{ depth: 1 }}
-      globalGraph={{ depth: 3, showTags: false }}
+      localGraph={{ depth: 1, showTags: false, labelDisplayMode: 'all', defaultLinkOpacity: 0.42 }}
+      globalGraph={{ depth: 3, showTags: false, labelDisplayMode: 'all' }}
     />
     
     <!-- 目录 - 浏览器空闲时加载 -->
@@ -325,7 +313,7 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
     {/* 反向链接组件 - 数据已在构建时获取 */}
     <Backlinks articleId={article.id} backlinks={backlinks} client:idle />
   </article>
-  <ScrollTopButton />
+  <SpeedDial />
 </QuartzLayout>
 
 
@@ -373,40 +361,4 @@ const formattedDate = new Date(article.publishedAt || article.createdAt).toLocal
     color: var(--dark);
   }
   
-  /* 搜索和控制图标行布局 */
-  .search-controls-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-  }
-  
-  .control-icons {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-  }
-  
-  /* 控制图标按钮样式 */
-  .control-icons .darkmode,
-  .control-icons .readermode {
-    border: 1px solid var(--lightgray);
-    border-radius: 5px;
-    padding: 0.5rem;
-    background: var(--light);
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-  
-  .control-icons .darkmode:hover,
-  .control-icons .readermode:hover {
-    border-color: var(--secondary);
-    background: var(--highlight);
-  }
-  
-  .control-icons .darkmode svg,
-  .control-icons .readermode svg {
-    display: block;
-  }
 </style>

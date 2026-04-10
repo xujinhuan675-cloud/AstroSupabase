@@ -2,7 +2,7 @@
 /**
  * 文章列表页 - /articles
  * 显示所有已发布的文章
- * 
+ *
  * 优化：启用静态预渲染，构建时获取数据，运行时零数据库查询
  */
 export const prerender = true;
@@ -11,46 +11,43 @@ import Layout from '../../layout/Layout.astro';
 import { getArticles } from '../../lib/articles';
 import ArticleCard from '../../components/ArticleCard.astro';
 import MainNav from '../../components/MainNav.astro';
+import CollectionPageShell from '../../components/CollectionPageShell.astro';
+import CollectionEmptyState from '../../components/CollectionEmptyState.astro';
 
 const articles = await getArticles();
 ---
 
-<Layout title="所有文章 - Openeducation">
-  <!-- 主导航栏 -->
+<Layout
+  title="所有文章 - Openeducation"
+  description={`浏览 Openeducation 全部已发布文章（当前 ${articles.length} 篇）`}
+>
   <MainNav />
-  
-  <main class="min-h-screen py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- 页面标题 -->
-      <div class="mb-12">
-        <h1 class="text-4xl font-extrabold mb-4" style="color: var(--dark);">
-          所有文章
-        </h1>
-        <p class="text-xl" style="color: var(--gray);">
-          共 {articles.length} 篇文章
-        </p>
-      </div>
 
-      <!-- 文章网格 -->
-      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {articles.map(article => (
-          <ArticleCard article={article} />
-        ))}
-      </div>
-
-      <!-- 空状态 -->
-      {articles.length === 0 && (
-        <div class="text-center py-16">
-          <p class="text-xl" style="color: var(--gray);">
-            暂无文章
-          </p>
+  <CollectionPageShell
+    icon="📝"
+    title="所有文章"
+    subtitle="按公开发布状态汇总的内容目录"
+    meta={`共 ${articles.length} 篇文章`}
+    quickLinks={[
+      { href: '/categories', label: '学科分类' },
+      { href: '/tags', label: '标签' },
+      { href: '/blog', label: '最近更新' },
+    ]}
+  >
+    {articles.length > 0 ? (
+      <section class="collection-articles-section" aria-label="所有文章列表">
+        <div class="collection-articles-grid">
+          {articles.map((article) => (
+            <ArticleCard article={article} />
+          ))}
         </div>
-      )}
-    </div>
-  </main>
+      </section>
+    ) : (
+      <CollectionEmptyState
+        message="暂无文章"
+        actionHref="/blog"
+        actionLabel="查看最近更新"
+      />
+    )}
+  </CollectionPageShell>
 </Layout>
-
-<style>
-  /* 可以添加额外样式 */
-</style>
-

@@ -168,6 +168,8 @@ export async function initGraph(
     opacityScale: 1,
     removeTags: [],
     showTags: true,
+    defaultLinkOpacity: 0,
+    autoCenterCurrentNode: true,
     focusOnHover: false,
     enableRadial: false,
   };
@@ -200,9 +202,28 @@ export async function initGraph(
     opacityScale,
     removeTags,
     showTags,
+    showLabelsOnDesktop,
+    labelDisplayMode,
+    defaultVisibleLabelCount,
+    defaultLinkOpacity,
+    autoCenterCurrentNode,
     focusOnHover,
     enableRadial,
   } = config;
+
+  const isDesktopViewport =
+    typeof window !== 'undefined' &&
+    window.matchMedia('(min-width: 1024px)').matches;
+  const resolvedLabelDisplayMode =
+    labelDisplayMode ?? (showLabelsOnDesktop ? 'all' : 'hover');
+  const persistentLabelMode =
+    resolvedLabelDisplayMode === 'all'
+      ? 'all'
+      : isDesktopViewport
+        ? resolvedLabelDisplayMode
+        : 'hover';
+  const baseVisibleLabelCount = Math.max(0, defaultVisibleLabelCount ?? 12);
+  const restingLinkOpacity = Math.max(0, Math.min(1, defaultLinkOpacity ?? 0));
 
   // 获取数据
   const contentIndex = await fetchContentIndex();
@@ -240,12 +261,11 @@ export async function initGraph(
 
   // 计算邻域（按深度过滤）
   const neighbourhood = new Set<string>();
-  const wl: (string | '__SENTINEL')[] = [slug, '__SENTINEL'];
-  
-  // 确保当前 slug 始终包含在邻域中
-  neighbourhood.add(slug);
-  
-  if (depth >= 0) {
+  const hasCurrentSlug = slug.length > 0 && data.has(slug);
+  const currentNodeId = hasCurrentSlug ? slug : null;
+  const wl: (string | '__SENTINEL')[] = hasCurrentSlug ? [slug, '__SENTINEL'] : [];
+
+  if (depth >= 0 && hasCurrentSlug) {
     let currentDepth = depth;
     while (currentDepth >= 0 && wl.length > 0) {
       const cur = wl.shift()!;
@@ -265,14 +285,14 @@ export async function initGraph(
       }
     }
   } else {
-    // depth < 0 表示显示所有节点
+    // depth < 0 或缺少当前 slug 时，显示全图
     validLinks.forEach((id) => neighbourhood.add(id));
     if (showTags) tags.forEach((tag) => neighbourhood.add(tag));
   }
   
   // 再次确保当前 slug 在邻域中（防止被过滤掉）
-  if (!neighbourhood.has(slug) && data.has(slug)) {
-    neighbourhood.add(slug);
+  if (currentNodeId && !neighbourhood.has(currentNodeId)) {
+    neighbourhood.add(currentNodeId);
   }
 
   // 构建节点数据
@@ -312,15 +332,61 @@ export async function initGraph(
     links: graphLinks,
   };
 
+  const nodeDegreeMap = new Map<string, number>();
+  for (const node of graphData.nodes) {
+    nodeDegreeMap.set(node.id, 0);
+  }
+  for (const link of graphData.links) {
+    nodeDegreeMap.set(link.source.id, (nodeDegreeMap.get(link.source.id) ?? 0) + 1);
+    nodeDegreeMap.set(link.target.id, (nodeDegreeMap.get(link.target.id) ?? 0) + 1);
+  }
+
+  const labelPriorityOrder = [...graphData.nodes]
+    .sort((a, b) => {
+      const score = (node: NodeData) => {
+        const degree = nodeDegreeMap.get(node.id) ?? 0;
+        const visitedBoost = visited.has(node.id) ? 10 : 0;
+        const currentBoost = currentNodeId !== null && node.id === currentNodeId ? 100 : 0;
+        const tagPenalty = node.id.startsWith('tags/') ? 8 : 0;
+        const longTitlePenalty = Math.max(node.text.length - 10, 0) * 0.2;
+        return currentBoost + degree * 12 + visitedBoost - tagPenalty - longTitlePenalty;
+      };
+
+      return score(b) - score(a);
+    })
+    .map((node) => node.id);
+  const labelPriorityRank = new Map(
+    labelPriorityOrder.map((nodeId, index) => [nodeId, index] as const)
+  );
+  const emphasizedLabelCount = Math.max(4, Math.ceil(baseVisibleLabelCount / 2));
+
+  function getPriorityVisibleLabelCount(zoomLevel: number) {
+    const zoomBoost = Math.max(0, zoomLevel - 1);
+    const extraLabels = Math.floor(zoomBoost * 12);
+    return Math.min(labelPriorityOrder.length, baseVisibleLabelCount + extraLabels);
+  }
+
+  function getPersistentLabelIds(zoomLevel: number) {
+    if (persistentLabelMode === 'all') {
+      return new Set(graphData.nodes.map((node) => node.id));
+    }
+
+    if (persistentLabelMode === 'priority') {
+      return new Set(labelPriorityOrder.slice(0, getPriorityVisibleLabelCount(zoomLevel)));
+    }
+
+    return new Set<string>();
+  }
+
   // 验证图谱数据
   if (nodes.length === 0) {
     console.warn('Graph has no nodes to display. Content index might be empty or slug not found.');
     // 至少显示当前节点（如果数据中存在）
-    if (data.has(slug)) {
-      const currentNodeData = data.get(slug)!;
+    if (currentNodeId && data.has(currentNodeId)) {
+      const currentNodeData = data.get(currentNodeId)!;
       graphData.nodes = [{
-        id: slug,
-        text: currentNodeData.title || slug,
+        id: currentNodeId,
+        text: currentNodeData.title || currentNodeId,
         tags: currentNodeData.tags ?? [],
       }];
       graphData.links = [];
@@ -333,23 +399,26 @@ export async function initGraph(
   // 节点数量限制 - 防止大图谱卡顿
   if (graphData.nodes.length > MAX_NODES) {
     console.warn(`Graph has ${graphData.nodes.length} nodes, limiting to ${MAX_NODES}`);
-    // 保留当前节点和最相关的节点
-    const currentNode = graphData.nodes.find(n => n.id === slug);
     const connectedNodeIds = new Set<string>();
-    graphData.links.forEach(l => {
-      if (l.source.id === slug || l.target.id === slug) {
-        connectedNodeIds.add(l.source.id);
-        connectedNodeIds.add(l.target.id);
-      }
-    });
-    
-    // 优先保留直接连接的节点
-    const priorityNodes = graphData.nodes.filter(n => 
-      n.id === slug || connectedNodeIds.has(n.id)
-    );
-    const otherNodes = graphData.nodes.filter(n => 
-      n.id !== slug && !connectedNodeIds.has(n.id)
-    ).slice(0, MAX_NODES - priorityNodes.length);
+    if (currentNodeId) {
+      graphData.links.forEach(l => {
+        if (l.source.id === currentNodeId || l.target.id === currentNodeId) {
+          connectedNodeIds.add(l.source.id);
+          connectedNodeIds.add(l.target.id);
+        }
+      });
+    }
+
+    // 优先保留当前节点及其直连节点
+    const priorityNodeIds = new Set<string>();
+    if (currentNodeId) {
+      priorityNodeIds.add(currentNodeId);
+      connectedNodeIds.forEach((id) => priorityNodeIds.add(id));
+    }
+
+    const priorityNodes = graphData.nodes.filter(n => priorityNodeIds.has(n.id));
+    const otherNodes = graphData.nodes.filter(n => !priorityNodeIds.has(n.id))
+      .slice(0, MAX_NODES - priorityNodes.length);
     
     graphData.nodes = [...priorityNodes, ...otherNodes];
     
@@ -378,7 +447,7 @@ export async function initGraph(
   let shouldCenterOnSimulationEnd = false;
   simulation.on('end', () => {
     isSimulationActive = false;
-    shouldCenterOnSimulationEnd = true;
+    shouldCenterOnSimulationEnd = autoCenterCurrentNode;
   });
 
   // 获取 CSS 变量
@@ -400,10 +469,20 @@ export async function initGraph(
     },
     {} as Record<(typeof cssVars)[number], string>
   );
+  const useLightGraphTheme = graph.closest('.landing-container') !== null;
+  const labelFillColor = useLightGraphTheme
+    ? '#f8fafc'
+    : computedStyleMap['--dark'] || '#1f2937';
+  const defaultLinkColor = useLightGraphTheme
+    ? '#cbd5e1'
+    : computedStyleMap['--gray'] || '#94a3b8';
+  const activeLinkColor = useLightGraphTheme
+    ? '#ffffff'
+    : computedStyleMap['--secondary'] || '#a855f7';
 
   // 节点颜色计算
   const color = (d: NodeData) => {
-    const isCurrent = d.id === slug;
+    const isCurrent = currentNodeId !== null && d.id === currentNodeId;
     if (isCurrent) {
       return computedStyleMap['--secondary'] || '#5b8a72';
     } else if (visited.has(d.id) || d.id.startsWith('tags/')) {
@@ -419,6 +498,30 @@ export async function initGraph(
     ).length;
     // 增加基础半径和缩放因子，使节点更明显
     return 4 + Math.sqrt(numLinks) * 1.2;
+  }
+
+  function isCurrentNode(nodeId: string) {
+    return currentNodeId !== null && nodeId === currentNodeId;
+  }
+
+  function formatLabelText(text: string, isTagNode: boolean) {
+    const maxLength = isTagNode ? 12 : 18;
+    if (text.length <= maxLength) {
+      return text;
+    }
+
+    return `${text.slice(0, maxLength).trim()}…`;
+  }
+
+  function getRestingLabelScale(nodeId: string) {
+    const rank = labelPriorityRank.get(nodeId);
+    const defaultScale = 1 / scale;
+
+    if (rank !== undefined && rank < emphasizedLabelCount) {
+      return defaultScale * 1.05;
+    }
+
+    return defaultScale;
   }
 
   let hoveredNodeId: string | null = null;
@@ -463,13 +566,21 @@ export async function initGraph(
     const tweenGroup = new TweenGroup();
 
     for (const l of linkRenderData) {
-      let alpha = 1;
-      if (hoveredNodeId) {
-        alpha = l.active ? 1 : 0.2;
+      let alpha = 0; // 默认隐藏
+      if (hoveredNodeId && l.active) {
+        alpha = 1; // 悬浮时显示相关连线
       }
       l.color = l.active
-        ? computedStyleMap['--gray'] || '#999'
+        ? '#ffffff' // 白色连线
         : computedStyleMap['--lightgray'] || '#d4d4d4';
+      alpha = hoveredNodeId
+        ? l.active
+          ? 1
+          : focusOnHover
+            ? Math.min(restingLinkOpacity, 0.12)
+            : restingLinkOpacity
+        : restingLinkOpacity;
+      l.color = l.active ? activeLinkColor : defaultLinkColor;
       tweenGroup.add(new Tweened<LinkRenderData>(l).to({ alpha }, 200));
     }
 
@@ -486,31 +597,67 @@ export async function initGraph(
     tweens.get('label')?.stop();
     const tweenGroup = new TweenGroup();
 
-    const defaultScale = 1 / scale;
-    const activeScale = defaultScale * 1.1;
+    const persistentLabelIds = getPersistentLabelIds(currentTransform.k || 1);
+    const persistentAlpha = persistentLabelMode === 'priority' ? 0.86 : 0.92;
+    const mutedPersistentAlpha = focusOnHover ? 0.16 : persistentAlpha;
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id;
-      if (hoveredNodeId === nodeId) {
+      const isHoveredNode = hoveredNodeId === nodeId;
+      const isRelatedNode = hoveredNodeId !== null && n.active;
+      const isPersistentLabel = persistentLabelIds.has(nodeId);
+      const restingScale = getRestingLabelScale(nodeId);
+      const hoverScale = restingScale * 1.08;
+      let targetAlpha = 0;
+      let targetScale = restingScale;
+
+      if (isHoveredNode) {
+        targetAlpha = 1;
+        targetScale = hoverScale;
+      } else if (isRelatedNode) {
+        targetAlpha = 0.96;
+      } else if (isPersistentLabel) {
+        targetAlpha = hoveredNodeId !== null ? mutedPersistentAlpha : persistentAlpha;
+      }
+
+      tweenGroup.add(
+        new Tweened<Text>(n.label).to(
+          {
+            alpha: targetAlpha,
+            scale: { x: targetScale, y: targetScale },
+          },
+          120
+        )
+      );
+
+      /*
+      if (isHoveredNode) {
+        // 悬浮节点的标签：放大显示
+        targetAlpha = 1;
+        targetScale = hoverScale;
+      } else if (isRelatedNode) {
+        // 默认显示或相关节点的标签：正常大小显示
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
-              alpha: 1,
-              scale: { x: activeScale, y: activeScale },
+              alpha: 0.96,
+              scale: { x: restingScale, y: restingScale },
             },
             100
           )
         );
       } else {
+        // 其他标签隐藏
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
-              alpha: n.label.alpha,
+              alpha: 0,
               scale: { x: defaultScale, y: defaultScale },
             },
             100
           )
         );
       }
+      */
     }
 
     tweenGroup.getAll().forEach((tw) => tw.start());
@@ -525,13 +672,39 @@ export async function initGraph(
   function renderNodes() {
     tweens.get('hover')?.stop();
     const tweenGroup = new TweenGroup();
+    
     for (const n of nodeRenderData) {
-      let alpha = 1;
-      if (hoveredNodeId !== null && focusOnHover) {
-        alpha = n.active ? 1 : 0.2;
+      const nodeId = n.simulationData.id;
+      
+      // 清除之前的绘制
+      n.gfx.clear();
+      
+      if (hoveredNodeId === nodeId) {
+        // 悬浮节点：实心紫色
+        (n.gfx as any).circle(0, 0, nodeRadius(n.simulationData));
+        (n.gfx as any).fill({ color: 0xa855f7, alpha: 1 }); // 紫色 #a855f7
+        tweenGroup.add(new Tweened<Graphics>(n.gfx, tweenGroup).to({ alpha: 1 }, 200));
+      } else if (isCurrentNode(nodeId)) {
+        (n.gfx as any).circle(0, 0, nodeRadius(n.simulationData));
+        (n.gfx as any).fill({ color: 0xa855f7, alpha: 1 });
+        tweenGroup.add(new Tweened<Graphics>(n.gfx, tweenGroup).to({ alpha: 1 }, 200));
+      } else if (hoveredNodeId !== null && n.active) {
+        // 相关节点：空心紫色
+        (n.gfx as any).circle(0, 0, nodeRadius(n.simulationData));
+        (n.gfx as any).stroke({ width: 2, color: 0xa855f7, alpha: 1 }); // 紫色边框
+        tweenGroup.add(new Tweened<Graphics>(n.gfx, tweenGroup).to({ alpha: 1 }, 200));
+      } else {
+        // 默认状态：半透明灰色（闪烁效果由动画循环处理）
+        const passiveAlpha =
+          hoveredNodeId !== null && focusOnHover
+            ? Math.min(n.alpha, 0.12)
+            : n.alpha;
+        (n.gfx as any).circle(0, 0, nodeRadius(n.simulationData));
+        (n.gfx as any).fill({ color: 0x808080, alpha: passiveAlpha });
+        tweenGroup.add(new Tweened<Graphics>(n.gfx, tweenGroup).to({ alpha: passiveAlpha }, 200));
       }
-      tweenGroup.add(new Tweened<Graphics>(n.gfx, tweenGroup).to({ alpha }, 200));
     }
+    
     tweenGroup.getAll().forEach((tw) => tw.start());
     tweens.set('hover', {
       update: tweenGroup.update.bind(tweenGroup),
@@ -600,32 +773,30 @@ export async function initGraph(
   // 创建节点
   for (const n of graphData.nodes) {
     const nodeId = n.id;
-
-    // 动态获取文字颜色，确保在暗色模式下使用浅色
-    const getTextColor = () => {
-      const currentDarkValue = getComputedStyle(document.documentElement)
-        .getPropertyValue('--dark')
-        .trim();
-      return currentDarkValue || computedStyleMap['--dark'] || '#2d2d2d';
-    };
+    const isTagNode = nodeId.startsWith('tags/');
+    const priorityRank = labelPriorityRank.get(nodeId) ?? Number.POSITIVE_INFINITY;
+    const labelSizeBoost =
+      priorityRank < 4 ? 1.12 : priorityRank < baseVisibleLabelCount ? 1.04 : 1;
 
     const label = new Text({
       interactive: false,
       eventMode: 'none',
-      text: n.text,
-      alpha: 0.9, // 设置初始透明度，让标签可见
+      text: formatLabelText(n.text, isTagNode),
+      alpha: 0,
       anchor: { x: 0.5, y: 1.2 },
       style: {
+        /*
         fontSize: fontSize * 16, // 调整为 16，标签文字大小适中
-        fill: getTextColor(),
+        fill: '#ffffff', // 白色标签
+        */
+        fontSize: fontSize * 16 * labelSizeBoost,
+        fill: labelFillColor,
         fontFamily: computedStyleMap['--bodyFont'] || 'Sans-Serif',
       },
       resolution: window.devicePixelRatio * 4,
     } as any);
-    label.scale.set(1 / scale);
+    label.scale.set(getRestingLabelScale(nodeId));
 
-    let oldLabelOpacity = 0;
-    const isTagNode = nodeId.startsWith('tags/');
     const gfx = new Graphics({
       interactive: true,
       label: nodeId,
@@ -634,28 +805,23 @@ export async function initGraph(
       cursor: 'pointer',
     } as any);
     
+    // 默认状态：绘制半透明的圆点（用于闪烁效果）
     (gfx as any).circle(0, 0, nodeRadius(n));
-    (gfx as any).fill({ color: isTagNode ? computedStyleMap['--light'] || '#f5f5f5' : color(n) });
+    (gfx as any).fill({ color: 0x808080, alpha: 0.3 }); // 深灰色，低透明度
     
     gfx
       .on('pointerover', (e: any) => {
         updateHoverInfo(e.target.label);
-        oldLabelOpacity = label.alpha;
         if (!dragging) {
           renderPixiFromD3();
         }
       })
       .on('pointerleave', () => {
         updateHoverInfo(null);
-        label.alpha = oldLabelOpacity;
         if (!dragging) {
           renderPixiFromD3();
         }
       });
-
-    if (isTagNode) {
-      (gfx as any).stroke({ width: 2, color: computedStyleMap['--tertiary'] || '#8b6f56' });
-    }
 
     nodesContainer.addChild(gfx);
     labelsContainer.addChild(label);
@@ -665,7 +831,7 @@ export async function initGraph(
       gfx,
       label,
       color: color(n),
-      alpha: 1,
+      alpha: 0.3, // 默认低透明度
       active: false,
     };
 
@@ -681,10 +847,12 @@ export async function initGraph(
       simulationData: l,
       gfx,
       color: computedStyleMap['--lightgray'] || '#d4d4d4',
-      alpha: 1,
+      alpha: 0, // 默认隐藏连线
       active: false,
     };
 
+    linkRenderDatum.color = defaultLinkColor;
+    linkRenderDatum.alpha = restingLinkOpacity;
     linkRenderData.push(linkRenderDatum);
   }
 
@@ -700,7 +868,8 @@ export async function initGraph(
   };
 
   const buildCenterTransformForCurrentNode = (k: number): ZoomTransform | null => {
-    const currentNode = graphData.nodes.find((n) => n.id === slug);
+    if (!currentNodeId) return null;
+    const currentNode = graphData.nodes.find((n) => n.id === currentNodeId);
     if (!currentNode) return null;
     if (currentNode.x == null || currentNode.y == null) return null;
 
@@ -727,6 +896,8 @@ export async function initGraph(
     }
     return true;
   };
+
+  renderPixiFromD3();
 
   // 节点点击处理函数
   const handleNodeClick = (nodeId: string) => {
@@ -832,49 +1003,59 @@ export async function initGraph(
         const { transform } = event;
         applyViewportTransform(transform);
 
-        const zoomLevel = transform.k * opacityScale;
-        // 修改透明度计算：在默认缩放级别（1.0）时也显示标签，最小透明度为 0.8
-        // 放大时透明度逐渐增加到 1.0，缩小到 0.5 以下时才开始淡出
-        const scaleOpacity = Math.min(Math.max((zoomLevel - 0.5) / 2.5, 0.8), 1.0);
-        const activeNodes = nodeRenderData.filter((n) => n.active).flatMap((n) => n.label);
-
-        for (const label of labelsContainer.children) {
-          if (!activeNodes.includes(label as any)) {
-            (label as any).alpha = scaleOpacity;
+        if (!dragging) {
+          renderLabels();
+        }
+        
+        // 缩放时保持默认标签可见，或在悬浮时仅显示相关标签
+        /*
+        for (const n of nodeRenderData) {
+          const nodeId = n.simulationData.id;
+          if (shouldShowLabelsByDefault) {
+            n.label.alpha = 1;
+          } else if (hoveredNodeId !== null) {
+            n.label.alpha = (nodeId === hoveredNodeId || n.active) ? 1 : 0;
+          } else {
+            n.label.alpha = 0;
           }
         }
+        */
       });
 
     select<HTMLCanvasElement, NodeData>(app.canvas).call(zoomBehavior);
   }
 
-  if (!hasCenteredCurrentNode) {
+  if (autoCenterCurrentNode && !hasCenteredCurrentNode) {
     hasCenteredCurrentNode = centerCurrentNodeInView();
   }
+  /*
 
-  // 初始化标签透明度（确保默认缩放级别下标签可见）
-  // 无论是否启用缩放，都要确保标签在初始状态下可见
-  const defaultScale = 1.0 * opacityScale;
-  const defaultOpacity = enableZoom 
-    ? Math.min(Math.max((defaultScale - 0.5) / 2.5, 0.8), 1.0)
-    : 0.9; // 未启用缩放时使用固定透明度
+  // 初始化标签透明度：桌面首页默认显示，其余场景保留悬浮显示
+  const defaultOpacity = shouldShowLabelsByDefault ? 1 : 0;
+  /*
   for (const label of labelsContainer.children) {
     (label as any).alpha = defaultOpacity;
   }
+  */
 
   // 动画循环 - 优化：静止时降低帧率
   let stopAnimation = false;
   let lastRenderTime = 0;
   const IDLE_FRAME_INTERVAL = 100; // 静止时每 100ms 渲染一次
   
+  // 闪烁动画参数
+  const TWINKLE_SPEED = 0.002; // 闪烁速度
+  const TWINKLE_MIN_ALPHA = 0.2; // 最小透明度
+  const TWINKLE_MAX_ALPHA = 0.6; // 最大透明度
+  
   function animate(time: number) {
     if (stopAnimation) return;
 
-    if (!hasUserInteracted && !hasCenteredCurrentNode) {
+    if (autoCenterCurrentNode && !hasUserInteracted && !hasCenteredCurrentNode) {
       hasCenteredCurrentNode = centerCurrentNodeInView();
     }
 
-    if (!hasUserInteracted && shouldCenterOnSimulationEnd) {
+    if (autoCenterCurrentNode && !hasUserInteracted && shouldCenterOnSimulationEnd) {
       shouldCenterOnSimulationEnd = false;
       hasCenteredCurrentNode = centerCurrentNodeInView() || hasCenteredCurrentNode;
     }
@@ -888,6 +1069,7 @@ export async function initGraph(
     }
     lastRenderTime = time;
     
+    // 更新节点位置
     for (const n of nodeRenderData) {
       const { x, y } = n.simulationData;
       if (x == null || y == null) continue;
@@ -895,14 +1077,40 @@ export async function initGraph(
       if (n.label) {
         n.label.position.set(x + width / 2, y + height / 2);
       }
+      
+      // 闪烁动画：只在默认状态下（没有悬浮）应用
+      if (!hoveredNodeId) {
+        if (isCurrentNode(n.simulationData.id)) {
+          n.alpha = 1;
+          n.gfx.clear();
+          (n.gfx as any).circle(0, 0, nodeRadius(n.simulationData));
+          (n.gfx as any).fill({ color: 0xa855f7, alpha: 1 });
+          continue;
+        }
+
+        // 使用正弦波产生平滑的闪烁效果，每个节点有不同的相位偏移
+        const nodeIndex = nodeRenderData.indexOf(n);
+        const phase = nodeIndex * 0.5; // 相位偏移，避免所有节点同步闪烁
+        const twinkleAlpha = TWINKLE_MIN_ALPHA + 
+          (TWINKLE_MAX_ALPHA - TWINKLE_MIN_ALPHA) * 
+          (0.5 + 0.5 * Math.sin(time * TWINKLE_SPEED + phase));
+        n.alpha = twinkleAlpha;
+        
+        // 重新绘制节点以应用新的透明度
+        n.gfx.clear();
+        (n.gfx as any).circle(0, 0, nodeRadius(n.simulationData));
+        (n.gfx as any).fill({ color: 0x808080, alpha: twinkleAlpha });
+      }
     }
 
+    // 更新连线位置
     for (const l of linkRenderData) {
       const linkData = l.simulationData;
       l.gfx.clear();
       l.gfx.moveTo(linkData.source.x! + width / 2, linkData.source.y! + height / 2);
       l.gfx.lineTo(linkData.target.x! + width / 2, linkData.target.y! + height / 2);
-      (l.gfx as any).stroke({ alpha: l.alpha, width: 1, color: l.color });
+      const lineWidth = hoveredNodeId && l.active ? 1.7 : restingLinkOpacity > 0 ? 1.35 : 1;
+      (l.gfx as any).stroke({ alpha: l.alpha, width: lineWidth, color: l.color });
     }
 
     tweens.forEach((t) => t.update(time));
@@ -912,45 +1120,11 @@ export async function initGraph(
 
   requestAnimationFrame(animate);
 
-  // 监听暗色模式切换，更新标签颜色
-  const updateLabelColors = () => {
-    const currentDarkValue = getComputedStyle(document.documentElement)
-      .getPropertyValue('--dark')
-      .trim();
-    const textColor = currentDarkValue || computedStyleMap['--dark'] || '#2d2d2d';
-    
-    // 更新所有标签颜色
-    for (const nodeRender of nodeRenderData) {
-      if (nodeRender.label) {
-        (nodeRender.label.style as any).fill = textColor;
-      }
-    }
-  };
-
-  // 监听主题变化
-  const themeObserver = new MutationObserver(() => {
-    updateLabelColors();
-  });
-
-  themeObserver.observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ['saved-theme', 'class'],
-  });
-
-  // 也监听媒体查询变化（系统暗色模式）
-  const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  const handleDarkModeChange = () => {
-    updateLabelColors();
-  };
-  darkModeMediaQuery.addEventListener('change', handleDarkModeChange);
-
   // 返回清理函数
   return () => {
     stopAnimation = true;
     tweens.forEach((t) => t.stop());
     tweens.clear();
-    themeObserver.disconnect();
-    darkModeMediaQuery.removeEventListener('change', handleDarkModeChange);
     try {
       app.destroy(true);
     } catch (error) {

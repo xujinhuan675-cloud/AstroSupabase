@@ -1,0 +1,329 @@
+<div class="speed-dial" data-speed-dial>
+  <div class="speed-dial-action-group" aria-hidden="true">
+    <button
+      type="button"
+      class="speed-dial-btn speed-dial-btn-reader"
+      data-action="reader-mode"
+      data-tooltip="阅读模式"
+      aria-label="进入阅读模式"
+      title="阅读模式"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4.25" y="5" width="15.5" height="14" rx="2.25"></rect>
+        <path d="M8 9.25h8M8 12h6.5M8 14.75h5"></path>
+      </svg>
+    </button>
+  </div>
+  <button
+    type="button"
+    class="speed-dial-btn speed-dial-btn-scroll"
+    data-action="scroll-top"
+    data-tooltip="回到顶部"
+    aria-label="回到顶部"
+    title="回到顶部"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 18V6"></path>
+      <path d="M6.5 11.5 12 6l5.5 5.5"></path>
+    </svg>
+  </button>
+  <button
+    type="button"
+    class="speed-dial-btn speed-dial-btn-trigger"
+    data-tooltip="快捷操作"
+    aria-label="展开快捷操作"
+    aria-expanded="false"
+    title="快捷操作"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="3.25"></circle>
+      <path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.06.06a2.1 2.1 0 1 1-2.97 2.97l-.06-.06a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.1 1.65V22a2.1 2.1 0 1 1-4.2 0v-.1a1.8 1.8 0 0 0-1.1-1.65 1.8 1.8 0 0 0-1.98.36l-.06.06a2.1 2.1 0 1 1-2.97-2.97l.06-.06a1.8 1.8 0 0 0 .36-1.98A1.8 1.8 0 0 0 3 14.56H2.9a2.1 2.1 0 1 1 0-4.2H3a1.8 1.8 0 0 0 1.65-1.1 1.8 1.8 0 0 0-.36-1.98l-.06-.06a2.1 2.1 0 1 1 2.97-2.97l.06.06a1.8 1.8 0 0 0 1.98.36h.1A1.8 1.8 0 0 0 10.44 3V2.9a2.1 2.1 0 1 1 4.2 0V3a1.8 1.8 0 0 0 1.1 1.65 1.8 1.8 0 0 0 1.98-.36l.06-.06a2.1 2.1 0 1 1 2.97 2.97l-.06.06a1.8 1.8 0 0 0-.36 1.98v.1A1.8 1.8 0 0 0 22 10.44h.1a2.1 2.1 0 1 1 0 4.2H22a1.8 1.8 0 0 0-1.65 1.1z"></path>
+    </svg>
+  </button>
+</div>
+
+<script>
+  type ScrollTarget = Window | HTMLElement;
+
+  const speedDial = document.querySelector<HTMLElement>('[data-speed-dial]');
+  const triggerButton = speedDial?.querySelector<HTMLButtonElement>('.speed-dial-btn-trigger');
+  const actionsPanel = speedDial?.querySelector<HTMLElement>('.speed-dial-action-group');
+  const readerModeButton = speedDial?.querySelector<HTMLButtonElement>('[data-action="reader-mode"]');
+  const scrollTopButton = speedDial?.querySelector<HTMLButtonElement>('[data-action="scroll-top"]');
+
+  if (speedDial && triggerButton && actionsPanel && readerModeButton && scrollTopButton) {
+    const SHOW_THRESHOLD = 280;
+    const READER_MODE_KEY = 'reader-mode';
+    let activeScrollTarget: ScrollTarget | null = null;
+
+    const isWindowTarget = (target: ScrollTarget): target is Window => target === window;
+
+    const getScrollTop = (target: ScrollTarget): number => {
+      if (isWindowTarget(target)) {
+        return window.scrollY || document.documentElement.scrollTop || 0;
+      }
+      return target.scrollTop || 0;
+    };
+
+    const getScrollTarget = (): ScrollTarget => {
+      const center = document.querySelector<HTMLElement>('.center');
+      if (!center) return window;
+
+      const style = window.getComputedStyle(center);
+      const canCenterScroll =
+        (style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+        center.scrollHeight > center.clientHeight + 1;
+
+      return canCenterScroll ? center : window;
+    };
+
+    const setDialOpen = (open: boolean): void => {
+      speedDial.classList.toggle('is-open', open);
+      actionsPanel.setAttribute('aria-hidden', String(!open));
+      triggerButton.setAttribute('aria-expanded', String(open));
+      triggerButton.setAttribute('aria-label', open ? '关闭快捷操作' : '展开快捷操作');
+      triggerButton.setAttribute('title', open ? '关闭快捷操作' : '快捷操作');
+      triggerButton.setAttribute('data-tooltip', open ? '关闭快捷操作' : '快捷操作');
+      triggerButton.classList.toggle('is-open', open);
+    };
+
+    const setReaderMode = (enabled: boolean): void => {
+      document.body.classList.toggle('reader-mode', enabled);
+      localStorage.setItem(READER_MODE_KEY, enabled ? 'true' : 'false');
+
+      const tooltipText = enabled ? '退出阅读模式' : '阅读模式';
+      readerModeButton.classList.toggle('is-active', enabled);
+      readerModeButton.setAttribute('aria-label', enabled ? '退出阅读模式' : '进入阅读模式');
+      readerModeButton.setAttribute('title', tooltipText);
+      readerModeButton.setAttribute('data-tooltip', tooltipText);
+    };
+
+    const toggleReaderMode = (): void => {
+      const next = !document.body.classList.contains('reader-mode');
+      setReaderMode(next);
+
+      window.requestAnimationFrame(() => {
+        bindScrollTarget();
+      });
+    };
+
+    const updateScrollTopState = (): void => {
+      const currentTop = getScrollTop(activeScrollTarget || window);
+      const canScrollTop = currentTop > SHOW_THRESHOLD;
+      scrollTopButton.disabled = !canScrollTop;
+      scrollTopButton.classList.toggle('is-disabled', !canScrollTop);
+    };
+
+    const onScroll = (): void => {
+      updateScrollTopState();
+    };
+
+    const bindScrollTarget = (): void => {
+      const nextTarget = getScrollTarget();
+      if (nextTarget === activeScrollTarget) {
+        updateScrollTopState();
+        return;
+      }
+
+      if (activeScrollTarget) {
+        activeScrollTarget.removeEventListener('scroll', onScroll);
+      }
+
+      activeScrollTarget = nextTarget;
+      activeScrollTarget.addEventListener('scroll', onScroll, { passive: true });
+      updateScrollTopState();
+    };
+
+    triggerButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setDialOpen(!speedDial.classList.contains('is-open'));
+    });
+
+    readerModeButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleReaderMode();
+    });
+
+    scrollTopButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (scrollTopButton.disabled) {
+        return;
+      }
+
+      const target = activeScrollTarget || getScrollTarget();
+      if (target === window) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        target.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    window.addEventListener('resize', bindScrollTarget, { passive: true });
+
+    const savedReaderMode = localStorage.getItem(READER_MODE_KEY) === 'true';
+    setReaderMode(savedReaderMode);
+    bindScrollTarget();
+    setDialOpen(false);
+  }
+</script>
+
+<style is:global>
+  .speed-dial {
+    position: fixed;
+    right: 1.25rem;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.625rem;
+    z-index: 950;
+  }
+
+  .speed-dial-action-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.625rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.5rem) scale(0.96);
+    transform-origin: bottom right;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .speed-dial.is-open .speed-dial-action-group {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  .speed-dial-btn {
+    position: relative;
+    width: 2.85rem;
+    height: 2.85rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 1.35rem;
+    background: color-mix(in srgb, var(--light) 86%, var(--secondary) 14%);
+    color: var(--darkgray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .speed-dial-btn:hover {
+    background: var(--highlight);
+    border-color: color-mix(in srgb, var(--secondary) 36%, var(--lightgray));
+    transform: translateY(-1px);
+  }
+
+  .speed-dial-btn svg {
+    width: 1.3rem;
+    height: 1.3rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+  .speed-dial-btn-trigger svg {
+    width: 1.24rem;
+    height: 1.24rem;
+  }
+
+  .speed-dial-btn-scroll svg {
+    width: 1.62rem;
+    height: 1.62rem;
+  }
+
+  .speed-dial-btn-reader svg {
+    width: 1.44rem;
+    height: 1.44rem;
+  }
+
+  .speed-dial-btn.is-active {
+    border-color: color-mix(in srgb, var(--secondary) 52%, var(--lightgray));
+    background: color-mix(in srgb, var(--highlight) 70%, var(--light));
+    color: var(--secondary);
+  }
+
+  .speed-dial-btn.is-disabled,
+  .speed-dial-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    filter: saturate(0.4);
+  }
+
+  .speed-dial-btn-trigger.is-open {
+    border-color: color-mix(in srgb, var(--secondary) 55%, var(--lightgray));
+    background: color-mix(in srgb, var(--highlight) 78%, var(--light));
+    color: var(--secondary);
+  }
+
+  .speed-dial-btn::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + 0.55rem);
+    top: 50%;
+    transform: translate(-0.35rem, -50%);
+    padding: 0.35rem 0.55rem;
+    border-radius: 0.4rem;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 0.75rem;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 2;
+  }
+
+  .speed-dial-btn::after {
+    content: '';
+    position: absolute;
+    right: calc(100% + 0.2rem);
+    top: 50%;
+    transform: translate(-0.35rem, -50%);
+    border: 5px solid transparent;
+    border-left-color: rgba(0, 0, 0, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 2;
+  }
+
+  .speed-dial-btn:hover::before,
+  .speed-dial-btn:hover::after,
+  .speed-dial-btn:focus-visible::before,
+  .speed-dial-btn:focus-visible::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+
+  .speed-dial-btn:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--light) 70%, transparent);
+    outline-offset: 2px;
+  }
+
+  body.reader-mode .sidebar.left,
+  body.reader-mode .sidebar.right {
+    display: none;
+  }
+
+  body.reader-mode .center {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 767px) {
+    .speed-dial {
+      right: 1rem;
+      bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+  }
+</style>

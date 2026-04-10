@@ -1,171 +1,97 @@
 ---
 /**
- * 标签文章列表页 - 静态生成版本
- * 
- * 优化策略：
- * 1. 所有数据在构建时通过 getStaticPaths() 获取
- * 2. 运行时零数据库查询
+ * 标签文章列表页
+ *
+ * 修复说明：
+ * `getStaticPaths()` 里的 params 必须传原始 tag，不能提前 encodeURIComponent，
+ * 否则 dev/route matching 下会出现标签链接 404。
  */
-// 强制静态预渲染（有 getStaticPaths 时自动启用，但显式声明更清晰）
 export const prerender = true;
 
 import Layout from '../../layout/Layout.astro';
+import MainNav from '../../components/MainNav.astro';
+import ArticleCard from '../../components/ArticleCard.astro';
+import CollectionPageShell from '../../components/CollectionPageShell.astro';
+import CollectionEmptyState from '../../components/CollectionEmptyState.astro';
 import { db } from '../../db/client';
-import { articles, articleTags } from '../../db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { articleTags, articles, type Article } from '../../db/schema';
+import { and, eq } from 'drizzle-orm';
+import { getArticlesByTag } from '../../lib/articles';
 
-// 定义 props 类型
 interface TagPageProps {
   decodedTag: string;
-  taggedArticles: Array<{
-    id: number;
-    title: string;
-    excerpt: string | null;
-    slug: string;
-    createdAt: Date;
-    publishedAt: Date | null;
-  }>;
+  taggedArticles: Article[];
 }
 
-// 构建时获取所有标签及其文章，生成静态路径
 export async function getStaticPaths() {
   console.log('[BUILD] Starting static path generation for tags...');
-  
-  // 1. 获取所有唯一标签
+
   const allTags = await db
     .selectDistinct({ tag: articleTags.tag })
-    .from(articleTags);
-  
-  console.log(`[BUILD] Found ${allTags.length} unique tags`);
-  
-  // 2. 为每个标签获取文章列表
-  const paths = await Promise.all(allTags.map(async ({ tag }) => {
-    const taggedArticles = await db
-      .select({
-        id: articles.id,
-        title: articles.title,
-        excerpt: articles.excerpt,
-        slug: articles.slug,
-        createdAt: articles.createdAt,
-        publishedAt: articles.publishedAt,
-      })
-      .from(articles)
-      .innerJoin(articleTags, eq(articles.id, articleTags.articleId))
-      .where(and(
-        eq(articleTags.tag, tag),
+    .from(articleTags)
+    .innerJoin(articles, eq(articleTags.articleId, articles.id))
+    .where(
+      and(
         eq(articles.status, 'published'),
-        eq(articles.isDeleted, false)
-      ))
-      .orderBy(desc(articles.publishedAt));
-    
-    return {
-      params: { tag: encodeURIComponent(tag) },
-      props: {
-        decodedTag: tag,
-        taggedArticles,
-      } as TagPageProps,
-    };
-  }));
-  
+        eq(articles.isDeleted, false),
+      ),
+    );
+
+  console.log(`[BUILD] Found ${allTags.length} published tags`);
+
+  const paths = await Promise.all(
+    allTags.map(async ({ tag }) => {
+      const taggedArticles = await getArticlesByTag(tag);
+
+      return {
+        params: { tag },
+        props: {
+          decodedTag: tag,
+          taggedArticles,
+        } as TagPageProps,
+      };
+    }),
+  );
+
   console.log('[BUILD] Tag static paths generated');
   return paths;
 }
 
-// 从 props 获取所有数据（构建时已准备好，运行时零查询）
 const { decodedTag, taggedArticles } = Astro.props as TagPageProps;
 ---
 
-<Layout title={`标签: ${decodedTag}`}>
-  <div class="max-w-4xl mx-auto px-4 py-10">
-    <!-- 返回导航 -->
-    <nav class="mb-8">
-      <a 
-        href="/" 
-        class="text-base font-medium flex items-center gap-1 inline-flex hover:opacity-80"
-        style="color: var(--secondary);"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-        </svg>
-        返回首页
-      </a>
-    </nav>
+<Layout
+  title={`标签: ${decodedTag} - Openeducation`}
+  description={`标签「${decodedTag}」下共有 ${taggedArticles.length} 篇已发布文章`}
+>
+  <MainNav />
 
-    <!-- 标签标题 -->
-    <header class="mb-10">
-      <div class="flex items-center gap-3 mb-4">
-        <span class="text-5xl">🏷️</span>
-        <h1 class="text-4xl font-extrabold" style="color: var(--dark);">
-          {decodedTag}
-        </h1>
-      </div>
-      <p class="text-lg" style="color: var(--gray);">
-        共 {taggedArticles.length} 篇文章包含此标签
-      </p>
-    </header>
-
-    <!-- 文章列表 -->
+  <CollectionPageShell
+    backHref="/tags"
+    backLabel="返回标签页"
+    icon="🏷️"
+    title={decodedTag}
+    subtitle={`围绕「${decodedTag}」聚合的相关文章`}
+    meta={`共 ${taggedArticles.length} 篇文章`}
+    quickLinks={[
+      { href: '/articles', label: '全部文章' },
+      { href: '/categories', label: '学科分类' },
+    ]}
+  >
     {taggedArticles.length > 0 ? (
-      <div class="space-y-6">
-        {taggedArticles.map((article) => {
-          const formattedDate = new Date(article.publishedAt || article.createdAt).toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          });
-          
-          return (
-            <article class="rounded-lg p-6 hover:shadow-lg transition-shadow" style="background-color: var(--light); border: 1px solid var(--lightgray);">
-              <a href={`/articles/${article.id}`}>
-                <h2 class="text-2xl font-bold mb-2 transition-colors hover:opacity-80" style="color: var(--dark);">
-                  {article.title}
-                </h2>
-              </a>
-              
-              {article.excerpt && (
-                <p class="mb-4 line-clamp-3" style="color: var(--gray);">
-                  {article.excerpt}
-                </p>
-              )}
-              
-              <div class="flex items-center text-sm" style="color: var(--gray);">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                {formattedDate}
-              </div>
-            </article>
-          );
-        })}
-      </div>
+      <section class="collection-articles-section" aria-label={`${decodedTag} 标签下的文章列表`}>
+        <div class="collection-articles-grid">
+          {taggedArticles.map((article) => (
+            <ArticleCard article={article} />
+          ))}
+        </div>
+      </section>
     ) : (
-      <div class="text-center py-20">
-        <p class="text-xl" style="color: var(--gray);">暂无文章包含此标签</p>
-      </div>
+      <CollectionEmptyState
+        message={`当前没有找到标签「${decodedTag}」下的文章`}
+        actionHref="/tags"
+        actionLabel="返回标签页"
+      />
     )}
-
-    <!-- 底部操作 -->
-    <div class="mt-12 pt-8 flex justify-between items-center" style="border-top: 1px solid var(--lightgray);">
-      <a 
-        href="/" 
-        class="flex items-center gap-2 hover:opacity-80"
-        style="color: var(--gray);"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
-        返回列表
-      </a>
-    </div>
-  </div>
+  </CollectionPageShell>
 </Layout>
-
-<style>
-  .line-clamp-3 {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-</style>
-

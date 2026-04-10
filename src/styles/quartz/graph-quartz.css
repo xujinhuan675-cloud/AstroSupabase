@@ -4,8 +4,15 @@
  */
 
 .graph > h3 {
-  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  min-height: 2.1rem;
+  padding: 0 0.25rem;
+  font-size: 0.95rem;
   margin: 0;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--darkgray);
 }
 
 .graph > .graph-outer {
@@ -13,7 +20,7 @@
   border: 1px solid var(--lightgray);
   box-sizing: border-box;
   height: 250px;
-  margin: 0.5em 0;
+  margin: 0.35rem 0 0;
   position: relative;
   overflow: hidden;
 }
@@ -43,7 +50,6 @@
 .graph > .global-graph-icon-floating {
   display: none;
 }
-
 @media (max-width: 639px) {
   .graph > .global-graph-icon-floating {
     position: fixed;
@@ -154,4 +160,38 @@
 
 .global-graph-only.active {
   display: block;
+}
+
+/* 首页全局图谱作为背景层渲染：去除弹窗遮罩和白底容器 */
+.graph.global-graph-only.active {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.graph.global-graph-only.active > .global-graph-outer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  display: block;
+  backdrop-filter: none;
+  overflow: hidden;
+}
+
+.graph.global-graph-only.active > .global-graph-outer::before {
+  display: none;
+}
+
+.graph.global-graph-only.active > .global-graph-outer > .global-graph-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: none;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
 }

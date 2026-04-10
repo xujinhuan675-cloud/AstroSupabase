@@ -6,9 +6,11 @@
 export const prerender = true;
 
 import Layout from '../layout/Layout.astro';
+import MainNav from '../components/MainNav.astro';
 ---
 
 <Layout title="404 - 页面未找到">
+  <MainNav />
   <main class="error-page">
     <div class="error-container">
       <div class="error-code">404</div>

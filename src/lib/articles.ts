@@ -1,5 +1,5 @@
 import { db } from '../db/client';
-import { articles, type Article } from '../db/schema';
+import { articles, articleTags, type Article } from '../db/schema';
 import { desc, eq, and } from 'drizzle-orm';
 import type { Category } from './categories';
 
@@ -43,6 +43,21 @@ export async function getLatestUpdatedArticles(limit: number): Promise<Article[]
     ))
     .orderBy(desc(articles.updatedAt))
     .limit(limit);
+}
+
+export async function getArticlesByTag(tag: string): Promise<Article[]> {
+  const rows = await db
+    .select()
+    .from(articles)
+    .innerJoin(articleTags, eq(articles.id, articleTags.articleId))
+    .where(and(
+      eq(articleTags.tag, tag),
+      eq(articles.status, 'published'),
+      eq(articles.isDeleted, false)
+    ))
+    .orderBy(desc(articles.publishedAt), desc(articles.id));
+
+  return rows.map((row) => row.articles);
 }
 
 /**

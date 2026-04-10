@@ -62,9 +62,11 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
         isGlobal={true}
         height={600}
         showTitle={false}
-        globalGraph={{ depth: -1, enableRadial: true }}
+        globalGraph={{ depth: -1, enableRadial: true, labelDisplayMode: 'priority', defaultVisibleLabelCount: 14 }}
       />
     </div>
+
+    <div class="hero-veil" aria-hidden="true"></div>
 
     <!-- 内容区域 - Logo和标题 -->
     <div class="content-wrapper">
@@ -109,7 +111,19 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
     align-items: center;
     text-decoration: none;
     position: relative;
-    z-index: 10;
+    z-index: 20;
+    max-width: min(720px, calc(100vw - 2rem));
+    padding: 2rem 1.5rem;
+    box-sizing: border-box;
+  }
+
+  .hero-veil {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 42%, rgba(5, 10, 24, 0.46) 0%, rgba(5, 10, 24, 0.26) 24%, rgba(5, 10, 24, 0.1) 44%, rgba(5, 10, 24, 0) 68%);
   }
 
   /* 火箭容器 */
@@ -195,6 +209,11 @@ const subtitle = 'Ship your Second Brain into the Cyber-Space';
   }
 
   @media (max-width: 768px) {
+    .hero-veil {
+      background:
+        radial-gradient(circle at 50% 44%, rgba(5, 10, 24, 0.4) 0%, rgba(5, 10, 24, 0.22) 30%, rgba(5, 10, 24, 0.08) 52%, rgba(5, 10, 24, 0) 74%);
+    }
+
     .logo-img {
       width: 130px;
     }

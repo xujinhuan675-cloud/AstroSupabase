@@ -39,31 +39,52 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
 <nav class="main-nav">
   <div class="nav-container">
     <!-- Logo / 标题 -->
-    <a href="/" class="nav-logo">
+    <a href="/" class="nav-logo" aria-label="Openeducation 首页">
       Openeducation
     </a>
 
     <!-- 桌面端导航链接 -->
     <div class="nav-links desktop-nav">
-      <a href="/" class:list={['nav-link', { active: isActive('/') && currentPath === '/' }]}>
+      <a
+        href="/"
+        class:list={['nav-link', { active: isActive('/') && currentPath === '/' }]}
+        aria-current={isActive('/') && currentPath === '/' ? 'page' : undefined}
+      >
         首页
       </a>
 
-      <a href="/blog" class:list={['nav-link', { active: currentPath.startsWith('/blog') }]}>
+      <a
+        href="/blog"
+        class:list={['nav-link', { active: currentPath.startsWith('/blog') }]}
+        aria-current={currentPath.startsWith('/blog') ? 'page' : undefined}
+      >
         文章
       </a>
-
-      <a href="/articles" class:list={['nav-link', { active: isActive('/articles') }]}>
+      <a
+        href="/articles"
+        class:list={['nav-link', { active: isActive('/articles') }]}
+        aria-current={isActive('/articles') ? 'page' : undefined}
+      >
         所有文章
       </a>
 
       <!-- 学科分类下拉菜单 -->
       <div class="nav-dropdown">
-        <button class:list={['nav-link', 'dropdown-toggle', { active: isActive('/categories') }]}>
+        <button
+          type="button"
+          class:list={['nav-link', 'dropdown-toggle', { active: isActive('/categories') }]}
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="desktop-categories-menu"
+        >
           学科分类 <span class="arrow">▼</span>
         </button>
-        <div class="dropdown-menu">
-          <a href="/categories" class="dropdown-item all-categories">
+        <div class="dropdown-menu" id="desktop-categories-menu">
+          <a
+            href="/categories"
+            class="dropdown-item all-categories"
+            aria-current={currentPath === '/categories' ? 'page' : undefined}
+          >
             查看所有分类
           </a>
           <div class="dropdown-divider"></div>
@@ -76,7 +97,11 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
         </div>
       </div>
 
-      <a href="/tags" class:list={['nav-link', { active: isActive('/tags') }]}>
+      <a
+        href="/tags"
+        class:list={['nav-link', { active: isActive('/tags') }]}
+        aria-current={isActive('/tags') ? 'page' : undefined}
+      >
         标签
       </a>
       
@@ -100,7 +125,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     <div class="mobile-nav-actions">
       <!-- 目录按钮 - 仅在文章详情页显示 -->
       {isArticlePage && (
-        <button class="mobile-toc-toggle" aria-label="目录" aria-expanded="false">
+        <button type="button" class="mobile-toc-toggle" aria-label="目录" aria-expanded="false">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="4" y1="6" x2="14" y2="6"></line>
             <line x1="4" y1="10" x2="20" y2="10"></line>
@@ -111,7 +136,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       )}
       
       <!-- 移动端菜单按钮 - 指南针图标 -->
-      <button class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
+      <button type="button" class="mobile-menu-toggle" aria-label="切换菜单" aria-expanded="false">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"></circle>
           <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" stroke="none"></polygon>
@@ -162,13 +187,18 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       
       <!-- 移动端搜索框 -->
       <div class="mobile-search">
-        <Search client:idle enablePreview={true} />
+        <Search
+          client:idle
+          enablePreview={true}
+          enableGlobalShortcut={false}
+          showShortcutHint={false}
+        />
       </div>
 
       <!-- 移动端文章浏览（仅文章详情页展示） -->
       {isArticlePage && (
         <div class="mobile-dropdown mobile-menu-explorer">
-          <button class="mobile-nav-link mobile-dropdown-toggle mobile-explorer-toggle">
+          <button type="button" class="mobile-nav-link mobile-dropdown-toggle mobile-explorer-toggle">
             文章浏览 <span class="mobile-arrow">▼</span>
           </button>
           <div class="mobile-dropdown-menu mobile-explorer-menu">
@@ -198,7 +228,10 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
 
         <!-- 移动端学科分类 -->
         <div class="mobile-dropdown">
-          <button class:list={['mobile-nav-link', 'mobile-dropdown-toggle', { active: isActive('/categories') }]}>
+          <button
+            type="button"
+            class:list={['mobile-nav-link', 'mobile-dropdown-toggle', { active: isActive('/categories') }]}
+          >
             学科分类 <span class="mobile-arrow">▼</span>
           </button>
           <div class="mobile-dropdown-menu">
@@ -288,6 +321,11 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     background: var(--highlight);
   }
 
+  .nav-link:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+    outline-offset: 2px;
+  }
+
   .nav-link.active {
     color: var(--secondary);
     background: var(--highlight);
@@ -309,7 +347,9 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     transition: transform 0.2s ease;
   }
 
-  .nav-dropdown:hover .arrow {
+  .nav-dropdown:hover .arrow,
+  .nav-dropdown:focus-within .arrow,
+  .nav-dropdown.open .arrow {
     transform: rotate(-180deg);
   }
 
@@ -329,7 +369,9 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     padding: 0.5rem 0;
   }
 
-  .nav-dropdown:hover .dropdown-menu {
+  .nav-dropdown:hover .dropdown-menu,
+  .nav-dropdown:focus-within .dropdown-menu,
+  .nav-dropdown.open .dropdown-menu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -345,6 +387,13 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   }
 
   .dropdown-item:hover {
+    background: var(--highlight);
+    color: var(--dark);
+  }
+
+  .dropdown-item:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+    outline-offset: -2px;
     background: var(--highlight);
     color: var(--dark);
   }
@@ -779,6 +828,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   const mobileMenu = document.querySelector('.mobile-menu');
   const mobileDropdowns = document.querySelectorAll('.mobile-dropdown');
   const mobileNavLinks = document.querySelectorAll('.mobile-nav-link:not(.mobile-dropdown-toggle)');
+  const desktopDropdowns = document.querySelectorAll('.nav-dropdown');
 
   // 在部分移动端浏览器中，若祖先元素存在 backdrop-filter/filter/transform 等，
   // position: fixed 的覆盖层可能会变成相对定位或被裁剪。
@@ -834,6 +884,79 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     tocPanel?.setAttribute('aria-hidden', 'true');
   }
 
+  function closeDesktopDropdowns() {
+    desktopDropdowns.forEach((dropdown) => {
+      dropdown.classList.remove('open');
+      const toggle = dropdown.querySelector('.dropdown-toggle');
+      toggle?.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  desktopDropdowns.forEach((dropdown) => {
+    const toggle = dropdown.querySelector('.dropdown-toggle');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', (e) => {
+      if (window.innerWidth <= 767) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const wasOpen = dropdown.classList.contains('open');
+      closeDesktopDropdowns();
+
+      if (!wasOpen) {
+        dropdown.classList.add('open');
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    toggle.addEventListener('keydown', (e) => {
+      if (window.innerWidth <= 767) return;
+
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        closeDesktopDropdowns();
+        dropdown.classList.add('open');
+        toggle.setAttribute('aria-expanded', 'true');
+
+        const firstItem = menu.querySelector('.dropdown-item');
+        if (firstItem instanceof HTMLElement) {
+          firstItem.focus();
+        }
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDesktopDropdowns();
+        if (toggle instanceof HTMLElement) {
+          toggle.focus();
+        }
+      }
+    });
+
+    menu.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeDesktopDropdowns();
+        if (toggle instanceof HTMLElement) {
+          toggle.focus();
+        }
+      }
+    });
+
+    dropdown.addEventListener('focusout', (e) => {
+      if (window.innerWidth <= 767) return;
+      const nextTarget = e.relatedTarget;
+      if (!(nextTarget instanceof Node) || !dropdown.contains(nextTarget)) {
+        dropdown.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  });
+
 
   // 点击汉堡按钮
   menuToggle?.addEventListener('click', toggleMenu);
@@ -863,6 +986,24 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
     const clickedToggle = !!tocToggle?.contains(target);
     if (!clickedInsidePanel && !clickedToggle) {
       closeToc();
+    }
+  });
+
+  // 点击桌面端下拉菜单外区域时关闭下拉
+  document.addEventListener('click', (e) => {
+    if (window.innerWidth <= 767) return;
+    const target = e.target;
+    if (!(target instanceof Node)) return;
+
+    let clickedInsideDropdown = false;
+    desktopDropdowns.forEach((dropdown) => {
+      if (dropdown.contains(target)) {
+        clickedInsideDropdown = true;
+      }
+    });
+
+    if (!clickedInsideDropdown) {
+      closeDesktopDropdowns();
     }
   });
 
@@ -906,6 +1047,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       if (tocPanel?.classList.contains('active')) {
         closeToc();
       }
+      closeDesktopDropdowns();
     }
   });
 
@@ -918,6 +1060,8 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       if (tocPanel?.classList.contains('active')) {
         closeToc();
       }
+    } else {
+      closeDesktopDropdowns();
     }
   });
 

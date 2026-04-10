@@ -1,0 +1,47 @@
+---
+interface Props {
+  message: string;
+  actionHref: string;
+  actionLabel: string;
+}
+
+const { message, actionHref, actionLabel } = Astro.props as Props;
+---
+
+<div class="collection-empty-state">
+  <p>{message}</p>
+  <a href={actionHref} class="collection-empty-cta">{actionLabel}</a>
+</div>
+
+<style>
+  .collection-empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+
+  .collection-empty-state p {
+    font-size: 1.25rem;
+    color: var(--gray);
+    margin-bottom: 2rem;
+  }
+
+  .collection-empty-cta {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: var(--secondary);
+    color: white;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.2s ease;
+  }
+
+  .collection-empty-cta:hover {
+    opacity: 0.9;
+  }
+
+  .collection-empty-cta:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+    outline-offset: 2px;
+  }
+</style>

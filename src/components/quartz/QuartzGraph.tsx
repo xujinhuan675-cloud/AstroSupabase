@@ -51,15 +51,16 @@ export default function QuartzGraph({
     if (typeof window === 'undefined') return;
 
     const slug = currentSlug || '';
-    if (!slug) return;
     if (!globalOuterRef.current) return;
     if (!globalContainerRef.current) return;
 
     globalOuterRef.current.classList.add('active');
-    const sidebar = globalOuterRef.current.closest('.sidebar') as HTMLElement | null;
-    if (sidebar) sidebar.style.zIndex = '1';
 
-    const globalConfig = { ...defaultGlobalGraph, ...globalGraph };
+    const globalConfig = {
+      ...defaultGlobalGraph,
+      ...globalGraph,
+      autoCenterCurrentNode: false,
+    };
     globalContainerRef.current.setAttribute('data-cfg', JSON.stringify(globalConfig));
 
     globalCleanupRef.current?.();
@@ -77,8 +78,6 @@ export default function QuartzGraph({
   const closeGlobalGraph = useCallback(() => {
     if (!globalOuterRef.current) return;
     globalOuterRef.current.classList.remove('active');
-    const sidebar = globalOuterRef.current.closest('.sidebar') as HTMLElement | null;
-    if (sidebar) sidebar.style.zIndex = '';
     globalCleanupRef.current?.();
     globalCleanupRef.current = null;
   }, []);
@@ -113,54 +112,69 @@ export default function QuartzGraph({
     }
 
     // 初始化全局图谱容器（如果存在）
-    if (globalContainerRef.current && globalGraph) {
+    if (globalContainerRef.current) {
       const globalConfig = { ...defaultGlobalGraph, ...globalGraph };
       globalContainerRef.current.setAttribute('data-cfg', JSON.stringify(globalConfig));
+
+      if (isGlobal) {
+        initGraph(globalContainerRef.current, slug)
+          .then(cleanup => {
+            if (cleanup) globalCleanupRef.current = cleanup;
+          })
+          .catch(err => {
+            console.error('Failed to initialize global graph:', err);
+          });
+      }
     }
 
-    // 隐藏全局图谱的处理
-    hideGlobalGraphRef.current = closeGlobalGraph;
+    // 仅在弹窗模式下绑定关闭与快捷键逻辑
+    if (!isGlobal) {
+      // 隐藏全局图谱的处理
+      hideGlobalGraphRef.current = closeGlobalGraph;
 
-    // 点击背景关闭全局图谱
-    if (globalOuterRef.current) {
-      const handleBackgroundClick = (e: MouseEvent) => {
-        if (e.target === globalOuterRef.current) {
+      // 点击背景关闭全局图谱
+      if (globalOuterRef.current) {
+        const handleBackgroundClick = (e: MouseEvent) => {
+          if (e.target === globalOuterRef.current) {
+            closeGlobalGraph();
+          }
+        };
+        globalOuterRef.current.addEventListener('click', handleBackgroundClick);
+        listenersCleanupRef.current.push(() => {
+          globalOuterRef.current?.removeEventListener('click', handleBackgroundClick);
+        });
+      }
+
+      // ESC 键关闭全局图谱
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' && globalOuterRef.current?.classList.contains('active')) {
           closeGlobalGraph();
         }
       };
-      globalOuterRef.current.addEventListener('click', handleBackgroundClick);
-      listenersCleanupRef.current.push(() => {
-        globalOuterRef.current?.removeEventListener('click', handleBackgroundClick);
-      });
-    }
 
-    // ESC 键关闭全局图谱
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && globalOuterRef.current?.classList.contains('active')) {
-        closeGlobalGraph();
-      }
-    };
+      document.addEventListener('keydown', handleKeyDown);
+      listenersCleanupRef.current.push(() => document.removeEventListener('keydown', handleKeyDown));
 
-    document.addEventListener('keydown', handleKeyDown);
-    listenersCleanupRef.current.push(() => document.removeEventListener('keydown', handleKeyDown));
-
-    // Ctrl+G 快捷键切换全局图谱
-    const handleGlobalGraphShortcut = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'g' && !e.shiftKey) {
-        e.preventDefault();
-        if (globalOuterRef.current) {
-          const isActive = globalOuterRef.current.classList.contains('active');
-          if (isActive) {
-            closeGlobalGraph();
-          } else {
-            openGlobalGraph();
+      // Ctrl+G 快捷键切换全局图谱
+      const handleGlobalGraphShortcut = (e: KeyboardEvent) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'g' && !e.shiftKey) {
+          e.preventDefault();
+          if (globalOuterRef.current) {
+            const isActive = globalOuterRef.current.classList.contains('active');
+            if (isActive) {
+              closeGlobalGraph();
+            } else {
+              openGlobalGraph();
+            }
           }
         }
-      }
-    };
+      };
 
-    document.addEventListener('keydown', handleGlobalGraphShortcut);
-    listenersCleanupRef.current.push(() => document.removeEventListener('keydown', handleGlobalGraphShortcut));
+      document.addEventListener('keydown', handleGlobalGraphShortcut);
+      listenersCleanupRef.current.push(() => document.removeEventListener('keydown', handleGlobalGraphShortcut));
+    } else {
+      hideGlobalGraphRef.current = null;
+    }
 
     return () => {
       localCleanupRef.current?.();
@@ -177,6 +191,21 @@ export default function QuartzGraph({
     if (typeof window === 'undefined') return;
 
     const handleThemeChange = () => {
+      if (isGlobal && globalContainerRef.current) {
+        const globalConfig = { ...defaultGlobalGraph, ...globalGraph };
+        globalContainerRef.current.setAttribute('data-cfg', JSON.stringify(globalConfig));
+        
+        initGraph(globalContainerRef.current, currentSlug || '')
+          .then(cleanup => {
+            globalCleanupRef.current?.();
+            globalCleanupRef.current = null;
+            if (cleanup) globalCleanupRef.current = cleanup;
+          })
+          .catch(err => {
+            console.error('Failed to reinitialize global graph on theme change:', err);
+          });
+        return;
+      }
       // 重新初始化图谱以应用新主题
       if (localContainerRef.current && currentSlug) {
         const localConfig = { ...defaultLocalGraph, ...localGraph };
@@ -201,13 +230,13 @@ export default function QuartzGraph({
     return () => {
       mediaQuery.removeEventListener('change', handleThemeChange);
     };
-  }, [currentSlug, localGraph]);
+  }, [currentSlug, localGraph, globalGraph, isGlobal]);
 
   if (isGlobal) {
     return (
-      <div className="graph global-graph-only">
+      <div className="graph global-graph-only active">
         {showTitle && <h3>{title}</h3>}
-        <div className="global-graph-outer" ref={globalOuterRef}>
+        <div className="global-graph-outer active" ref={globalOuterRef}>
           <div 
             className="global-graph-container" 
             ref={globalContainerRef}
@@ -217,6 +246,22 @@ export default function QuartzGraph({
       </div>
     );
   }
+
+  const globalGraphOverlay = (
+    <div className="global-graph-outer" ref={globalOuterRef}>
+      <button
+        className="global-graph-close"
+        onClick={() => hideGlobalGraphRef.current?.()}
+        aria-label="鍏抽棴鍥捐氨"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <div className="global-graph-container" ref={globalContainerRef} />
+    </div>
+  );
 
   return (
     <div className="graph">

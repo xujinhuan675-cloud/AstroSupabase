@@ -1,0 +1,201 @@
+---
+interface QuickLinkItem {
+  href: string;
+  label: string;
+}
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  meta?: string;
+  icon?: string;
+  backHref?: string;
+  backLabel?: string;
+  quickLinks?: QuickLinkItem[];
+  quickLinksAriaLabel?: string;
+}
+
+const {
+  title,
+  subtitle,
+  meta,
+  icon,
+  backHref,
+  backLabel,
+  quickLinks = [],
+  quickLinksAriaLabel = '相关入口',
+} = Astro.props as Props;
+---
+
+<main class="collection-main">
+  <div class="collection-container">
+    {backHref && backLabel && (
+      <nav class="collection-back-nav">
+        <a href={backHref} class="back-link">
+          ← {backLabel}
+        </a>
+      </nav>
+    )}
+
+    <header class="collection-header">
+      <div class="collection-title-row">
+        {icon && (
+          <span class="collection-icon" aria-hidden="true">{icon}</span>
+        )}
+        <h1 class="collection-title">{title}</h1>
+      </div>
+
+      {subtitle && <p class="collection-subtitle">{subtitle}</p>}
+      {meta && <p class="collection-meta">{meta}</p>}
+    </header>
+
+    {quickLinks.length > 0 && (
+      <nav class="collection-quick-links" aria-label={quickLinksAriaLabel}>
+        {quickLinks.map((link) => (
+          <a href={link.href} class="quick-link">{link.label}</a>
+        ))}
+      </nav>
+    )}
+
+    <slot />
+  </div>
+</main>
+
+<style>
+  .collection-main {
+    min-height: 100vh;
+    padding: 3rem 0;
+  }
+
+  .collection-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .collection-back-nav {
+    margin-bottom: 1.25rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--secondary);
+    text-decoration: none;
+    font-weight: 500;
+    min-height: 44px;
+  }
+
+  .back-link:hover {
+    text-decoration: underline;
+  }
+
+  .back-link:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  .collection-header {
+    margin-bottom: 1rem;
+  }
+
+  .collection-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.625rem;
+  }
+
+  .collection-icon {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .collection-title {
+    margin: 0;
+    color: var(--dark);
+    font-size: 2.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .collection-subtitle {
+    margin: 0;
+    color: var(--gray);
+    font-size: 1rem;
+  }
+
+  .collection-meta {
+    margin: 0.35rem 0 0;
+    color: var(--darkgray);
+    font-size: 0.92rem;
+  }
+
+  .collection-quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0 1.25rem;
+  }
+
+  .quick-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--lightgray);
+    border-radius: 9999px;
+    text-decoration: none;
+    color: var(--darkgray);
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  }
+
+  .quick-link:hover {
+    border-color: var(--secondary);
+    color: var(--secondary);
+    background: var(--highlight);
+  }
+
+  .quick-link:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  :global(.collection-articles-section) {
+    margin-top: 0.25rem;
+  }
+
+  :global(.collection-articles-grid) {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 1023px) {
+    :global(.collection-articles-grid) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .collection-main {
+      padding: 1.5rem 0;
+    }
+
+    .collection-container {
+      padding: 0 1rem;
+    }
+
+    .collection-title {
+      font-size: 1.75rem;
+    }
+
+    :global(.collection-articles-grid) {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+</style>

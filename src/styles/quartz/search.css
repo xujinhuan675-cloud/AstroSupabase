@@ -45,6 +45,11 @@
   border-color: var(--secondary);
 }
 
+.search>.search-box-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+  outline-offset: 2px;
+}
+
 .search-box-button>svg {
   cursor: pointer;
   width: 18px;
@@ -65,9 +70,25 @@
   text-align: left;
 }
 
+.search-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 0.375rem;
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--gray);
+  background: color-mix(in srgb, var(--lightgray) 20%, transparent);
+  white-space: nowrap;
+}
+
 .search-container {
   position: fixed;
-  z-index: 10000;
+  z-index: 20000;
   left: 0;
   top: 0;
   width: 100vw;
@@ -178,6 +199,17 @@
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
 }
 
+.search-result-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--secondary) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.search-result-item.is-selected {
+  background: var(--card-purple);
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--secondary) 16%, transparent);
+}
+
 .search-result-item h3 {
   margin: 0 0 0.5rem 0;
   color: var(--dark);
@@ -210,6 +242,10 @@
   background: color-mix(in srgb, var(--secondary) 28%, transparent);
 }
 
+.search-result-item.is-selected .search-highlight {
+  background: color-mix(in srgb, var(--secondary) 32%, transparent);
+}
+
 .search-loading,
 .search-no-results {
   text-align: center;
@@ -234,6 +270,10 @@
 
   .search {
     min-width: auto;
+  }
+
+  .search-shortcut {
+    display: none;
   }
 }
 

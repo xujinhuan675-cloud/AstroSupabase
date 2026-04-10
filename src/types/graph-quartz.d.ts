@@ -58,6 +58,13 @@ export interface D3Config {
   
   /** 是否显示标签节点 */
   showTags: boolean;
+
+  /** 是否在桌面端默认显示所有节点标签 */
+  showLabelsOnDesktop?: boolean;
+  labelDisplayMode?: 'hover' | 'priority' | 'all';
+  defaultVisibleLabelCount?: number;
+  defaultLinkOpacity?: number;
+  autoCenterCurrentNode?: boolean;
   
   /** 悬停时聚焦（淡出非相关节点） */
   focusOnHover?: boolean;

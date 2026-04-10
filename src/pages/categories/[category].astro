@@ -1,38 +1,36 @@
 ---
 /**
  * 学科分类文章列表页 - 静态生成版本
- * 
+ *
  * 优化策略：
  * 1. 所有数据在构建时通过 getStaticPaths() 获取
  * 2. 运行时零数据库查询
+ * 3. 与标签/文章列表页统一集合页结构
  */
-// 强制静态预渲染（有 getStaticPaths 时自动启用，但显式声明更清晰）
 export const prerender = true;
 
 import Layout from '../../layout/Layout.astro';
 import MainNav from '../../components/MainNav.astro';
 import { getArticles } from '../../lib/articles';
 import ArticleCard from '../../components/ArticleCard.astro';
-import { getCategoryInfo, isValidCategory, getAllCategories, type CategoryInfo } from '../../lib/categories';
+import { getCategoryInfo, getAllCategories, type CategoryInfo } from '../../lib/categories';
+import CollectionPageShell from '../../components/CollectionPageShell.astro';
+import CollectionEmptyState from '../../components/CollectionEmptyState.astro';
 import type { Article } from '../../db/schema';
 
-// 定义 props 类型
 interface CategoryPageProps {
   currentCategory: CategoryInfo;
   articles: Article[];
 }
 
-// 构建时获取所有分类及其文章，生成静态路径
 export async function getStaticPaths() {
   console.log('[BUILD] Starting static path generation for categories...');
-  
+
   const categories = getAllCategories();
-  
-  // 为每个分类获取文章列表
   const paths = await Promise.all(categories.map(async (category) => {
     const categoryInfo = getCategoryInfo(category);
     const categoryArticles = await getArticles(undefined, category);
-    
+
     return {
       params: { category },
       props: {
@@ -41,135 +39,46 @@ export async function getStaticPaths() {
       } as CategoryPageProps,
     };
   }));
-  
+
   console.log(`[BUILD] Category static paths generated for ${categories.length} categories`);
   return paths;
 }
 
-// 从 props 获取所有数据（构建时已准备好，运行时零查询）
 const { currentCategory, articles } = Astro.props as CategoryPageProps;
 ---
 
-<Layout title={`${currentCategory.name} - 学科分类`}>
-  <!-- 主导航栏 -->
+<Layout
+  title={`${currentCategory.name} - 学科分类 - Openeducation`}
+  description={`${currentCategory.name}：${currentCategory.description}，共 ${articles.length} 篇文章`}
+>
   <MainNav />
-  
-  <main class="min-h-screen py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- 分类标题 -->
-      <div class="mb-12">
-        <a href="/categories" class="back-link">
-          ← 返回所有分类
-        </a>
-        
-        <div class="category-header">
-          <div class="category-icon-large">{currentCategory.icon}</div>
-          <div>
-            <h1 class="category-title">{currentCategory.name}</h1>
-            <p class="category-description">{currentCategory.description}</p>
-            <p class="article-count">{articles.length} 篇文章</p>
-          </div>
-        </div>
-      </div>
 
-      <!-- 文章网格 -->
-      {articles.length > 0 ? (
-        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {articles.map(article => (
+  <CollectionPageShell
+    backHref="/categories"
+    backLabel="返回学科分类"
+    icon={currentCategory.icon}
+    title={currentCategory.name}
+    subtitle={currentCategory.description}
+    meta={`共 ${articles.length} 篇文章`}
+    quickLinks={[
+      { href: '/articles', label: '全部文章' },
+      { href: '/tags', label: '标签' },
+    ]}
+  >
+    {articles.length > 0 ? (
+      <section class="collection-articles-section" aria-label={`${currentCategory.name} 分类下的文章列表`}>
+        <div class="collection-articles-grid">
+          {articles.map((article) => (
             <ArticleCard article={article} />
           ))}
         </div>
-      ) : (
-        <div class="empty-state">
-          <p>该分类暂无文章</p>
-          <a href="/blog" class="btn-primary">浏览所有文章</a>
-        </div>
-      )}
-    </div>
-  </main>
+      </section>
+    ) : (
+      <CollectionEmptyState
+        message="该分类暂无文章"
+        actionHref="/blog"
+        actionLabel="浏览所有文章"
+      />
+    )}
+  </CollectionPageShell>
 </Layout>
-
-<style>
-  .back-link {
-    display: inline-block;
-    color: var(--secondary);
-    text-decoration: none;
-    margin-bottom: 2rem;
-    font-weight: 500;
-  }
-
-  .back-link:hover {
-    text-decoration: underline;
-  }
-
-  .category-header {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    margin-bottom: 2rem;
-  }
-
-  .category-icon-large {
-    font-size: 5rem;
-  }
-
-  .category-title {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--dark);
-    margin-bottom: 0.5rem;
-  }
-
-  .category-description {
-    font-size: 1.25rem;
-    color: var(--gray);
-    margin-bottom: 0.5rem;
-  }
-
-  .article-count {
-    font-size: 1rem;
-    color: var(--darkgray);
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-  }
-
-  .empty-state p {
-    font-size: 1.25rem;
-    color: var(--gray);
-    margin-bottom: 2rem;
-  }
-
-  .btn-primary {
-    display: inline-block;
-    padding: 0.75rem 2rem;
-    background: var(--secondary);
-    color: white;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    font-weight: 500;
-    transition: opacity 0.3s ease;
-  }
-
-  .btn-primary:hover {
-    opacity: 0.9;
-  }
-
-  @media (max-width: 768px) {
-    .category-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .category-icon-large {
-      font-size: 3rem;
-    }
-
-    .category-title {
-      font-size: 2rem;
-    }
-  }
-</style>
-

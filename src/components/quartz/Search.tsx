@@ -1,9 +1,9 @@
 /**
  * Search 组件
  * 从 Quartz 迁移并适配 AstroSupabase
- * 
+ *
  * 功能：全文搜索
- * 
+ *
  * 性能优化：
  * 1. 防抖处理（300ms）
  * 2. 搜索结果缓存
@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import '../../styles/quartz/search.css';
 
 interface SearchResult {
@@ -22,16 +23,29 @@ interface SearchResult {
 
 interface SearchProps {
   enablePreview?: boolean;
+  enableGlobalShortcut?: boolean;
+  showShortcutHint?: boolean;
 }
 
-export default function Search({ enablePreview = true }: SearchProps) {
+export default function Search({
+  enablePreview = true,
+  enableGlobalShortcut = true,
+  showShortcutHint = true,
+}: SearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isSearching, setIsSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const shortcutLabel =
+    typeof navigator !== 'undefined' && /mac|iphone|ipad|ipod/i.test(navigator.platform)
+      ? '⌘K'
+      : 'Ctrl K';
 
   const highlightText = useCallback((text: string, query: string): React.ReactNode => {
     const q = query.trim();
@@ -65,21 +79,40 @@ export default function Search({ enablePreview = true }: SearchProps) {
   }, []);
 
   // 搜索函数（简化版）
-  const performSearch = useCallback(async (query: string) => {
+  const performSearch = useCallback(async (query: string, signal?: AbortSignal) => {
     const normalizedQuery = query.trim();
     if (!normalizedQuery) return [];
 
-    const response = await fetch(`/api/search?q=${encodeURIComponent(normalizedQuery)}`);
+    const response = await fetch(`/api/search?q=${encodeURIComponent(normalizedQuery)}`, { signal });
     if (!response.ok) {
       throw new Error('Search failed');
     }
 
-    return await response.json();
+    return await response.json() as SearchResult[];
   }, []);
+
+  const handleCloseSearch = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedIndex(-1);
+    setIsSearching(false);
+  }, []);
+
+  const navigateToResult = useCallback((result: SearchResult) => {
+    handleCloseSearch();
+    window.location.href = `/articles/${result.id}`;
+  }, [handleCloseSearch]);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
       setSearchResults([]);
+      setSelectedIndex(-1);
       return;
     }
 
@@ -87,33 +120,34 @@ export default function Search({ enablePreview = true }: SearchProps) {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    abortControllerRef.current = new AbortController();
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setIsSearching(true);
 
     // 防抖处理（300ms）
     const debounceTimer = setTimeout(async () => {
       try {
-        const results = await performSearch(searchQuery);
+        const results = await performSearch(searchQuery, controller.signal);
         setSearchResults(results);
+        setSelectedIndex(results.length > 0 ? 0 : -1);
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           console.error('搜索失败:', error);
         }
       } finally {
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
         setIsSearching(false);
       }
     }, 300);
 
     return () => {
       clearTimeout(debounceTimer);
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
+      controller.abort();
     };
   }, [searchQuery, performSearch]);
-
-
 
   // 点击外部区域关闭搜索弹窗（不包括搜索框按钮本身）
   useEffect(() => {
@@ -133,7 +167,7 @@ export default function Search({ enablePreview = true }: SearchProps) {
       }
 
       // 点击外部区域，关闭弹窗
-      setShowSearch(false);
+      handleCloseSearch();
     };
 
     if (showSearch) {
@@ -154,17 +188,63 @@ export default function Search({ enablePreview = true }: SearchProps) {
         document.documentElement.style.overflow = '';
       }
     };
+  }, [showSearch, handleCloseSearch]);
+
+  // 全局快捷键：Cmd/Ctrl + K 打开搜索，ESC 关闭搜索
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      const isOpenSearchShortcut =
+        enableGlobalShortcut &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === 'k';
+
+      if (isOpenSearchShortcut) {
+        const isVisibleInstance = !!searchButtonRef.current && searchButtonRef.current.offsetParent !== null;
+        if (!isVisibleInstance) {
+          return;
+        }
+
+        event.preventDefault();
+        setShowSearch(true);
+        return;
+      }
+
+      if (event.key === 'Escape' && showSearch) {
+        event.preventDefault();
+        handleCloseSearch();
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [showSearch, handleCloseSearch, enableGlobalShortcut]);
+
+  // 打开弹窗后聚焦输入框
+  useEffect(() => {
+    if (!showSearch) return;
+
+    const rafId = window.requestAnimationFrame(() => {
+      searchInputRef.current?.focus();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(rafId);
+    };
   }, [showSearch]);
 
-  const handleCloseSearch = () => {
-    setShowSearch(false);
-    setSearchQuery('');
-    setSearchResults([]);
-  };
+  // 键盘选择项变化时，保持选中项可见
+  useEffect(() => {
+    if (!showSearch || selectedIndex < 0 || !searchContainerRef.current) return;
+
+    const selectedEl = searchContainerRef.current.querySelector<HTMLElement>(
+      `[data-search-index="${selectedIndex}"]`
+    );
+    selectedEl?.scrollIntoView({ block: 'nearest' });
+  }, [showSearch, selectedIndex]);
 
   const handleSearchButtonClick = (e: React.MouseEvent) => {
-    // 如果弹窗已打开，点击搜索按钮不关闭，保持打开状态
-    // 如果弹窗未打开，点击搜索按钮打开弹窗
     if (!showSearch) {
       setShowSearch(true);
     }
@@ -177,9 +257,116 @@ export default function Search({ enablePreview = true }: SearchProps) {
     if (e.target === e.currentTarget) {
       e.preventDefault();
       e.stopPropagation();
-      setShowSearch(false);
+      handleCloseSearch();
     }
   };
+
+  const handleSearchInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      handleCloseSearch();
+      return;
+    }
+
+    if (searchResults.length === 0) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setSelectedIndex((prev) => {
+        if (prev < 0) return 0;
+        return (prev + 1) % searchResults.length;
+      });
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setSelectedIndex((prev) => {
+        if (prev < 0) return searchResults.length - 1;
+        return (prev - 1 + searchResults.length) % searchResults.length;
+      });
+      return;
+    }
+
+    if (event.key === 'Enter' && selectedIndex >= 0) {
+      event.preventDefault();
+      const selected = searchResults[selectedIndex];
+      if (selected) {
+        navigateToResult(selected);
+      }
+    }
+  };
+
+  const searchOverlay = showSearch ? (
+    <div
+      className="search-container"
+      ref={searchContainerRef}
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-label="搜索面板"
+    >
+      <div className="search-space">
+        <div className="search-bar-wrapper">
+          <input
+            ref={searchInputRef}
+            autoComplete="off"
+            className="search-bar"
+            name="search"
+            type="text"
+            aria-label="搜索文章"
+            placeholder="搜索文章..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchInputKeyDown}
+            autoFocus
+          />
+          <button
+            className="search-close-button"
+            onClick={handleCloseSearch}
+            aria-label="关闭搜索"
+            title="关闭搜索"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div className={`search-layout ${enablePreview ? 'preview-enabled' : ''}`}>
+          {isSearching && <div className="search-loading">搜索中...</div>}
+
+          {!isSearching && searchResults.length > 0 && (
+            <div className="search-results">
+              {searchResults.map((result, index) => (
+                <a
+                  key={result.id}
+                  href={`/articles/${result.id}`}
+                  className={`search-result-item ${selectedIndex === index ? 'is-selected' : ''}`}
+                  data-search-index={index}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    navigateToResult(result);
+                  }}
+                >
+                  <h3>{highlightText(result.title, searchQuery)}</h3>
+                  {enablePreview && result.excerpt ? (
+                    <p className="search-excerpt">{highlightText(result.excerpt, searchQuery)}</p>
+                  ) : null}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {!isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
+            <div className="search-no-results">未找到匹配的文章</div>
+          )}
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="search">
@@ -197,69 +384,11 @@ export default function Search({ enablePreview = true }: SearchProps) {
           </g>
         </svg>
         <span className="search-text">搜索</span>
+        {showShortcutHint && enableGlobalShortcut ? (
+          <span className="search-shortcut" aria-hidden="true">{shortcutLabel}</span>
+        ) : null}
       </button>
-
-      {showSearch && (
-        <div
-          className="search-container"
-          ref={searchContainerRef}
-          onClick={handleOverlayClick}
-        >
-          <div className="search-space">
-            <div className="search-bar-wrapper">
-              <input
-                autoComplete="off"
-                className="search-bar"
-                name="search"
-                type="text"
-                aria-label="搜索文章"
-                placeholder="搜索文章..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-              />
-              <button
-                className="search-close-button"
-                onClick={handleCloseSearch}
-                aria-label="关闭搜索"
-                title="关闭搜索"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-
-            <div className={`search-layout ${enablePreview ? 'preview-enabled' : ''}`}>
-              {isSearching && <div className="search-loading">搜索中...</div>}
-
-              {!isSearching && searchResults.length > 0 && (
-                <div className="search-results">
-                  {searchResults.map((result) => (
-                    <a
-                      key={result.id}
-                      href={`/articles/${result.id}`}
-                      className="search-result-item"
-                      onClick={() => setShowSearch(false)}
-                    >
-                      <h3>{highlightText(result.title, searchQuery)}</h3>
-                      {enablePreview && result.excerpt ? (
-                        <p className="search-excerpt">{highlightText(result.excerpt, searchQuery)}</p>
-                      ) : null}
-                    </a>
-                  ))}
-                </div>
-              )}
-
-              {!isSearching && searchQuery.length >= 2 && searchResults.length === 0 && (
-                <div className="search-no-results">未找到匹配的文章</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {searchOverlay && (typeof document !== 'undefined' ? createPortal(searchOverlay, document.body) : searchOverlay)}
     </div>
   );
 }
-
