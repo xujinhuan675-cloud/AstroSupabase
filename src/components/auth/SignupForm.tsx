@@ -56,7 +56,7 @@ export default function SignupForm() {
         window.location.href = data.redirectTo;
       } else if (data.message) {
         alert(data.message);
-        window.location.href = '/login?message=check-email';
+        window.location.href = '/auth/login?message=check-email';
       } else {
         window.location.href = '/dashboard';
       }

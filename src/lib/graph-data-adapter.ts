@@ -4,7 +4,7 @@
  */
 
 import { getGraphData, getArticleTagsBatch } from './links-service';
-import type { GraphNode, GraphLink } from './links-service';
+import type { GraphNode } from './links-service';
 import { createModuleLogger } from './logger';
 
 const logger = createModuleLogger('GraphDataAdapter');

@@ -12,7 +12,7 @@
 
 import { db } from '../src/db/client.js';
 import { articles } from '../src/db/schema.js';
-import { eq, and, isNull, or, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { processMarkdown } from '../src/lib/markdown-processor.js';
 import { cpus } from 'os';
 
@@ -79,10 +79,6 @@ async function processSingleArticle(article: Article, retries = 2): Promise<Proc
             enableYouTubeEmbed: false,
             enableVideoEmbed: false,
           }
-        },
-        async (permalink: string) => {
-          // 简化：不验证链接（在导入时已验证）
-          return true;
         }
       );
 
@@ -263,7 +259,6 @@ async function main() {
     if (articlesToProcess.length === 0) {
       console.log('✅ All articles already have cached HTML');
       process.exit(0);
-      return;
     }
     
     console.log(`📝 Processing ${articlesToProcess.length} articles...\n`);

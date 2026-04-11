@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request }) => {
         JSON.stringify({ 
           success: true, 
           message: '请检查您的电子邮件以完成注册',
-          redirectTo: '/login?message=check-email'
+          redirectTo: '/auth/login?message=check-email'
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );

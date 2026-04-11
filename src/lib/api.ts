@@ -20,6 +20,58 @@ export interface ApiErrorResponse {
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
+export interface DashboardArticle extends Article {
+  tags?: string[];
+}
+
+export type ArticleMutationPayload = Omit<
+  Partial<Article>,
+  'createdAt' | 'updatedAt' | 'publishedAt' | 'category'
+> & {
+  tags?: string[];
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
+  publishedAt?: Date | string | null;
+  category?: Article['category'] | null;
+};
+
+export interface ParsedMarkdownArticlePayload {
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  authorId: string | null;
+  featuredImage: string | null;
+  status: 'draft' | 'published' | 'archived';
+  category: string | null;
+  tags: string[];
+  createdAt: string | null;
+  updatedAt: string | null;
+  publishedAt: string | null;
+  hasFrontmatter: boolean;
+}
+
+export interface MarkdownImportFilePayload {
+  name: string;
+  content: string;
+}
+
+export interface MarkdownImportResultItem {
+  fileName: string;
+  title?: string;
+  slug?: string;
+  status: 'imported' | 'skipped' | 'failed';
+  articleId?: number;
+  reason?: string;
+}
+
+export interface MarkdownImportSummary {
+  imported: number;
+  skipped: number;
+  failed: number;
+  results: MarkdownImportResultItem[];
+}
+
 /**
  * 类型守卫：检查是否为成功响应
  */
@@ -42,7 +94,7 @@ export function isErrorResponse<T>(
  * 获取所有文章列表
  * @returns 文章数组的 API 响应
  */
-export async function fetchArticles(): Promise<ApiResponse<Article[]>> {
+export async function fetchArticles(): Promise<ApiResponse<DashboardArticle[]>> {
   try {
     logger.info('[GET] Fetching articles from /api/articles');
     const response = await fetch('/api/articles');
@@ -89,7 +141,7 @@ export async function fetchArticles(): Promise<ApiResponse<Article[]>> {
  * @param article - 要保存的文章数据（部分字段）
  * @returns 保存后的文章数据
  */
-export async function saveArticle(article: Partial<Article>): Promise<ApiResponse<Article>> {
+export async function saveArticle(article: ArticleMutationPayload): Promise<ApiResponse<Article>> {
   try {
     logger.info('[POST] Saving article to /api/articles', article);
     const response = await fetch('/api/articles', {
@@ -186,7 +238,7 @@ export async function deleteArticle(id: number): Promise<ApiResponse<{ success: 
  * @param article - 要更新的文章数据（必须包含 id）
  * @returns 更新后的文章数据
  */
-export async function updateArticle(article: Partial<Article>): Promise<ApiResponse<Article>> {
+export async function updateArticle(article: ArticleMutationPayload): Promise<ApiResponse<Article>> {
   try {
     logger.info(`[PATCH] Updating article ID ${article.id}`);
     const response = await fetch(`/api/articles/${article.id}`, {
@@ -280,6 +332,99 @@ export async function fetchArticle(id: number): Promise<ApiResponse<Article>> {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch article',
+      code: 'NETWORK_ERROR',
+    };
+  }
+}
+
+export async function parseMarkdownArticle(
+  markdown: string,
+  filename?: string
+): Promise<ApiResponse<ParsedMarkdownArticlePayload>> {
+  try {
+    logger.info('[POST] Parsing markdown from /api/articles/parse-markdown');
+    const response = await fetch('/api/articles/parse-markdown', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ markdown, filename }),
+      credentials: 'same-origin',
+    });
+
+    logger.debug(`Response status: ${response.status}`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      logger.error(`Failed to parse markdown, status: ${response.status}`);
+      return {
+        success: false,
+        error: result.error || 'Failed to parse markdown',
+        code: result.code || 'PARSE_MARKDOWN_ERROR',
+      };
+    }
+
+    if (result.success && result.data) {
+      return { success: true, data: result.data };
+    }
+
+    return {
+      success: false,
+      error: 'Invalid response format',
+      code: 'INVALID_FORMAT',
+    };
+  } catch (error) {
+    logger.error('Error parsing markdown:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to parse markdown',
+      code: 'NETWORK_ERROR',
+    };
+  }
+}
+
+export async function importMarkdownArticles(
+  files: MarkdownImportFilePayload[]
+): Promise<ApiResponse<MarkdownImportSummary>> {
+  try {
+    logger.info('[POST] Importing markdown files to /api/articles/import', {
+      fileCount: files.length,
+    });
+    const response = await fetch('/api/articles/import', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ files }),
+      credentials: 'same-origin',
+    });
+
+    logger.debug(`Response status: ${response.status}`);
+    const result = await response.json();
+
+    if (!response.ok) {
+      logger.error(`Failed to import markdown files, status: ${response.status}`);
+      return {
+        success: false,
+        error: result.error || 'Failed to import markdown files',
+        code: result.code || 'IMPORT_MARKDOWN_ERROR',
+      };
+    }
+
+    if (result.success && result.data) {
+      return { success: true, data: result.data };
+    }
+
+    return {
+      success: false,
+      error: 'Invalid response format',
+      code: 'INVALID_FORMAT',
+    };
+  } catch (error) {
+    logger.error('Error importing markdown files:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to import markdown files',
       code: 'NETWORK_ERROR',
     };
   }

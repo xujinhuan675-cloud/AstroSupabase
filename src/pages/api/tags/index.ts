@@ -21,7 +21,7 @@ export const GET = createApiHandler(async () => {
     total: tags.length,
   };
 }, {
-  onError: (error, context) => {
+  onError: (error) => {
     logger.error('Error fetching tags:', error);
     return new Response(JSON.stringify({ 
       success: false,

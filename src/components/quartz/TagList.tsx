@@ -5,7 +5,6 @@
  * 功能：显示文章标签列表
  */
 
-import React from 'react';
 import '../../styles/quartz/taglist.css';
 
 interface TagListProps {

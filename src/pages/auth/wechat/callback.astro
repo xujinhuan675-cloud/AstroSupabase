@@ -3,7 +3,6 @@ export const prerender = false;
 import Layout from '../../../layout/Layout.astro';
 
 const accessToken = Astro.url.searchParams.get("access_token");
-const refreshToken = Astro.url.searchParams.get("refresh_token");
 const error = Astro.url.searchParams.get("error");
 
 if (error) {
@@ -37,6 +36,8 @@ if (!accessToken) {
     if (!accessToken || !refreshToken) {
       window.location.href = '/auth/login?error=' + encodeURIComponent('登录失败');
     } else {
+      const sessionAccessToken = accessToken;
+      const sessionRefreshToken = refreshToken;
       const supabase = createClient(
         import.meta.env.PUBLIC_SUPABASE_URL,
         import.meta.env.PUBLIC_SUPABASE_ANON_KEY
@@ -48,8 +49,8 @@ if (!accessToken) {
           
           // 设置 session
           const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
+            access_token: sessionAccessToken,
+            refresh_token: sessionRefreshToken
           });
 
           if (error) {

@@ -10,7 +10,8 @@
  * 3. 取消未完成的请求
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import '../../styles/quartz/search.css';
 
@@ -43,18 +44,18 @@ export default function Search({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const shortcutLabel =
-    typeof navigator !== 'undefined' && /mac|iphone|ipad|ipod/i.test(navigator.platform)
+    typeof navigator !== 'undefined' && /mac|iphone|ipad|ipod/i.test(navigator.userAgent)
       ? '⌘K'
       : 'Ctrl K';
 
-  const highlightText = useCallback((text: string, query: string): React.ReactNode => {
+  const highlightText = useCallback((text: string, query: string): ReactNode => {
     const q = query.trim();
     if (!q) return text;
 
     const lowerText = text.toLowerCase();
     const lowerQ = q.toLowerCase();
 
-    const parts: React.ReactNode[] = [];
+    const parts: ReactNode[] = [];
     let startIndex = 0;
     while (startIndex < text.length) {
       const index = lowerText.indexOf(lowerQ, startIndex);
@@ -244,7 +245,7 @@ export default function Search({
     selectedEl?.scrollIntoView({ block: 'nearest' });
   }, [showSearch, selectedIndex]);
 
-  const handleSearchButtonClick = (e: React.MouseEvent) => {
+  const handleSearchButtonClick = (e: ReactMouseEvent) => {
     if (!showSearch) {
       setShowSearch(true);
     }
@@ -252,7 +253,7 @@ export default function Search({
     e.stopPropagation();
   };
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
+  const handleOverlayClick = (e: ReactMouseEvent) => {
     // 只有点击蒙层本身（不是搜索框区域）时关闭弹窗
     if (e.target === e.currentTarget) {
       e.preventDefault();
@@ -261,7 +262,7 @@ export default function Search({
     }
   };
 
-  const handleSearchInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchInputKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Escape') {
       event.preventDefault();
       handleCloseSearch();

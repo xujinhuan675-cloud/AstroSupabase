@@ -5,7 +5,7 @@
  * 功能：暗色/亮色主题切换
  */
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import '../../styles/quartz/darkmode.css';
 
 export default function Darkmode() {

@@ -43,7 +43,7 @@ export function getFullSlug(): FullSlug {
  * 解析相对路径
  * 从当前 slug 解析到目标 slug 的相对路径
  */
-export function resolveRelative(current: FullSlug, target: FullSlug | SimpleSlug): RelativeURL {
+export function resolveRelative(_current: FullSlug, target: FullSlug | SimpleSlug): RelativeURL {
   // 简化处理：直接返回目标 slug 的路径
   const targetSlug = simplifySlug(target as FullSlug);
   return `/articles/${targetSlug}`;
@@ -52,7 +52,7 @@ export function resolveRelative(current: FullSlug, target: FullSlug | SimpleSlug
 /**
  * 获取路径到根目录的路径
  */
-export function pathToRoot(slug: FullSlug): string {
+export function pathToRoot(_slug: FullSlug): string {
   // 对于文章页面，返回到根目录的路径
   return '../../';
 }

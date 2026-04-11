@@ -5,6 +5,7 @@
 
 import { db } from '../src/db/client';
 import { articles, articleTags, articleLinks } from '../src/db/schema';
+import { eq } from 'drizzle-orm';
 
 async function diagnoseDatabase() {
   try {
@@ -20,7 +21,7 @@ async function diagnoseDatabase() {
     const publishedArticles = await db
       .select()
       .from(articles)
-      .where((col) => col.status === 'published');
+      .where(eq(articles.status, 'published'));
     console.log(`   已发布: ${publishedArticles.length}`);
 
     // 3. 详细列出所有文章

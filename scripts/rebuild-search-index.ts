@@ -16,7 +16,7 @@ async function rebuildSearchIndex() {
   try {
     // We execute a raw SQL update to force recalculation of the search_vector
     // This matches the logic in the postgres trigger
-    const result = await db.execute(sql`
+    await db.execute(sql`
       UPDATE articles 
       SET search_vector = 
         setweight(to_tsvector('simple', coalesce(title,'')), 'A') || 

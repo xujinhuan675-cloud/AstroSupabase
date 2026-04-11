@@ -5,7 +5,6 @@
  * 显示网站标题，点击返回首页
  */
 
-import React from 'react';
 import '../../styles/quartz/pagetitle.css';
 
 interface PageTitleProps {

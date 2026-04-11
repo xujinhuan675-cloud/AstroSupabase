@@ -1,15 +1,19 @@
 import { db } from '../../db/client';
 import { articles, articleTags } from '../../db/schema';
 import { eq, desc, inArray, and } from 'drizzle-orm';
-import { supabase } from '../../lib/supabase';
-import { createApiHandler, createAuthenticatedApiHandler, parseIdParam, validateBody, successResponse } from '../../lib/api-handler';
-import { ApiErrors } from '../../lib/api-error';
+import { createApiHandler, createAuthenticatedApiHandler, validateBody } from '../../lib/api-handler';
 import { createModuleLogger } from '../../lib/logger';
 import { getAllCategories, isValidCategory, type Category } from '../../lib/categories';
 import { z } from 'zod';
 import { updateArticleLinks } from '../../lib/links-service';
+import { articleStatusValues, resolveArticleTimestamps } from '../../lib/article-markdown';
 
 const logger = createModuleLogger('API.Articles');
+
+const nullableDateSchema = z.preprocess(
+  (value) => (value === '' ? null : value),
+  z.union([z.coerce.date(), z.null()]).optional()
+);
 
 // Zod schemas for validation
 const ArticleCreateSchema = z.object({
@@ -18,14 +22,23 @@ const ArticleCreateSchema = z.object({
   excerpt: z.string().max(500).optional(),
   content: z.string().min(1),
   authorId: z.string().optional(),
-  featuredImage: z.string().url().optional().nullable(),
-  status: z.enum(['draft', 'published', 'archived']).default('draft'),
+  tags: z.array(z.string().min(1)).optional(),
+  featuredImage: z.preprocess(
+    (value) => value === '' ? null : value,
+    z.string().url().optional().nullable()
+  ),
+  status: z.enum(articleStatusValues).default('draft'),
   category: z.enum(getAllCategories() as [Category, ...Category[]]).optional().nullable(),
+  createdAt: nullableDateSchema,
+  updatedAt: nullableDateSchema,
+  publishedAt: nullableDateSchema,
 });
 
-const ArticleUpdateSchema = ArticleCreateSchema.partial();
-
 export const prerender = false;
+
+function normalizeFeaturedImage(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
 
 /**
  * @description Handles GET requests to fetch all non-deleted articles with tags, ordered by published date descending.
@@ -90,7 +103,10 @@ export const GET = createApiHandler(async (context) => {
 export const POST = createAuthenticatedApiHandler(
   async (context) => {
     const user = (context as any).user;
-    const articleData = validateBody((context as any).body, ArticleCreateSchema);
+    const articleData = validateBody(
+      (context as any).body,
+      ArticleCreateSchema
+    ) as z.infer<typeof ArticleCreateSchema>;
     
     logger.info('Creating article', { title: articleData.title, userId: user.id });
     
@@ -104,19 +120,30 @@ export const POST = createAuthenticatedApiHandler(
         .replace(/--+/g, '-');
     }
     
-    // Timestamps
-    const now = new Date();
+    const timestamps = resolveArticleTimestamps({
+      status: articleData.status,
+      createdAt: articleData.createdAt,
+      updatedAt: articleData.updatedAt,
+      publishedAt: articleData.publishedAt,
+    });
+    const insertPayload: typeof articles.$inferInsert = {
+      title: articleData.title,
+      slug: slug || articleData.title.toLowerCase().replace(/\s+/g, '-'),
+      excerpt: articleData.excerpt,
+      content: articleData.content,
+      authorId: articleData.authorId?.trim() || user.id,
+      featuredImage: normalizeFeaturedImage(articleData.featuredImage),
+      status: articleData.status,
+      category: articleData.category,
+      createdAt: timestamps.createdAt,
+      updatedAt: timestamps.updatedAt,
+      publishedAt: timestamps.publishedAt,
+      isDeleted: false,
+    };
     
     const inserted = await db
       .insert(articles)
-      .values({
-        ...articleData,
-        slug: slug || articleData.title.toLowerCase().replace(/\s+/g, '-'),
-        authorId: user.id,
-        createdAt: now,
-        updatedAt: now,
-        isDeleted: false,
-      })
+      .values(insertPayload)
       .returning();
     
     const newArticle = inserted[0];
@@ -124,7 +151,9 @@ export const POST = createAuthenticatedApiHandler(
     // 更新链接和标签关系
     if (newArticle && articleData.content) {
       try {
-        await updateArticleLinks(newArticle.id, articleData.content);
+        await updateArticleLinks(newArticle.id, articleData.content, {
+          tags: articleData.tags,
+        });
       } catch (error) {
         logger.warn('Failed to update article links', { articleId: newArticle.id, error });
       }

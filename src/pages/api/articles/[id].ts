@@ -6,10 +6,18 @@ import { db } from "../../../db/client";
 import { z } from "zod";
 import { createModuleLogger } from "../../../lib/logger";
 import { ApiErrors, handleApiError } from "../../../lib/api-error";
+import { updateArticleLinks } from "../../../lib/links-service";
+import { getAllCategories, type Category } from "../../../lib/categories";
+import { articleStatusValues } from "../../../lib/article-markdown";
 
 export const prerender = false;
 
 const logger = createModuleLogger('API.Articles');
+
+const nullableDateSchema = z.preprocess(
+  (value) => (value === '' ? null : value),
+  z.union([z.coerce.date(), z.null()]).optional()
+);
 
 // Zod schema for article updates (PATCH)
 const ArticleUpdateSchema = z.object({
@@ -18,9 +26,24 @@ const ArticleUpdateSchema = z.object({
   excerpt: z.string().optional(),
   content: z.string().min(1).optional(),
   authorId: z.string().optional(),
-  featuredImage: z.string().optional().nullable(),
-  status: z.enum(['draft', 'published', 'archived']).optional(),
+  tags: z.array(z.string().min(1)).optional(),
+  featuredImage: z.preprocess(
+    (value) => value === '' ? null : value,
+    z.string().url().optional().nullable()
+  ),
+  status: z.enum(articleStatusValues).optional(),
+  category: z.enum(getAllCategories() as [Category, ...Category[]]).optional().nullable(),
+  publishedAt: nullableDateSchema,
+  updatedAt: nullableDateSchema,
 });
+
+function normalizeOptionalFeaturedImage(value: unknown): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return typeof value === 'string' ? value : null;
+}
 
 /**
  * @description Handles GET requests to fetch a single article by ID.
@@ -77,11 +100,39 @@ export const PATCH: APIRoute = async ({ request, params }) => {
     const id = z.coerce.number().int().positive().parse(params.id);
 
     const body = await request.json();
-    const updateFields = ArticleUpdateSchema.parse(body);
+    const updateFields = ArticleUpdateSchema.parse(body) as z.infer<typeof ArticleUpdateSchema>;
 
     if (Object.keys(updateFields).length === 0) {
       return ApiErrors.badRequest('No updatable fields provided').toResponse();
     }
+
+    const existing = await db
+      .select()
+      .from(articles)
+      .where(eq(articles.id, id))
+      .limit(1);
+
+    if (!existing.length) {
+      logger.warn(`[PATCH] No article found with ID ${id}`);
+      return ApiErrors.notFound('Article').toResponse();
+    }
+
+    const currentArticle = existing[0];
+    const now = new Date();
+    const normalizedFeaturedImage = normalizeOptionalFeaturedImage(updateFields.featuredImage);
+    const contentChanged =
+      typeof updateFields.content === 'string' &&
+      updateFields.content !== currentArticle.content;
+    const shouldSyncRelations = contentChanged || updateFields.tags !== undefined;
+
+    const nextStatus = updateFields.status ?? currentArticle.status;
+    const nextPublishedAt =
+      updateFields.publishedAt !== undefined
+        ? updateFields.publishedAt
+        : nextStatus === 'published' && !currentArticle.publishedAt
+          ? now
+          : currentArticle.publishedAt;
+    const nextUpdatedAt = updateFields.updatedAt ?? now;
 
     const updated = await db
       .update(articles)
@@ -90,16 +141,26 @@ export const PATCH: APIRoute = async ({ request, params }) => {
         slug: updateFields.slug,
         excerpt: updateFields.excerpt,
         content: updateFields.content,
-        authorId: updateFields.authorId,
-        featuredImage: updateFields.featuredImage,
+        authorId: updateFields.authorId?.trim() || currentArticle.authorId,
+        featuredImage: normalizedFeaturedImage,
         status: updateFields.status,
+        category: updateFields.category,
+        publishedAt: nextPublishedAt,
+        updatedAt: nextUpdatedAt,
+        htmlContent: contentChanged ? null : currentArticle.htmlContent,
+        readingTime: contentChanged ? null : currentArticle.readingTime,
       })
       .where(eq(articles.id, id))
       .returning();
 
-    if (!updated.length) {
-      logger.warn(`[PATCH] No article found with ID ${id}`);
-      return ApiErrors.notFound('Article').toResponse();
+    if (shouldSyncRelations && updated[0]?.content) {
+      try {
+        await updateArticleLinks(id, updated[0].content, {
+          tags: updateFields.tags,
+        });
+      } catch (error) {
+        logger.warn('Failed to refresh article links after update', { articleId: id, error });
+      }
     }
 
     logger.info(`[PATCH] Article ID ${id} updated by user ${user.data.user.id}`);

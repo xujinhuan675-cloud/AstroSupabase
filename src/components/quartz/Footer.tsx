@@ -5,7 +5,6 @@
  * 显示页脚链接和版权信息
  */
 
-import React from 'react';
 import '../../styles/quartz/footer.css';
 
 interface FooterProps {

@@ -3,21 +3,22 @@
  * 执行 migrations/add_performance_indexes.sql
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
 import postgres from 'postgres';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const databaseUrl = process.env.DATABASE_URL;
+function getRequiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} not found in environment variables`);
+  }
 
-if (!databaseUrl) {
-  console.error('❌ DATABASE_URL not found in environment variables');
-  process.exit(1);
+  return value;
 }
 
 async function addIndexes() {
+  const databaseUrl = getRequiredEnv('DATABASE_URL');
   const sql = postgres(databaseUrl);
 
   try {

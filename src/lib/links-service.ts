@@ -1,11 +1,15 @@
 import { db } from '../db/client';
 import { articles, articleLinks, articleTags } from '../db/schema';
 import { eq, and, sql, inArray } from 'drizzle-orm';
-import { processMarkdown, extractWikiLinks } from './markdown-processor';
+import { processMarkdown } from './markdown-processor';
 import { createModuleLogger } from './logger';
 import type { FullSlug } from './quartz/util/path';
 
 const logger = createModuleLogger('LinksService');
+
+export interface UpdateArticleLinksOptions {
+  tags?: string[];
+}
 
 /**
  * 反向链接信息
@@ -70,7 +74,11 @@ export interface GraphData {
  * await updateArticleLinks(1, "# 标题\n\n这是一个 [[其他文章]] 的链接。");
  * ```
  */
-export async function updateArticleLinks(articleId: number, content: string) {
+export async function updateArticleLinks(
+  articleId: number,
+  content: string,
+  options: UpdateArticleLinksOptions = {}
+) {
   try {
     // 获取文章信息
     const article = await db
@@ -99,6 +107,13 @@ export async function updateArticleLinks(articleId: number, content: string) {
       allSlugs: allSlugs,
       currentSlug: article[0].slug as FullSlug,
     });
+    const mergedTags = Array.from(
+      new Set(
+        [...processed.tags, ...(options.tags ?? [])]
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      )
+    );
 
     // 使用事务确保数据一致性
     await db.transaction(async (tx) => {
@@ -146,8 +161,8 @@ export async function updateArticleLinks(articleId: number, content: string) {
       }
 
       // 批量插入标签
-      if (processed.tags.length > 0) {
-        const tagValues = processed.tags.map(tag => ({
+      if (mergedTags.length > 0) {
+        const tagValues = mergedTags.map(tag => ({
           articleId,
           tag,
         }));

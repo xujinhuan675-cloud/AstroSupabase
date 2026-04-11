@@ -10,12 +10,10 @@
 // 强制静态预渲染（有 getStaticPaths 时自动启用，但显式声明更清晰）
 export const prerender = true;
 
-import { getArticleById } from '../../lib/articles';
 import { processMarkdown } from '../../lib/markdown-processor';
-import { getArticleTags, getForwardLinks, getBacklinks } from '../../lib/links-service';
 import { db } from '../../db/client';
 import { articles, articleTags, articleLinks } from '../../db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import QuartzLayout from '../../layouts/QuartzLayout.astro';
 import Backlinks from '../../components/Backlinks';
 import TableOfContents from '../../components/quartz/TableOfContents';
@@ -190,12 +188,6 @@ export async function getStaticPaths() {
 const { article, tags, forwardLinks, backlinks, allArticlesForExplorer, processedHtml, readingTime } = Astro.props as ArticlePageProps;
 const { id } = Astro.params;
 
-// 格式化日期
-const formattedDate = new Date(article.publishedAt || article.createdAt).toLocaleDateString('zh-CN', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
 ---
 
 <QuartzLayout title={article.title} currentSlug={`articles/${id}`}>

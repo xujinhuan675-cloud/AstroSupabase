@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../../styles/quartz/toc.css';
 
 interface TocItem {
@@ -13,6 +13,10 @@ interface TableOfContentsProps {
   variant?: 'desktop' | 'mobile';
   showHeader?: boolean;
   closeOnNavigate?: boolean;
+}
+
+function isWindowTarget(target: ScrollTarget): target is Window {
+  return target === window;
 }
 
 function closeMobileTocPanel() {
@@ -103,14 +107,14 @@ export default function TableOfContents({
     };
 
     const getScrollTop = (target: ScrollTarget): number => {
-      if (target === window) {
+      if (isWindowTarget(target)) {
         return window.scrollY || document.documentElement.scrollTop || 0;
       }
       return target.scrollTop;
     };
 
     const getElementTop = (target: ScrollTarget, element: HTMLElement): number => {
-      if (target === window) {
+      if (isWindowTarget(target)) {
         return element.getBoundingClientRect().top + window.scrollY;
       }
 
@@ -121,7 +125,7 @@ export default function TableOfContents({
 
     const updateActiveSection = () => {
       const scrollTop = getScrollTop(activeScrollTarget);
-      const indicatorOffset = activeScrollTarget === window ? 100 : 70;
+      const indicatorOffset = isWindowTarget(activeScrollTarget) ? 100 : 70;
       const position = scrollTop + indicatorOffset;
 
       let nextActiveId = '';

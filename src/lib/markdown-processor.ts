@@ -24,7 +24,7 @@ import {
   type LinksOptions,
 } from './quartz/transformers/links';
 import type { FullSlug, SimpleSlug } from './quartz/util/path';
-import { slugifyFilePath, simplifySlug } from './quartz/util/path';
+import { slugifyFilePath } from './quartz/util/path';
 import { cache } from './cache';
 import { cacheConfig } from '../config';
 import { createModuleLogger } from './logger';

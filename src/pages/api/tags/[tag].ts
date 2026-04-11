@@ -1,5 +1,5 @@
 import { getArticlesByTag } from '../../../lib/links-service';
-import { createApiHandler, parseIdParam } from '../../../lib/api-handler';
+import { createApiHandler } from '../../../lib/api-handler';
 import { ApiErrors } from '../../../lib/api-error';
 import { createModuleLogger } from '../../../lib/logger';
 
@@ -30,7 +30,7 @@ export const GET = createApiHandler(async (context) => {
     count: articles.length,
   };
 }, {
-  onError: (error, context) => {
+  onError: (error) => {
     logger.error('Error fetching articles by tag:', error);
     return new Response(JSON.stringify({ 
       success: false,

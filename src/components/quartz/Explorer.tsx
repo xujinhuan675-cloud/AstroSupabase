@@ -5,7 +5,7 @@
  * 功能：文件/文章浏览树
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { JSX } from 'react';
 import '../../styles/quartz/explorer.css';
 

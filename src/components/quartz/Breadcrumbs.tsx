@@ -5,7 +5,6 @@
  * 功能：面包屑导航
  */
 
-import React from 'react';
 import '../../styles/quartz/breadcrumbs.css';
 
 interface BreadcrumbItem {

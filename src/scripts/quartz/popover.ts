@@ -10,6 +10,19 @@ import { computePosition, flip, inline, shift } from '@floating-ui/dom';
 const p = new DOMParser();
 let activeAnchor: HTMLAnchorElement | null = null;
 
+function mouseEnterListener(event: Event) {
+  if (!(event instanceof MouseEvent)) {
+    return;
+  }
+
+  const currentTarget = event.currentTarget;
+  if (!(currentTarget instanceof HTMLAnchorElement)) {
+    return;
+  }
+
+  void mouseEnterHandler.call(currentTarget, event);
+}
+
 async function mouseEnterHandler(
   this: HTMLAnchorElement,
   event: MouseEvent
@@ -169,11 +182,11 @@ export function setupPopover() {
   
   for (const link of links) {
     // 移除旧事件（如果有）
-    link.removeEventListener('mouseenter', mouseEnterHandler as EventListener);
+    link.removeEventListener('mouseenter', mouseEnterListener);
     link.removeEventListener('mouseleave', clearActivePopover);
     
     // 添加新事件
-    link.addEventListener('mouseenter', mouseEnterHandler as EventListener);
+    link.addEventListener('mouseenter', mouseEnterListener);
     link.addEventListener('mouseleave', clearActivePopover);
   }
 }

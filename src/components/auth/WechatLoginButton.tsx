@@ -94,20 +94,7 @@ export default function WechatLoginButton() {
       alert('UID 已复制到剪贴板');
     } catch (error) {
       console.error('复制失败:', error);
-      // 降级方案：使用传统方法
-      const textArea = document.createElement('textarea');
-      textArea.value = user.id;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        alert('UID 已复制到剪贴板');
-      } catch (err) {
-        alert('复制失败，请手动复制：' + user.id);
-      }
-      document.body.removeChild(textArea);
+      alert('复制失败，请手动复制：' + user.id);
     }
   };
 
@@ -125,9 +112,6 @@ export default function WechatLoginButton() {
     const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.avatar;
     const userRole = user.user_metadata?.role || 'user';
     const isAdmin = userRole === 'admin';
-    
-    // 显示 UID 前8位
-    const displayUID = user.id.substring(0, 8);
 
     return (
       <div className="user-menu">

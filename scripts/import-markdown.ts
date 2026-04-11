@@ -4,7 +4,7 @@ import matter from 'gray-matter';
 import { db } from '../src/db/client-scripts';
 import { articles, articleLinks, articleTags } from '../src/db/schema';
 import { eq } from 'drizzle-orm';
-import { processMarkdown, generateSlug, extractWikiLinks } from '../src/lib/markdown-processor';
+import { processMarkdown, generateSlug } from '../src/lib/markdown-processor';
 
 /**
  * 更新文章的链接关系和标签（脚本版本）
@@ -12,7 +12,7 @@ import { processMarkdown, generateSlug, extractWikiLinks } from '../src/lib/mark
 async function updateArticleLinksAndTags(articleId: number, content: string) {
   try {
     // 解析 Markdown 获取所有链接和标签
-    const processed = await processMarkdown(content, async (permalink) => {
+    const processed = await processMarkdown(content, {}, async (permalink: string) => {
       const result = await db
         .select()
         .from(articles)

@@ -7,7 +7,6 @@
 // - 在 Node 环境（例如 tsx 脚本、Vercel 构建钩子）使用 process.env
 const astroEnv: any = (import.meta as any).env || {};
 const isDev: boolean = astroEnv?.DEV ?? (process.env.NODE_ENV !== 'production');
-const isProduction: boolean = astroEnv?.PROD ?? (process.env.NODE_ENV === 'production');
 
 export interface Logger {
   info: (...args: unknown[]) => void;

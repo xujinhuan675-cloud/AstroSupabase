@@ -3,7 +3,7 @@
  * 使用 Quartz 样式和逻辑
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/quartz/backlinks.css';
 
 interface Backlink {
@@ -83,7 +83,7 @@ export default function Backlinks({ articleId, backlinks: initialBacklinks, hide
         <ul className="overflow">
           {backlinks.map((backlink) => (
             <li key={backlink.id}>
-              <a href={`/articles/${backlink.slug}`} className="internal">
+              <a href={`/articles/${backlink.id}`} className="internal">
                 {backlink.title}
               </a>
               {backlink.excerpt && (

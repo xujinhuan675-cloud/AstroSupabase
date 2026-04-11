@@ -3,6 +3,10 @@ import { tasks } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import type { APIRoute } from 'astro';
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export const GET: APIRoute = async ({ params }) => {
   try {
     const { id } = params;
@@ -38,7 +42,7 @@ export const GET: APIRoute = async ({ params }) => {
   } catch (error) {
     return new Response(JSON.stringify({ 
       error: 'Failed to fetch tasks',
-      details: error.message 
+      details: getErrorMessage(error),
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -70,7 +74,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     return new Response(JSON.stringify({ 
       error: 'Failed to create task',
-      details: error.message 
+      details: getErrorMessage(error),
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -79,7 +83,7 @@ export const POST: APIRoute = async ({ request }) => {
 };
 
 // Handle all other methods
-export const ALL: APIRoute = async ({ request }) => {
+export const ALL: APIRoute = async () => {
   return new Response(JSON.stringify({ 
     error: 'Method not allowed',
     allowedMethods: ['GET', 'POST', 'DELETE'] 

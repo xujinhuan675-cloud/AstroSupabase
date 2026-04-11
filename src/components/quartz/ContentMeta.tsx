@@ -5,7 +5,6 @@
  * 功能：显示文章元数据（日期、阅读时间等）
  */
 
-import React from 'react';
 import '../../styles/quartz/contentmeta.css';
 
 interface ContentMetaProps {

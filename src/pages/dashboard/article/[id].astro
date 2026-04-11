@@ -18,10 +18,11 @@ if (!accessToken?.value || !refreshToken?.value) {
   return Astro.redirect('/auth/login');
 }
 
-// Set up Supabase client with cookies
-const { data: { session } } = await supabase.auth.setSession({
+const {
+  data: { session },
+} = await supabase.auth.setSession({
   access_token: accessToken.value,
-  refresh_token: refreshToken.value
+  refresh_token: refreshToken.value,
 });
 
 if (!session) {
@@ -31,54 +32,49 @@ if (!session) {
 let article: Partial<Article> | null = null;
 let error: string | null = null;
 
-// 检查 id 是否存在
 if (!id) {
-  return Astro.redirect('/dashboard/article');
+  return Astro.redirect('/dashboard');
 }
 
 if (id !== 'new') {
   try {
-    const articleId = parseInt(id);
-    if (isNaN(articleId)) {
-      return Astro.redirect('/dashboard/article');
+    const articleId = parseInt(id, 10);
+    if (Number.isNaN(articleId)) {
+      return Astro.redirect('/dashboard');
     }
-    
-    // 直接使用数据库查询，避免 fetch 问题
-    console.info(`[Edit Page] Fetching article ID ${articleId} directly from database`);
+
     const articleData = await db
       .select()
       .from(articles)
       .where(eq(articles.id, articleId))
       .limit(1);
-    
-    if (articleData && articleData.length > 0) {
+
+    if (articleData.length > 0) {
       article = articleData[0];
-      console.info(`[Edit Page] Article loaded successfully:`, article.title);
     } else {
       error = 'Article not found';
-      console.warn(`[Edit Page] Article ID ${articleId} not found in database`);
     }
-  } catch (err: any) {
+  } catch (err) {
     error = 'Failed to load article';
     console.error('[Edit Page] Error fetching article:', err);
   }
 }
 
 if (id !== 'new' && (error || !article)) {
-  return Astro.redirect('/dashboard/article');
+  return Astro.redirect('/dashboard');
 }
 ---
 
 <Layout title={`编辑: ${article?.title || '文章'}`}>
   <div class="min-h-screen bg-gray-50">
     <header class="bg-white shadow">
-      <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+      <div class="max-w-7xl mx-auto flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">编辑文章</h1>
           <nav class="flex" aria-label="Breadcrumb">
             <ol class="flex items-center space-x-2">
               <li>
-                <a href="/dashboard/article" class="text-indigo-600 hover:text-indigo-800">文章列表</a>
+                <a href="/dashboard" class="text-indigo-600 hover:text-indigo-800">文章列表</a>
               </li>
               <li class="text-gray-500">/</li>
               <li class="text-gray-500">编辑文章</li>
@@ -86,28 +82,28 @@ if (id !== 'new' && (error || !article)) {
           </nav>
         </div>
         <div class="space-x-4">
-          <a 
-            href="/" 
-            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          <a
+            href="/"
+            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             返回前台
           </a>
-          <a 
+          <a
             href="/auth/signout"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            class="inline-flex items-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             退出登录
           </a>
         </div>
       </div>
     </header>
-    
+
     <main>
       <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <ArticleEditor 
+        <ArticleEditor
           client:load
           article={article}
-          onCancel={() => window.location.href = '/dashboard/article'}
+          onCancel={() => window.location.href = '/dashboard'}
         />
       </div>
     </main>

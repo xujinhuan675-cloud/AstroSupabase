@@ -823,12 +823,12 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
 
 <script>
   // 移动端菜单交互
-  const menuToggle = document.querySelector('.mobile-menu-toggle');
-  const menuOverlay = document.querySelector('.mobile-menu-overlay');
-  const mobileMenu = document.querySelector('.mobile-menu');
-  const mobileDropdowns = document.querySelectorAll('.mobile-dropdown');
-  const mobileNavLinks = document.querySelectorAll('.mobile-nav-link:not(.mobile-dropdown-toggle)');
-  const desktopDropdowns = document.querySelectorAll('.nav-dropdown');
+  const menuToggle = document.querySelector<HTMLElement>('.mobile-menu-toggle');
+  const menuOverlay = document.querySelector<HTMLElement>('.mobile-menu-overlay');
+  const mobileMenu = document.querySelector<HTMLElement>('.mobile-menu');
+  const mobileDropdowns = document.querySelectorAll<HTMLElement>('.mobile-dropdown');
+  const mobileNavLinks = document.querySelectorAll<HTMLElement>('.mobile-nav-link:not(.mobile-dropdown-toggle)');
+  const desktopDropdowns = document.querySelectorAll<HTMLElement>('.nav-dropdown');
 
   // 在部分移动端浏览器中，若祖先元素存在 backdrop-filter/filter/transform 等，
   // position: fixed 的覆盖层可能会变成相对定位或被裁剪。
@@ -893,8 +893,8 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   }
 
   desktopDropdowns.forEach((dropdown) => {
-    const toggle = dropdown.querySelector('.dropdown-toggle');
-    const menu = dropdown.querySelector('.dropdown-menu');
+    const toggle = dropdown.querySelector<HTMLElement>('.dropdown-toggle');
+    const menu = dropdown.querySelector<HTMLElement>('.dropdown-menu');
     if (!toggle || !menu) return;
 
     toggle.addEventListener('click', (e) => {
@@ -912,7 +912,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       }
     });
 
-    toggle.addEventListener('keydown', (e) => {
+    toggle.addEventListener('keydown', (e: KeyboardEvent) => {
       if (window.innerWidth <= 767) return;
 
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
@@ -937,7 +937,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       }
     });
 
-    menu.addEventListener('keydown', (e) => {
+    menu.addEventListener('keydown', (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
         closeDesktopDropdowns();
@@ -947,7 +947,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
       }
     });
 
-    dropdown.addEventListener('focusout', (e) => {
+    dropdown.addEventListener('focusout', (e: FocusEvent) => {
       if (window.innerWidth <= 767) return;
       const nextTarget = e.relatedTarget;
       if (!(nextTarget instanceof Node) || !dropdown.contains(nextTarget)) {
@@ -1025,7 +1025,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
 
   // 移动端下拉菜单切换
   mobileDropdowns.forEach(dropdown => {
-    const toggle = dropdown.querySelector('.mobile-dropdown-toggle');
+    const toggle = dropdown.querySelector<HTMLElement>('.mobile-dropdown-toggle');
     toggle?.addEventListener('click', (e) => {
       e.preventDefault();
       dropdown.classList.toggle('active');
@@ -1039,7 +1039,7 @@ const isArticlePage = currentPath.startsWith('/articles/') && currentPath !== '/
   });
 
   // ESC 键关闭菜单和目录
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       if (menuOverlay?.classList.contains('active')) {
         closeMenu();

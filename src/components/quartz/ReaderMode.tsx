@@ -5,7 +5,7 @@
  * 功能：阅读模式切换（隐藏侧边栏）
  */
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import '../../styles/quartz/readermode.css';
 
 export default function ReaderMode() {

@@ -3,7 +3,7 @@
  * 适配 AstroSupabase 的 React 组件版本
  */
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { D3Config } from '../../types/graph-quartz';
 import { initGraph } from './scripts/graph-inline';
 import { graphConfig } from '../../config';
@@ -246,22 +246,6 @@ export default function QuartzGraph({
       </div>
     );
   }
-
-  const globalGraphOverlay = (
-    <div className="global-graph-outer" ref={globalOuterRef}>
-      <button
-        className="global-graph-close"
-        onClick={() => hideGlobalGraphRef.current?.()}
-        aria-label="鍏抽棴鍥捐氨"
-      >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-      <div className="global-graph-container" ref={globalContainerRef} />
-    </div>
-  );
 
   return (
     <div className="graph">

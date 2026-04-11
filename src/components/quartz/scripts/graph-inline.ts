@@ -20,7 +20,6 @@ import {
   forceLink, 
   forceCollide, 
   forceRadial,
-  type Simulation,
   type SimulationNodeDatum,
   type SimulationLinkDatum 
 } from 'd3-force';
@@ -199,7 +198,6 @@ export async function initGraph(
     centerForce,
     linkDistance,
     fontSize,
-    opacityScale,
     removeTags,
     showTags,
     showLabelsOnDesktop,
@@ -447,7 +445,7 @@ export async function initGraph(
   let shouldCenterOnSimulationEnd = false;
   simulation.on('end', () => {
     isSimulationActive = false;
-    shouldCenterOnSimulationEnd = autoCenterCurrentNode;
+    shouldCenterOnSimulationEnd = autoCenterCurrentNode ?? false;
   });
 
   // 获取 CSS 变量

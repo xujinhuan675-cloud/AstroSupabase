@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ request, cookies, redirect }) => {
       
       if (error) {
         console.error('Error exchanging code for session:', error);
-        return redirect('/login?error=oauth_failed');
+        return redirect('/auth/login?error=oauth_failed');
       }
 
       // Set session cookies
@@ -33,11 +33,11 @@ export const GET: APIRoute = async ({ request, cookies, redirect }) => {
       return redirect('/dashboard');
     } catch (error) {
       console.error('Error in OAuth callback:', error);
-      return redirect('/login?error=oauth_failed');
+      return redirect('/auth/login?error=oauth_failed');
     }
   }
 
-  return redirect('/login?error=invalid_request');
+  return redirect('/auth/login?error=invalid_request');
 };
 
 export const prerender = false;

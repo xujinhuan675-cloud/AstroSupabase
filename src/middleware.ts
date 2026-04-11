@@ -2,16 +2,7 @@ import { sequence } from 'astro:middleware';
 import { supabase } from './lib/supabase';
 
 const protectedRoutes = ['/dashboard'];
-const authRoutes = ['/login', '/signup'];
-
-/**
- * 只读 API 路由（不需要认证）
- */
-const publicApiRoutes = [
-  '/api/articles',        // GET 文章列表
-  '/api/content-index',   // GET 内容索引
-  '/api/tags',            // GET 标签列表
-];
+const authRoutes = ['/auth/login', '/auth/signup'];
 
 /**
  * 写操作 API 路由（需要认证）
@@ -29,20 +20,13 @@ function isWriteOperation(method: string): boolean {
 }
 
 /**
- * 检查路径是否为公共 API（只读）
- */
-function isPublicApiRoute(pathname: string): boolean {
-  return publicApiRoutes.some(route => pathname.startsWith(route));
-}
-
-/**
  * 检查路径是否为写操作 API
  */
 function isWriteApiRoute(pathname: string): boolean {
   return writeApiRoutes.some(route => pathname.startsWith(route));
 }
 
-export const onRequest = sequence(async ({ locals, url, cookies, redirect, request }, next) => {
+export const onRequest = sequence(async ({ locals, url, redirect, request }, next) => {
   const { data: { session } } = await supabase.auth.getSession();
   
   // Add the user to the locals

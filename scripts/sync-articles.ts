@@ -7,7 +7,6 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { config as dotenvConfig } from 'dotenv';
-import { eq, sql } from 'drizzle-orm';
 import { generateSlug } from '../src/lib/markdown-processor';
 
 dotenvConfig();

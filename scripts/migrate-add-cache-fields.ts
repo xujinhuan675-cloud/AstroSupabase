@@ -64,7 +64,7 @@ async function migrate() {
     `);
 
     console.log('✓ 验证成功，找到以下字段：');
-    console.log(result.rows);
+    console.log(result);
 
     console.log('\n' + '='.repeat(50));
     console.log('✅ 数据库迁移完成！');

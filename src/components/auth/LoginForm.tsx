@@ -236,7 +236,7 @@ export default function LoginForm() {
       <div className="mt-6 text-center text-sm">
         <p className="text-gray-600">
           还没有账号？{' '}
-          <a href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+          <a href="/auth/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
             立即注册
           </a>
         </p>
